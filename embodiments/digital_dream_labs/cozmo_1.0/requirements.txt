@@ -1,0 +1,4 @@
+pycozmo
+feagi_connector
+websockets
+opencv-python==4.7.0.68

@@ -1,0 +1,40 @@
+{
+    "description": "cozmo_1.0",
+    "version": "v0.0.0",
+    "feagi_settings": {
+        "feagi_url": null,
+        "feagi_dns": null,
+        "feagi_host": "127.0.0.1",
+        "feagi_api_port": 8000
+    },
+    "agent_settings": {
+        "agent_data_port": 10003,
+        "agent_id": "cozmo",
+        "agent_type": "embodiment",
+        "compression": true
+    },
+    "capabilities": {
+        "servo": {
+            "type": "opu",
+            "disabled": "False",
+            "count": 2,
+            "topic_identifier": "/S",
+            "power_amount": 1000
+
+        },
+        "motor": {
+            "type": "opu",
+            "disabled": "False",
+            "count": 4,
+            "topic_identifier": "/M",
+            "rolling_window_len": 2,
+            "power_amount": 300
+        },
+        "camera": {
+            "type": "ipu",
+            "disabled": "False",
+            "index": "00",
+            "mirror": "True"
+        }
+    }
+}

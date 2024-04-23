@@ -1,0 +1,4 @@
+pyfirmata
+feagi_connector
+websockets
+opencv-python
