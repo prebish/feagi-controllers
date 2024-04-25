@@ -1,0 +1,3 @@
+djitellopy
+feagi_connector
+websockets
