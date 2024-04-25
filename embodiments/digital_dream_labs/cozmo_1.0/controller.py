@@ -151,6 +151,10 @@ async def expressions():
                     cli.display_image(im2)
             face_selected.pop()
             print("poped")
+            if len(face_selected) > 2:
+                temp = face_selected.pop()
+                face_selected.clear()
+                face_selected.append(temp)
         else:
             time.sleep(0.05)
 
@@ -248,7 +252,7 @@ def action(obtained_data, arms_angle, head_angle):
         if id in [2, 3]:
             test_arm_angle = arms_angle
             if id == 2:
-                test_arm_angle -= servo_power / 40
+                test_arm_angle += servo_power / 40
             else:
                 test_arm_angle += servo_power / 40
             if lift_arms(cli, test_arm_angle, max_lift, min_lift):
@@ -355,12 +359,12 @@ if __name__ == '__main__':
                                 eye_two_location.append([-30, y_array[int(split_data[1])]])
                         if len(face_selected) == 0:
                             face_selected.append(0)
-                if "o_init" in message_from_feagi["opu_data"]:
-                    if message_from_feagi["opu_data"]["o_init"]:
-                        for i in message_from_feagi["opu_data"]["o_init"]:
-                            split_data = i.split("-")
-                            if split_data[0] == '0':
-                                motor_functions.display_lines(cli)
+                # if "o_init" in message_from_feagi["opu_data"]:
+                #     if message_from_feagi["opu_data"]["o_init"]:
+                #         for i in message_from_feagi["opu_data"]["o_init"]:
+                #             split_data = i.split("-")
+                #             if split_data[0] == '0':
+                #                 motor_functions.display_lines(cli)
 
             raw_frame = camera_data['vision']
             default_capabilities['camera']['blink'] = []
