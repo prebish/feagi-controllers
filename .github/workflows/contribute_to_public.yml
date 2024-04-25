@@ -15,10 +15,10 @@ jobs:
     - name: Check out Neuraville code
       uses: actions/checkout@v4
       with:
-        repository: Neuraville/feagi-connector
+        repository: Neuraville/controllers
         ref: pre-pub-staging
         fetch-depth: 0
-        path: neuraville-feagi-connector
+        path: neuraville-controllers
 
     - name: Generate branch name
       run: echo "BRANCH_NAME=neuraville-$(date +'%Y-%m-%d-%H-%M-%S')" >> $GITHUB_ENV
@@ -26,9 +26,9 @@ jobs:
     - name: Check out Community code
       uses: actions/checkout@v4
       with:
-        repository: feagi/feagi-connector
+        repository: feagi/controllers
         ref: staging
-        path: community-feagi-connector
+        path: community-controllers
         token: ${{ secrets.PUBLIC_PAT_MNT }}
         sparse-checkout: .
         fetch-depth: 0
@@ -36,15 +36,15 @@ jobs:
 
     - name: Setup Git Identity for Merge
       run: |
-        cd community-feagi-connector
+        cd community-controllers
         git config user.email "dev@neuraville.com"
         git config user.name "NeuravilleDeveloper"
 
 
     - name: Merge Neuraville code into Community code
       run: |
-        cd community-feagi-connector
-        git remote add neuraville ../neuraville-feagi-connector
+        cd community-controllers
+        git remote add neuraville ../neuraville-controllers
         git fetch neuraville
         git merge neuraville/pre-pub-staging --allow-unrelated-histories
 
@@ -57,11 +57,11 @@ jobs:
 
     - name: Setup Git with PAT and commit changes
       run: |
-        cd community-feagi-connector
+        cd community-controllers
         git config user.email "dev@neuraville.com"
         git config user.name "NeuravilleDeveloper"
         git remote | grep public && git remote remove public
-        git remote add public https://github.com/feagi/feagi-connector.git
+        git remote add public https://github.com/feagi/controllers.git
         git branch --all
         git status
         git checkout $BRANCH_NAME || git checkout -b $BRANCH_NAME
@@ -72,7 +72,7 @@ jobs:
       run: |
         gh auth login --with-token <<< "${{ secrets.PUBLIC_PAT_MNT }}"
         gh pr create \
-          --repo feagi/feagi-connector \
+          --repo feagi/controllers \
           --base staging \
           --head ${{ env.BRANCH_NAME }} \
           --title "Updates from Neuraville Inc" \
