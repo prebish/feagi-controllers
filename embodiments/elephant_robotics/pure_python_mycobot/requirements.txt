@@ -1,0 +1,4 @@
+feagi_connector
+websockets
+opencv-python==4.6.0.66
+pymycobot==3.0.6

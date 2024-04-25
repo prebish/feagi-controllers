@@ -1,0 +1,58 @@
+{
+    "description": "feagi_connector_freenove",
+    "version": "v0.0.0",
+    "feagi_settings": {
+        "feagi_url": null,
+        "feagi_dns": null,
+        "feagi_host": "127.0.0.1",
+        "feagi_api_port": 8000
+    },
+    "agent_settings": {
+        "agent_data_port": 10004,
+        "agent_id": "freenove",
+        "agent_type": "embodiment",
+        "compression": true
+    },
+    "capabilities": {
+        "servo": {
+            "type": "opu",
+            "disabled": "False",
+            "count": 2,
+            "topic_identifier": "/S",
+            "power_amount": "0.5"
+
+        },
+        "motor": {
+            "type": "opu",
+            "disabled": "False",
+            "count": 4,
+            "rolling_window_len": 2,
+            "diameter_of_wheel": "0.065",
+            "power_amount": 4094
+        },
+        "infrared": {
+            "type": "ipu",
+            "disabled": "False",
+            "count": 3,
+            "cortical_mapping": "i__inf",
+            "topic_identifier": "IR"
+        },
+        "battery": {
+            "type": "ipu",
+            "disabled": "False",
+            "count": 4,
+            "cortical_mapping": "i__bat",
+            "capacity": 100,
+            "depletion_per_burst": "0.01",
+            "charge_increment": "0.1"
+        },
+        "camera": {
+            "type": "ipu",
+            "disabled": "False",
+            "index": "00",
+            "video_device_index": 0,
+            "mirror": "False",
+            "threshold_default": [100, 255, 130, 51]
+        }
+    }
+}
