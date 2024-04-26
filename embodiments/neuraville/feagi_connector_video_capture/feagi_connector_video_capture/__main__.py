@@ -31,8 +31,6 @@ if __name__ == '__main__':
     parser.add_argument('-image', '--image', help='Use the path to image to read', required=False)
     parser.add_argument('-port', '--port', help='Change the port instead of default 8000.',
                         required=False)
-    parser.add_argument('-magic_link', '--magic_link', help='Get the magic link from NRS button',
-                        required=False)
     parser.add_argument('-magic_link', '--magic_link', help='to use magic link', required=False)
     parser.add_argument('-magic-link', '--magic-link', help='to use magic link', required=False)
     parser.add_argument('-magic', '--magic', help='to use magic link', required=False)
@@ -61,7 +59,7 @@ if __name__ == '__main__':
                     feagi_settings['magic_link'] = args[arg]
                     break
             configuration['feagi_settings']['feagi_url'] = feagi_settings['magic_link']
-            with open('configuration.json', 'w') as f:
+            with open(str(current_path[0]) + '/configuration.json', 'w') as f:
                 json.dump(configuration, f)
         else:
             feagi_settings['magic_link'] = feagi_settings['feagi_url']
