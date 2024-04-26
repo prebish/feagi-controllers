@@ -70,7 +70,8 @@ def process_video(video_path, capabilities):
                     "top": monitors.y,
                     "left": monitors.x,
                     "width": monitors.width,
-                    "height": monitors.height}
+                    "height": monitors.height
+                }
 
                 img = numpy.array(sct.grab(monitor))
                 pixels = cv2.cvtColor(img, cv2.COLOR_RGBA2RGB)
@@ -123,7 +124,6 @@ def main(feagi_auth_url, feagi_settings, agent_settings, capabilities, message_t
     default_capabilities = {}  # It will be generated in process_visual_stimuli. See the
     # overwrite manual
     default_capabilities = pns.create_runtime_default_list(default_capabilities, capabilities)
-    threading.Thread(target=pns.feagi_listener, args=(feagi_opu_channel,), daemon=True).start()
     threading.Thread(target=retina.vision_progress, args=(default_capabilities, feagi_opu_channel, api_address, feagi_settings,
                                        camera_data['vision'],), daemon=True).start()
     while True:

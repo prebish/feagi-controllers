@@ -1,0 +1,36 @@
+{
+    "description": "feagi_connector_video_capture",
+    "version": "v0.0.0",
+    "feagi_settings": {
+        "feagi_url": null,
+        "feagi_dns": null,
+        "feagi_host": "127.0.0.1",
+        "feagi_api_port": 8000
+    },
+    "agent_settings": {
+        "agent_data_port": 10005,
+        "agent_id": "video_capture_ctrl",
+        "agent_type": "embodiment",
+        "compression": true
+    },
+    "capabilities": {
+        "camera": {
+            "type": "ipu",
+            "disabled": false,
+            "index": "00",
+            "video_device_index": 0,
+            "video_loop": false,
+            "mirror": false,
+            "monitor": 0,
+            "image": "",
+            "gaze_control": {
+                "0": 1,
+                "1": 1
+            },
+            "pupil_control": {
+                "0": 99,
+                "1": 99
+            }
+        }
+    }
+}
