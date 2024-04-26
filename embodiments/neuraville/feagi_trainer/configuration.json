@@ -22,11 +22,11 @@
             "image": "",
             "video_loop": false,
             "mirror": false,
-            "gaze_control": {
+            "eccentricity_control": {
                 "0": 1,
                 "1": 1
             },
-            "pupil_control": {
+            "modulation_control": {
                 "0": 99,
                 "1": 99
             }
