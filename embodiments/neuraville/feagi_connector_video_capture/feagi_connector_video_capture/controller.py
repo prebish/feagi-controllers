@@ -101,14 +101,14 @@ def main(feagi_auth_url, feagi_settings, agent_settings, capabilities, message_t
     runtime_data = {"vision": {}, "current_burst_id": None, "stimulation_period": None,
                     "feagi_state": None,
                     "feagi_network": None}
-    FEAGI_FLAG = False
-    print("Waiting on FEAGI...")
-    while not FEAGI_FLAG:
-        FEAGI_FLAG = feagi.is_FEAGI_reachable(
-            os.environ.get('FEAGI_HOST_INTERNAL', feagi_settings["feagi_host"]),
-            int(os.environ.get('FEAGI_OPU_PORT', "3000")))
-        print("retrying...")
-        sleep(2)
+    # FEAGI_FLAG = False
+    # print("Waiting on FEAGI...")
+    # while not FEAGI_FLAG:
+    #     FEAGI_FLAG = feagi.is_FEAGI_reachable(
+    #         os.environ.get('FEAGI_HOST_INTERNAL', feagi_settings["feagi_host"]),
+    #         int(os.environ.get('FEAGI_OPU_PORT', "3000")))
+    #     print("retrying...")
+    #     sleep(2)
     print("FEAGI is reachable!")
     # # # FEAGI registration # # # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
     # - - - - - - - - - - - - - - - - - - #
