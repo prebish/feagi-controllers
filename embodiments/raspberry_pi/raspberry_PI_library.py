@@ -86,7 +86,10 @@ def configured_board_by_config(capabilities):
     if 'GPIO' in capabilities:
         if 'port' in capabilities['GPIO']:
             for pin in capabilities['GPIO']['port']:
-                GPIO.setup(int(pin), capabilities['GPIO']['port'][pin])
+                if capabilities['GPIO']['port'][pin] == 1:
+                    GPIO.setup(int(pin), capabilities['GPIO']['port'][pin], pull_up_down = GPIO.PUD_DOWN)
+                else:
+                    GPIO.setup(int(pin), capabilities['GPIO']['port'][pin])
                 gpio_modes[int(pin)] = capabilities['GPIO']['port'][pin]
     print(gpio_modes)
 
