@@ -14,13 +14,12 @@ See the License for the specific language governing permissions and
 limitations under the License.
 ==============================================================================
 """
-
-import pyfirmata
+import util
+from __init__ import *
 from time import sleep
-from feagi_connector import router
+import pyfirmata_neuraville
 from feagi_connector import sensors
 from feagi_connector import actuators
-from pyfirmata import Arduino, SERVO, util
 from feagi_connector import pns_gateway as pns
 from feagi_connector.version import __version__
 from feagi_connector import feagi_interface as feagi
@@ -93,7 +92,7 @@ def action(obtained_data):
             if id in pin_mode:
                 if pin_mode[int(id)] != 4:
                     print("reset your board to use the servo again after you updated pin: ", id)
-                    set_pin_mode(pin_board[int(id)], pyfirmata.OUTPUT, id)
+                    set_pin_mode(pin_board[int(id)], pyfirmata_neuraville.OUTPUT, id)
                 servo_power = actuators.servo_generate_power(180, recieve_servo_data[id], id)
                 if id in motor_status:
                     del motor_status[id]
