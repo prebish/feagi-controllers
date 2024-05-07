@@ -83,8 +83,9 @@ def action(obtained_data):
                 print("pin: ", i, " is not configured. Select another pin please.")
     else:
         if output_track:
-            pin_board[output_track[0]].write(0)
-            output_track.pop()
+            for pin in output_track:
+                pin_board[pin].write(0)
+            output_track.clear()
 
     if recieve_servo_data:
         # Do some custom work with servo data as well
