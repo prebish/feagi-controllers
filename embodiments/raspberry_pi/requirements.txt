@@ -1,0 +1,3 @@
+feagi_connector
+RPi.GPIO
+opencv-python
