@@ -1,3 +1,3 @@
 feagi_connector
-RPi.GPIO
-opencv-python
+RPi.GPIO==0.7.1a4
+opencv-python<=4.8.1.78
