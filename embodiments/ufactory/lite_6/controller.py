@@ -3,7 +3,6 @@ import traceback
 from time import sleep
 from collections import deque
 from version import __version__
-from feagi_connector import router
 from feagi_connector import sensors
 from feagi_connector import actuators
 from feagi_connector import pns_gateway as pns
@@ -18,10 +17,19 @@ def pose_to_default(arm, count):
     arm.reset(wait=True)
 
 
+def calculate_the_servo_speed(rolling_window, seconds):
+    last_index = len(rolling_window) - 1
+    rolling_delta = rolling_window[last_index] - rolling_window[0]
+    burst_duration_total = 3 * seconds
+    return rolling_delta / burst_duration_total
+
+
 def updating_encoder_position_in_bg(arm):
     global runtime_data, capabilities, feagi_settings
-    # for i in range(capabilities['servo']['count']):
-    #     runtime_data['i_spos'][i] = 0
+    rolling_window = {}
+    rolling_window_len = capabilities['servo']['rolling_window_len']
+    for servo_id in range(capabilities['servo']['count']):
+        rolling_window[servo_id] = deque([0] * rolling_window_len)
     while True:
         new_degree_list_of_servo = arm.get_servo_angle()
         for number_of_servo in range(capabilities['servo']['count']):
@@ -30,7 +38,17 @@ def updating_encoder_position_in_bg(arm):
                                                                            1][number_of_servo],
                                                                        number_of_servo,
                                                                        flip=True)
+            rolling_window[number_of_servo].append(new_degree_list_of_servo[1][number_of_servo])
+            rolling_window[number_of_servo].popleft()
+            get_speed = calculate_the_servo_speed(rolling_window[number_of_servo],
+                                                  feagi_settings['feagi_burst_speed'])
+            new_name = pns.fetch_servo_motion_sensor_size_and_return_percentage(get_speed,
+                                                                                number_of_servo,
+                                                                                capabilities[
+                                                                                    'servo'][
+                                                                                    'max_speed'])
             if name is not None:
+                runtime_data['i_smot'][new_name] = 100
                 runtime_data['i_spos'][name] = 100
         sleep(0.01)
 
@@ -58,9 +76,9 @@ def action(obtained_data, arm, speed):
                     arm.set_vacuum_gripper(on=True)
                 if i == 1:
                     arm.set_vacuum_gripper(on=False)
-                if i==2:
+                if i == 2:
                     arm.open_lite6_gripper()
-                if i==3:
+                if i == 3:
                     arm.close_lite6_gripper()
     if 'servo_position' in obtained_data:
         try:
@@ -97,6 +115,17 @@ def action(obtained_data, arm, speed):
         except Exception as e:
             print("ERROR: ", e)
             traceback.print_exc()
+    # servo_id_used = []
+    # for servo_id in runtime_data['servo_status']:
+    #     if servo_id not in servo_id_used:
+    #         runtime_data['servo_status'][servo_id].append(runtime_data['servo_status'][servo_id][2])
+    #         runtime_data['servo_status'][servo_id].popleft()
+    # runtime_data['i_smot'].clear()
+    # for servo_id in runtime_data['servo_status']:
+    #     get_speed = calculate_the_servo_speed(runtime_data['servo_status'][servo_id],
+    #                                           feagi_settings['feagi_burst_speed'])
+    #     new_name = pns.fetch_servo_motion_sensor_size_and_return_percentage(get_speed, servo_id)
+    #     runtime_data['i_smot'][new_name] = 100
     return speed
 
 
@@ -109,7 +138,8 @@ if __name__ == "__main__":
             "battery_charge_level": 1,
             "host_network": {},
             'servo_status': {},
-            'i_spos': {}
+            'i_spos': {},
+            'i_smot': {}
         }
 
     config = FEAGI.build_up_from_configuration()
@@ -145,15 +175,15 @@ if __name__ == "__main__":
                 obtained_signals = pns.obtain_opu_data(message_from_feagi)
                 speed = action(obtained_signals, arm, speed)
 
-            # Encoder position
-            encoder_for_feagi = dict()
             try:
-                if runtime_data['i_spos']:
-                    message_to_feagi = sensors.add_generic_input_to_feagi_data(runtime_data,
-                                                                               message_to_feagi)  # message_to_feagi =
+                message_to_feagi = sensors.add_generic_input_to_feagi_data(runtime_data,
+                                                                           message_to_feagi)  # message_to_feagi =
                 runtime_data['i_spos'].clear()
+                runtime_data['i_smot'].clear()
             except Exception as e:
                 print("error: ", e)
+
+
 
             sleep(feagi_settings['feagi_burst_speed'])
             pns.signals_to_feagi(message_to_feagi, feagi_ipu_channel, agent_settings,

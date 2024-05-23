@@ -18,6 +18,8 @@
         "type": "opu",
         "disabled": "False",
         "count": 6,
+        "rolling_window_len": 3,
+        "max_speed": 25,
         "servo_range": {
             "0": [-340, 340],
             "1": [-100,100],
