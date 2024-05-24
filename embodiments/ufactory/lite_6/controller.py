@@ -33,7 +33,7 @@ def updating_encoder_position_in_bg(arm):
     while True:
         new_degree_list_of_servo = arm.get_servo_angle()
         for number_of_servo in range(capabilities['servo']['count']):
-            name = pns.fetch_servo_position_size_and_return_percentage(capabilities,
+            position_for_i_spos = pns.fetch_servo_position_size_and_return_percentage(capabilities,
                                                                        new_degree_list_of_servo[
                                                                            1][number_of_servo],
                                                                        number_of_servo,
@@ -42,14 +42,16 @@ def updating_encoder_position_in_bg(arm):
             rolling_window[number_of_servo].popleft()
             get_speed = calculate_the_servo_speed(rolling_window[number_of_servo],
                                                   feagi_settings['feagi_burst_speed'])
-            new_name = pns.fetch_servo_motion_sensor_size_and_return_percentage(get_speed,
+            position_for_i_smot = pns.fetch_servo_motion_sensor_size_and_return_percentage(
+                get_speed,
                                                                                 number_of_servo,
                                                                                 capabilities[
                                                                                     'servo'][
                                                                                     'max_speed'])
-            if name is not None:
-                runtime_data['i_smot'][new_name] = 100
-                runtime_data['i_spos'][name] = 100
+            if position_for_i_spos is not None:
+                if not any(key[:4] == position_for_i_spos[:4] for key in runtime_data['i_smot']):
+                    runtime_data['i_smot'][position_for_i_smot] = 100
+                runtime_data['i_spos'][position_for_i_spos] = 100
         sleep(0.01)
 
 
