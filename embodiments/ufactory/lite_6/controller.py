@@ -28,30 +28,40 @@ def updating_encoder_position_in_bg(arm):
     global runtime_data, capabilities, feagi_settings
     rolling_window = {}
     rolling_window_len = capabilities['servo']['rolling_window_len']
-    for servo_id in range(capabilities['servo']['count']):
+    for servo_id in range(capabilities['servo']['count'] * 2):
         rolling_window[servo_id] = deque([0] * rolling_window_len)
     while True:
         new_degree_list_of_servo = arm.get_servo_angle()
         for number_of_servo in range(capabilities['servo']['count']):
             position_for_i_spos = pns.fetch_servo_position_size_and_return_percentage(capabilities,
-                                                                       new_degree_list_of_servo[
-                                                                           1][number_of_servo],
-                                                                       number_of_servo,
-                                                                       flip=True)
-            rolling_window[number_of_servo].append(new_degree_list_of_servo[1][number_of_servo])
+                                                                                      new_degree_list_of_servo[1][number_of_servo],
+                                                                                      number_of_servo,
+                                                                                      flip=True)
+            if position_for_i_spos is not None:
+                runtime_data['i_spos'][position_for_i_spos] = 100
+        for current_servo_number in range(0, capabilities['servo']['count'] * 2, 2):
+            number_of_servo = current_servo_number # A number incrementing from range(12)
+            rolling_window[number_of_servo].append(new_degree_list_of_servo[1][number_of_servo//2])
+            # new degree list has 6 servos, so using floor divsion to keep it 6
             rolling_window[number_of_servo].popleft()
+            # pop the old index from rolling_window
+
             get_speed = calculate_the_servo_speed(rolling_window[number_of_servo],
                                                   feagi_settings['feagi_burst_speed'])
+            # Get a speed from old index - new index / time
             position_for_i_smot = pns.fetch_servo_motion_sensor_size_and_return_percentage(
                 get_speed,
-                                                                                number_of_servo,
-                                                                                capabilities[
-                                                                                    'servo'][
-                                                                                    'max_speed'])
-            if position_for_i_spos is not None:
-                if not any(key[:4] == position_for_i_spos[:4] for key in runtime_data['i_smot']):
+                number_of_servo,
+                capabilities['servo']['max_speed'])
+            if position_for_i_smot is not None:
+                if not any(key[:4] == position_for_i_smot[:4] for key in runtime_data['i_smot']):
                     runtime_data['i_smot'][position_for_i_smot] = 100
-                runtime_data['i_spos'][position_for_i_spos] = 100
+                    key_name = str(number_of_servo) + '-0'
+                    if not key_name in position_for_i_smot:
+                        key_name = key_name + '-0'
+                    else:
+                        key_name = str(number_of_servo+1) + '-0-0'
+                    runtime_data['i_smot'][key_name] = 100
         sleep(0.01)
 
 
@@ -164,7 +174,8 @@ if __name__ == "__main__":
     arm.motion_enable(enable=True)
     arm.set_mode(0)
     arm.set_state(state=0)
-    speed = 100
+    speed = 200
+    arm.set_pause_time(0)
     # UFACTORY ENDS
     pose_to_default(arm, capabilities['servo']['count'])
 
@@ -179,14 +190,11 @@ if __name__ == "__main__":
 
             try:
                 message_to_feagi = sensors.add_generic_input_to_feagi_data(runtime_data,
-                                                                           message_to_feagi)  # message_to_feagi =
+                                                                           message_to_feagi)
                 runtime_data['i_spos'].clear()
                 runtime_data['i_smot'].clear()
             except Exception as e:
                 print("error: ", e)
-
-
-
             sleep(feagi_settings['feagi_burst_speed'])
             pns.signals_to_feagi(message_to_feagi, feagi_ipu_channel, agent_settings,
                                  feagi_settings)
