@@ -63,15 +63,13 @@ def gather_all_input_data():
     return input_list
 
 
-def gather_all_analog_output_data():
-    global analog_pins
+def gather_all_analog_output_data(analog_pins):
     create_analog_data_list = dict()
-    create_analog_data_list['iagpio'] = dict()
-    for channel in analog_pins:
+    for channel in range(len(analog_pins)):
         position_of_analog = sensors.convert_sensor_to_ipu_data(0, 1, analog_pins[
             channel].value, channel)
-        print("channel: ", channel, " and value: ", analog_pins[channel].value)
-        create_analog_data_list['iagpio'][position_of_analog] = 100
+        create_analog_data_list[position_of_analog] = 100
+    return create_analog_data_list
 
 
 def get_available_gpios():
@@ -113,11 +111,12 @@ def clear_gpio():
     GPIO.cleanup()
 
 
-def analog_pins_generate(channels=8, device=1):
-    global analog_pins
+def analog_pins_generate(channels=8, device=0):
+    analog_pins = []
     for channel in range(channels):
-        analog_pins[channel] = MCP3008(channel=channel, device=device)
+        analog_pins.append(MCP3008(channel=channel, device=device))
     print("Analog: ", analog_pins)
+    return analog_pins
 
 
 GPIO.setmode(GPIO.BCM)  # Using Broadcom pin numbering
