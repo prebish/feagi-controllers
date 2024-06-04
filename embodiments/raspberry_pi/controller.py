@@ -32,7 +32,6 @@ def action(obtained_data):
         rpi.depower_pin()
 
 
-
 if __name__ == "__main__":
     runtime_data = {
         "current_burst_id": 0,
@@ -60,7 +59,7 @@ if __name__ == "__main__":
 
     rpi.configured_board_by_config(capabilities)  # pass your config setting to this
     if capabilities['analog']:
-        rpi.analog_pins_generate(channels=1)
+        analog_list = rpi.analog_pins_generate(channels=3)
 
     while True:
         try:
@@ -73,10 +72,13 @@ if __name__ == "__main__":
                 action(obtained_signals)
             generic_input_dict = dict()
             generic_input_dict['idgpio'] = rpi.gather_all_input_data()
-            message_to_feagi = sensors.add_generic_input_to_feagi_data(generic_input_dict, message_to_feagi)
-            rpi.gather_all_analog_output_data()
+            if capabilities['analog']:
+                generic_input_dict['iagpio'] = rpi.gather_all_analog_output_data(analog_list)
+            message_to_feagi = sensors.add_generic_input_to_feagi_data(generic_input_dict,
+                                                                       message_to_feagi)
             pns.signals_to_feagi(message_to_feagi, feagi_ipu_channel, agent_settings,
                                  feagi_settings)
             sleep(feagi_settings['feagi_burst_speed'])
         except KeyboardInterrupt:
             rpi.clear_gpio()
+
