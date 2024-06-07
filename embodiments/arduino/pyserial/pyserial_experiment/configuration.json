@@ -1,5 +1,5 @@
 {
-    "description": "generic_pyserial",
+    "description": "generic_pyfirmata",
     "version": "v0.0.0",
     "feagi_settings": {
         "feagi_url": null,
@@ -9,7 +9,7 @@
     },
     "agent_settings": {
         "agent_data_port": 10007,
-        "agent_id": "pyserial",
+        "agent_id": "pyfirmata",
         "agent_type": "embodiment",
         "compression": true
     },
