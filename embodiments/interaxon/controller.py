@@ -113,13 +113,11 @@ if __name__ == "__main__":
                     convert_eeg_to_ipu[channel] = data[number][len(data[number])-1]
                     if data[number].max() > max_value[channel]:
                         max_value[channel] = data[number].max()
-                        print("max_value:", max_value)
                     if data[number].min() < min_value[channel]:
                         min_value[channel] = data[number].min()
-                        print("min_value:", min_value)
-
-                    position_of_analog = convert_sensor_to_ipu_data(min_value[channel], max_value[channel], convert_eeg_to_ipu[channel], channel)
-                    create_analog_data_list['i__bci'][position_of_analog] = convert_eeg_to_ipu[channel]
+                    # position_of_analog = convert_sensor_to_ipu_data(min_value[channel], max_value[channel], convert_eeg_to_ipu[channel], channel)
+                    position_of_analog = str(channel) + "-0-0"
+                    create_analog_data_list['i__bci'][position_of_analog] = convert_eeg_to_ipu[channel] + 1000.0
                 # print("min: ", min_value, " and max:", max_value)
                 message_to_feagi = sensors.add_generic_input_to_feagi_data(create_analog_data_list,
                                                                            message_to_feagi)
