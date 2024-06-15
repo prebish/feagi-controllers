@@ -104,7 +104,8 @@ def action(obtained_data, arm, speed):
                 for i in runtime_data['servo_status']:
                     angle_list.append(runtime_data['servo_status'][i])
                 angle_list.append(0)  # last one doesn't do anything so just add 0
-                arm.set_servo_angle(angle=angle_list, speed=speed)
+                if not arm.get_is_moving():
+                    arm.set_servo_angle(angle=angle_list, speed=speed)
         except Exception as e:
             print("ERROR: ", e)
             traceback.print_exc()
@@ -123,7 +124,8 @@ def action(obtained_data, arm, speed):
                 for i in runtime_data['servo_status']:
                     angle_list.append(runtime_data['servo_status'][i])
                 angle_list.append(0)  # last one doesn't do anything so just add 0
-                arm.set_servo_angle(angle=angle_list, speed=speed)
+                if not arm.get_is_moving():
+                    arm.set_servo_angle(angle=angle_list, speed=speed)
         except Exception as e:
             print("ERROR: ", e)
             traceback.print_exc()
