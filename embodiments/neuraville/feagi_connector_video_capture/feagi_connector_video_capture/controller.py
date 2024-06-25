@@ -36,8 +36,16 @@ camera_data = {"vision": {}}
 
 
 def process_video(video_path, capabilities):
+    webcam_list = list()
+    webcam_data_each = dict()
     if capabilities["camera"]["image"] == "":
-        cam = cv2.VideoCapture(video_path)
+        if isinstance(video_path, int):
+            cam = cv2.VideoCapture(video_path)
+            print("CAM CREATED")
+        if isinstance(video_path, list):
+            for device in video_path:
+                new_cam = cv2.VideoCapture(device)
+                webcam_list.append(new_cam)
     # cam.set(3, 320)
     # cam.set(4, 240)
     if capabilities['camera']['video_device_index'] == "monitor":
@@ -54,7 +62,14 @@ def process_video(video_path, capabilities):
                     pixels = static_image
                     # pixels = adjust_gamma(pixels)
             else:
-                check, pixels = cam.read()
+                if webcam_list:
+                    number_of_device = 0
+                    for i in webcam_list:
+                        check, new_data = i.read()
+                        webcam_data_each[number_of_device] = new_data
+                        number_of_device += 1
+                else:
+                    check, pixels = cam.read()
         else:
             check = True
         if capabilities['camera']['video_device_index'] != "monitor":
@@ -70,8 +85,7 @@ def process_video(video_path, capabilities):
                     "top": monitors.y,
                     "left": monitors.x,
                     "width": monitors.width,
-                    "height": monitors.height
-                }
+                    "height": monitors.height}
 
                 img = numpy.array(sct.grab(monitor))
                 pixels = cv2.cvtColor(img, cv2.COLOR_RGBA2RGB)
@@ -80,8 +94,16 @@ def process_video(video_path, capabilities):
             camera_data["vision"] = pixels
         else:
             if capabilities["camera"]["mirror"]:
-                pixels = cv2.flip(pixels, 1)
-            camera_data["vision"] = pixels
+                if webcam_data_each:
+                    for device in webcam_data_each:
+                        webcam_data_each[device] = cv2.flip(webcam_data_each[device], 1)
+                else:
+                    pixels = cv2.flip(pixels, 1)
+            if webcam_data_each:
+                camera_data["vision"] = webcam_data_each.copy()
+            else:
+                camera_data["vision"] = pixels
+            # print(camera_data)
     cam.release()
     cv2.destroyAllWindows()
 
@@ -101,14 +123,17 @@ def main(feagi_auth_url, feagi_settings, agent_settings, capabilities, message_t
     runtime_data = {"vision": {}, "current_burst_id": None, "stimulation_period": None,
                     "feagi_state": None,
                     "feagi_network": None}
-    # FEAGI_FLAG = False
-    # print("Waiting on FEAGI...")
-    # while not FEAGI_FLAG:
-    #     FEAGI_FLAG = feagi.is_FEAGI_reachable(
-    #         os.environ.get('FEAGI_HOST_INTERNAL', feagi_settings["feagi_host"]),
-    #         int(os.environ.get('FEAGI_OPU_PORT', "3000")))
-    #     print("retrying...")
-    #     sleep(2)
+    FEAGI_FLAG = False
+    print("Waiting on FEAGI...")
+    while not FEAGI_FLAG:
+        FEAGI_FLAG = feagi.is_FEAGI_reachable(
+            os.environ.get('FEAGI_HOST_INTERNAL', feagi_settings["feagi_host"]),
+            int(os.environ.get('FEAGI_OPU_PORT', "3000")))
+        print((
+            os.environ.get('FEAGI_HOST_INTERNAL', feagi_settings["feagi_host"]),
+            int(os.environ.get('FEAGI_OPU_PORT', "3000"))))
+        print("retrying...")
+        sleep(2)
     print("FEAGI is reachable!")
     # # # FEAGI registration # # # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
     # - - - - - - - - - - - - - - - - - - #
@@ -124,26 +149,44 @@ def main(feagi_auth_url, feagi_settings, agent_settings, capabilities, message_t
     default_capabilities = {}  # It will be generated in process_visual_stimuli. See the
     # overwrite manual
     default_capabilities = pns.create_runtime_default_list(default_capabilities, capabilities)
-    threading.Thread(target=retina.vision_progress, args=(default_capabilities, feagi_opu_channel, api_address, feagi_settings,
-                                       camera_data['vision'],), daemon=True).start()
+    threading.Thread(target=pns.feagi_listener, args=(feagi_opu_channel,), daemon=True).start()
+    threading.Thread(target=retina.vision_progress,
+                     args=(default_capabilities, feagi_opu_channel, api_address, feagi_settings,
+                           camera_data['vision'],), daemon=True).start()
     while True:
         try:
-            if camera_data['vision'] is not None:
-                raw_frame = camera_data['vision']
-            if 'camera' in default_capabilities:
-                if default_capabilities['camera']['blink'] != []:
-                    raw_frame = default_capabilities['camera']['blink']
-            previous_frame_data, rgb, default_capabilities = retina.process_visual_stimuli(
-                raw_frame,
-                default_capabilities,
-                previous_frame_data,
-                rgb, capabilities)
-            default_capabilities['camera']['blink'] = []
+            if len(camera_data['vision']) > 0:
+                if isinstance(camera_data['vision'], numpy.ndarray):
+                    raw_frame = camera_data['vision']
+                    if 'camera' in default_capabilities:
+                        if default_capabilities['camera']['blink'] != []:
+                            raw_frame = default_capabilities['camera']['blink']
+                    previous_frame_data, rgb, default_capabilities = retina.process_visual_stimuli(
+                        raw_frame,
+                        default_capabilities,
+                        previous_frame_data,
+                        rgb, capabilities)
+                elif isinstance(camera_data['vision'], dict):
+                    counter = 0
+                    for current_device in camera_data['vision']:
+                        raw_frame = camera_data['vision'][current_device]  # get each raw data from specific webcam
+                        if 'camera' in default_capabilities:
+                            if default_capabilities['camera']['blink'] != []:
+                                raw_frame = default_capabilities['camera']['blink']
+                        new_index = str(counter).zfill(2)  # basically up to 99 webcam supports
+                        default_capabilities['camera']['index'] = new_index
+                        previous_frame_data, rgb, default_capabilities = retina.process_visual_stimuli(
+                            raw_frame,
+                            default_capabilities,
+                            previous_frame_data,
+                            rgb, capabilities)
+                        counter += 1
+                default_capabilities['camera']['index'] = "00"  # reset to original and counter
+                default_capabilities['camera']['blink'] = []
             if rgb:
-                message_to_feagi = pns.generate_feagi_data(rgb, msg_counter, datetime.now(),
-                                                           message_to_feagi)
-            # print(default_capabilities['camera']['eccentricity_control'][0])
-            sleep(feagi_settings['feagi_burst_speed']) #bottleneck
+                message_to_feagi = pns.generate_feagi_data(rgb, msg_counter, datetime.now(), message_to_feagi)
+            # print(default_capabilities['camera']['gaze_control'][0])
+            sleep(feagi_settings['feagi_burst_speed'])  # bottleneck
             pns.signals_to_feagi(message_to_feagi, feagi_ipu_channel, agent_settings, feagi_settings)
             message_to_feagi.clear()
             if 'camera' in rgb:
