@@ -1,5 +1,5 @@
 {
-    "description": "Iphone_controller",
+    "description": "generic_mobile",
     "version": "v0.0.0",
     "feagi_settings": {
         "feagi_url": null,
@@ -9,7 +9,7 @@
     },
     "agent_settings": {
         "agent_data_port": 10010,
-        "agent_id": "iphone_udp_controller",
+        "agent_id": "generic_mobile_controller",
         "udp_ip": "127.0.0.1",
         "udp_port": 1234,
         "agent_type": "embodiment",
