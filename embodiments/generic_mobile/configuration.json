@@ -16,5 +16,7 @@
         "compression": true
     },
     "capabilities": {
+        "accelerometer": {},
+        "gyro": {}
     }
 }
