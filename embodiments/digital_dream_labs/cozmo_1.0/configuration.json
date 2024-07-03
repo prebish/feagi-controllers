@@ -35,6 +35,18 @@
             "disabled": "False",
             "index": "00",
             "mirror": "True"
+        },
+        "proximity": {
+            "maximum": [0.1],
+            "minimum": [0]
+        },
+        "accelerator": {
+            "maximum": [],
+            "minimum": []
+        },
+        "gyro": {
+            "maximum": [],
+            "minimum": []
         }
     }
 }
