@@ -9,7 +9,7 @@
     },
     "agent_settings": {
         "agent_data_port": 10008,
-        "agent_id": "muse",
+        "agent_id": "muse2_BCI_controller",
         "agent_type": "embodiment",
         "compression": true
     },
