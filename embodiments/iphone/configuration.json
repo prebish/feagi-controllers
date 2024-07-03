@@ -10,8 +10,8 @@
     "agent_settings": {
         "agent_data_port": 10010,
         "agent_id": "iphone_udp_controller",
-        "udp_ip": "0.0.0.0",
-        "udp_port": 9053,
+        "udp_ip": "127.0.0.1",
+        "udp_port": 1234,
         "agent_type": "embodiment",
         "compression": true
     },
