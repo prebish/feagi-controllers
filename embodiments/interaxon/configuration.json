@@ -14,5 +14,7 @@
         "compression": true
     },
     "capabilities": {
+        "bci":
+            {}
     }
 }
