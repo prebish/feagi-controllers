@@ -1,0 +1,3 @@
+feagi-connector
+opencv-python
+
