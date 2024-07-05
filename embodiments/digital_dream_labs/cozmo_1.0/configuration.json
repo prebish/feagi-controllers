@@ -40,13 +40,20 @@
             "maximum": [0.1],
             "minimum": [0]
         },
-        "accelerator": {
-            "maximum": [],
-            "minimum": []
-        },
+        "acceleration": {
+                "acceleration_columns": [3, 6],
+                "acceleration_max_value_list": [],
+                "acceleration_min_value_list": []
+            },
         "gyro": {
-            "maximum": [],
-            "minimum": []
+                "gyro_columns": [0, 3],
+                "gyro_max_value_list": [],
+                "gyro_min_value_list": []
+            },
+        "battery": {
+                "battery_coumns": [0,1],
+                "battery_max_value_list": [100],
+                "battery_min_value_list": [0]
         }
     }
 }
