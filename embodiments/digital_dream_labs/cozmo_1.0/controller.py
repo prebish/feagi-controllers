@@ -29,7 +29,6 @@ import facial_expression
 from collections import deque
 from datetime import datetime
 from version import __version__
-from feagi_connector import router
 from feagi_connector import sensors
 from feagi_connector import actuators
 from feagi_connector import retina as retina
@@ -82,7 +81,7 @@ def on_robot_state(cli, pkt: pycozmo.protocol_encoder.RobotState):
     robot['ultrasonic'] = pkt.cliff_data_raw
     robot["gyro"] = [pkt.gyro_x, pkt.gyro_y, pkt.gyro_z]
     robot['servo_head'] = pkt.head_angle_rad
-    robot['battery'] = pkt.battery_voltage
+    robot['battery'] = [pkt.battery_voltage]
     robot['lift_height'] = pkt.lift_height_mm
 
 
@@ -363,79 +362,54 @@ if __name__ == '__main__':
             if rgb:
                 message_to_feagi = pns.generate_feagi_data(rgb, msg_counter, datetime.now(),
                                                            message_to_feagi)
-            battery = robot['battery']
-            if robot['ultrasonic']:
-                create_ultrasonic_data_list = {}
-                create_ultrasonic_data_list['i__pro'] = {}
-                ultrasonic_data = robot['ultrasonic'][0]  # obtain ultrasonic data
-                capabilities['proximity']["maximum"], capabilities['proximity']["minimum"] = (
-                    sensors.measuring_max_and_min_range(ultrasonic_data,
-                                                        0,
-                                                        capabilities['proximity']["maximum"],
-                                                        capabilities['proximity']["minimum"]))
-                position_of_analog = sensors.convert_sensor_to_ipu_data(capabilities['proximity']["minimum"][0],
-                                                                        capabilities['proximity']["maximum"][0],
-                                                                        ultrasonic_data,
-                                                                        0,
-                                                                        cortical_id='i__pro')
-                create_ultrasonic_data_list['i__pro'][position_of_analog] = 100
-                message_to_feagi = sensors.add_generic_input_to_feagi_data(
-                    create_ultrasonic_data_list,
-                    message_to_feagi)
+            if robot['battery']:
+                message_to_feagi, capabilities['battery']['battery_max_value_list'], capabilities['battery']['battery_min_value_list'] = (
+                    sensors.create_data_for_feagi(
+                        cortical_id='i__bat',
+                        robot_data=robot['battery'],
+                        maximum_range=capabilities['battery']['battery_max_value_list'],
+                        minimum_range=capabilities['battery']['battery_min_value_list'],
+                        enable_symmetric=False,
+                        coumns=capabilities['battery']['battery_coumns'],
+                        message_to_feagi=message_to_feagi,
+                        has_range=True))
 
             if robot['gyro']:
-                # Section of gyro
-                create_gyro_data_list = dict()
-                create_gyro_data_list['i__gyr'] = dict()
+                message_to_feagi, capabilities['gyro']['gyro_max_value_list'], \
+                capabilities['gyro']['gyro_min_value_list'] = sensors.create_data_for_feagi(
+                    cortical_id='i__gyr',
+                    robot_data=robot['gyro'],
+                    maximum_range=capabilities['gyro']['gyro_max_value_list'],
+                    minimum_range=capabilities['gyro']['gyro_min_value_list'],
+                    enable_symmetric=True,
+                    coumns=capabilities['gyro']['gyro_columns'],
+                    message_to_feagi=message_to_feagi)
 
-                for device_id in range(3):
-                    capabilities['gyro']['maximum'], capabilities['gyro']['minimum'] = (
-                        sensors.measuring_max_and_min_range(robot['gyro'][device_id],
-                                                            device_id,
-                                                            capabilities['gyro']['maximum'],
-                                                            capabilities['gyro']['minimum']))
-                    try:
-                        position_of_analog = sensors.convert_sensor_to_ipu_data(
-                            capabilities['gyro']['minimum'][device_id],
-                            capabilities['gyro']['maximum'][device_id],
-                            robot['gyro'][device_id],
-                            device_id,
-                            cortical_id='i__gyr',
-                            symmetric=True)
-                        create_gyro_data_list['i__gyr'][position_of_analog] = 100
-                    except Exception as error:
-                        pass
-                message_to_feagi = sensors.add_generic_input_to_feagi_data(
-                    create_gyro_data_list,
-                    message_to_feagi)
 
             # Add accelerator section
             if robot['accelerator']:
-                # Section of acceleration
-                create_acceleration_data_list = dict()
-                create_acceleration_data_list['i__acc'] = dict()
-                try:
-                    for device_id in range(len(robot['accelerator'])):
-                        capabilities['accelerator']['maximum'], capabilities['accelerator']['minimum'] = \
-                            (sensors.measuring_max_and_min_range(robot['accelerator'][device_id],
-                                                                device_id,
-                                                                capabilities['accelerator']['maximum'],
-                                                                capabilities['accelerator']['minimum']))
-
-                        position_of_analog = sensors.convert_sensor_to_ipu_data(capabilities['accelerator']['minimum'][device_id],
-                                                                                capabilities['accelerator']['maximum'][device_id],
-                                                                                robot['accelerator'][device_id],
-                                                                                device_id,
-                                                                                cortical_id='i__acc',
-                                                                                symmetric=True)
-                        create_acceleration_data_list['i__acc'][position_of_analog] = 100
-                    message_to_feagi = sensors.add_generic_input_to_feagi_data(create_acceleration_data_list, message_to_feagi)
-                except Exception as e:
-                    pass
+                message_to_feagi, capabilities['acceleration']['acceleration_max_value_list'], \
+                capabilities['acceleration']['acceleration_min_value_list'] = sensors.create_data_for_feagi(
+                    cortical_id='i__acc',
+                    robot_data=robot['accelerator'],
+                    maximum_range=capabilities['acceleration']['acceleration_max_value_list'],
+                    minimum_range=capabilities['acceleration']['acceleration_min_value_list'],
+                    enable_symmetric=True,
+                    coumns=capabilities['acceleration']['acceleration_columns'],
+                    message_to_feagi=message_to_feagi)
+            if robot['ultrasonic']:
+                message_to_feagi, capabilities['proximity']['proximity_max_distance'], \
+                capabilities['proximity']['proximity_min_distance'] = sensors.create_data_for_feagi(
+                    cortical_id='i__pro',
+                    robot_data=robot['ultrasonic'],
+                    maximum_range=capabilities['proximity']['proximity_max_distance'],
+                    minimum_range=capabilities['proximity']['proximity_min_distance'],
+                    enable_symmetric=False,
+                    coumns=capabilities['proximity']['proximity_coumns'],
+                    message_to_feagi=message_to_feagi)
 
 
 
-            message_to_feagi = sensors.add_battery_to_feagi_data(battery, message_to_feagi)
             sleep(feagi_settings['feagi_burst_speed'])  # bottleneck
             pns.signals_to_feagi(message_to_feagi, feagi_ipu_channel, agent_settings, feagi_settings)
             message_to_feagi.clear()
