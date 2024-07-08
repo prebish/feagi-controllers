@@ -1,5 +1,5 @@
 {
-    "description": "generic_pyserial",
+    "description": "generic_pyfirmata",
     "version": "v0.0.0",
     "feagi_settings": {
         "feagi_url": null,
