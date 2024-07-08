@@ -61,13 +61,11 @@ if __name__ == "__main__":
     success_rate = 0
     # overwrite manual
     camera_data = dict()
-    camera_data['vision'] = dict()
+    camera_data['vision'] = []
     temporary_previous = dict()
     default_capabilities = {}  # It will be generated in process_visual_stimuli. See the
     default_capabilities = pns.create_runtime_default_list(default_capabilities, capabilities)
-    threading.Thread(target=retina.vision_progress,
-                     args=(default_capabilities, feagi_opu_channel, api_address, feagi_settings,
-                           camera_data['vision'],), daemon=True).start()
+    threading.Thread(target=retina.vision_progress, args=(default_capabilities, feagi_settings, camera_data['vision'],), daemon=True).start()
     while continue_loop:
         image_obj = feagi_trainer.scan_the_folder(capabilities['image_reader']['path'])
         for image in image_obj:
