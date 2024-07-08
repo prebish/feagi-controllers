@@ -3,7 +3,7 @@ import traceback
 from time import sleep
 from collections import deque
 from version import __version__
-from feagi_connector import router
+from feagi_connector import actuators
 from feagi_connector import sensors
 from pymycobot.mycobot import MyCobot
 from feagi_connector import pns_gateway as pns
@@ -99,7 +99,7 @@ def action(obtained_data, arm):
             if obtained_data['servo_position']:
                 for data_point in obtained_data['servo_position']:
                     device_id = data_point + 1
-                    encoder_position = (obtained_data['servo_position'][data_point] / 20) * ((capabilities['servo']['servo_range'][str(device_id)][1] -capabilities['servo']['servo_range'][str(device_id)][0])+capabilities['servo']['servo_range'][str(device_id)][0])
+                    encoder_position = actuators.get_position_data(obtained_data['servo_position'][data_point], capabilities, device_id)
                     move_encoder(arm, device_id, encoder_position)
         except Exception as e:
             print("ERROR: ", e)
@@ -149,7 +149,7 @@ if __name__ == "__main__":
 
     # MYCOBOT SECTION
     mycobot = Arm()
-    arm = mycobot.connection_initialize()
+    arm = mycobot.connection_initialize(port='/dev/cu.usbserial-023EDC85')
     arm.set_speed(100)
     mycobot.pose_to_default(arm, capabilities['servo']['count'])
     arm.release_servo(1)
@@ -165,12 +165,22 @@ if __name__ == "__main__":
 
             # Encoder position
             encoder_for_feagi = dict()
+            encoder_for_feagi['i_spos'] = dict()
             try:
                 for encoder_data in runtime_data['actual_encoder_position']:
                     encoder_for_feagi[encoder_data] = runtime_data['actual_encoder_position'][encoder_data][4]
-                message_to_feagi = sensors.add_encoder_to_feagi_data(encoder_for_feagi,message_to_feagi)
+                    position_of_analog = sensors.convert_sensor_to_ipu_data(
+                        capabilities['servo']['servo_range'][str(encoder_data)][0],
+                        capabilities['servo']['servo_range'][str(encoder_data)][1],
+                        runtime_data['actual_encoder_position'][encoder_data][4],
+                        int(encoder_data) - 1,
+                        cortical_id='i_spos',
+                        symmetric=True)
+                    encoder_for_feagi['i_spos'][position_of_analog] = 100
+                message_to_feagi = sensors.add_generic_input_to_feagi_data(encoder_for_feagi, message_to_feagi)
             except Exception as e:
                 print("error: ", e)
+                traceback.print_exc()
 
             sleep(feagi_settings['feagi_burst_speed'])
             pns.signals_to_feagi(message_to_feagi, feagi_ipu_channel, agent_settings, feagi_settings)

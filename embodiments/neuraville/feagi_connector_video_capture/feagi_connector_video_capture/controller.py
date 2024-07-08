@@ -184,7 +184,7 @@ def main(feagi_auth_url, feagi_settings, agent_settings, capabilities, message_t
                 default_capabilities['camera']['index'] = "00"  # reset to original and counter
                 default_capabilities['camera']['blink'] = []
             if rgb:
-                message_to_feagi = pns.generate_feagi_data(rgb, msg_counter, datetime.now(), message_to_feagi)
+                message_to_feagi = pns.generate_feagi_data(rgb, message_to_feagi)
             # print(default_capabilities['camera']['gaze_control'][0])
             sleep(feagi_settings['feagi_burst_speed'])  # bottleneck
             pns.signals_to_feagi(message_to_feagi, feagi_ipu_channel, agent_settings, feagi_settings)

@@ -34,14 +34,17 @@ def updating_encoder_position_in_bg(arm):
         new_degree_list_of_servo = arm.get_servo_angle()
         for number_of_servo in range(capabilities['servo']['count']):
             position_for_i_spos = pns.fetch_servo_position_size_and_return_percentage(capabilities,
-                                                                                      new_degree_list_of_servo[1][number_of_servo],
+                                                                                      new_degree_list_of_servo[
+                                                                                          1][
+                                                                                          number_of_servo],
                                                                                       number_of_servo,
                                                                                       flip=True)
             if position_for_i_spos is not None:
                 runtime_data['i_spos'][position_for_i_spos] = 100
         for current_servo_number in range(0, capabilities['servo']['count'] * 2, 2):
-            number_of_servo = current_servo_number # A number incrementing from range(12)
-            rolling_window[number_of_servo].append(new_degree_list_of_servo[1][number_of_servo//2])
+            number_of_servo = current_servo_number  # A number incrementing from range(12)
+            rolling_window[number_of_servo].append(
+                new_degree_list_of_servo[1][number_of_servo // 2])
             # new degree list has 6 servos, so using floor divsion to keep it 6
             rolling_window[number_of_servo].popleft()
             # pop the old index from rolling_window
@@ -60,7 +63,7 @@ def updating_encoder_position_in_bg(arm):
                     if not key_name in position_for_i_smot:
                         key_name = key_name + '-0'
                     else:
-                        key_name = str(number_of_servo+1) + '-0-0'
+                        key_name = str(number_of_servo + 1) + '-0-0'
                     runtime_data['i_smot'][key_name] = 100
         sleep(0.01)
 
@@ -176,10 +179,12 @@ if __name__ == "__main__":
     arm.motion_enable(enable=True)
     arm.set_mode(0)
     arm.set_state(state=0)
-    speed = 200
+    speed = 100
     arm.set_pause_time(0)
     # UFACTORY ENDS
     pose_to_default(arm, capabilities['servo']['count'])
+    move_encoder(2, 40)
+    arm.set_servo_angle(angle=[0, 0, 40, 0, 0, 0], speed=speed)
 
     threading.Thread(target=updating_encoder_position_in_bg, args=(arm,), daemon=True).start()
     while True:

@@ -29,7 +29,6 @@ import facial_expression
 from collections import deque
 from datetime import datetime
 from version import __version__
-from feagi_connector import router
 from feagi_connector import sensors
 from feagi_connector import actuators
 from feagi_connector import retina as retina
@@ -49,9 +48,9 @@ runtime_data = {
 
 previous_frame_data = {}
 rgb = {'camera': {}}
-robot = {'accelerator': [], "ultrasonic": [], "gyro": [], 'servo_head': [], "battery": [],
+robot = {'accelerator': {}, "ultrasonic": [], "gyro": [], 'servo_head': [], "battery": [],
          'lift_height': []}
-camera_data = {"vision": {}}
+camera_data = {"vision": []}
 
 
 def window_average(sequence):
@@ -78,12 +77,11 @@ def on_robot_state(cli, pkt: pycozmo.protocol_encoder.RobotState):
     backpack_touch_sensor_raw: Raw data from the robot's backpack touch sensor.
     curr_path_segment: The ID of the current path segment.
     """
-    robot['accelerator'] = {"0": pkt.accel_x - 1000, "1": pkt.accel_y - 1000,
-                            "2": pkt.accel_z - 1000}
+    robot['accelerator'] = {0: pkt.accel_x, 1: pkt.accel_y, 2: pkt.accel_z}
     robot['ultrasonic'] = pkt.cliff_data_raw
     robot["gyro"] = [pkt.gyro_x, pkt.gyro_y, pkt.gyro_z]
     robot['servo_head'] = pkt.head_angle_rad
-    robot['battery'] = pkt.battery_voltage
+    robot['battery'] = [pkt.battery_voltage]
     robot['lift_height'] = pkt.lift_height_mm
 
 
@@ -150,7 +148,6 @@ async def expressions():
                     # Display face image.
                     cli.display_image(im2)
             face_selected.pop()
-            print("poped")
             if len(face_selected) > 2:
                 temp = face_selected.pop()
                 face_selected.clear()
@@ -177,22 +174,6 @@ def on_camera_image(cli, image):
     raw_frame = retina.update_astype(new_rgb)
     camera_data['vision'] = raw_frame
     time.sleep(0.01)
-
-
-def move_control(cli, id, rolling_window):
-    wheel_speeds = {"rf": 0, "rb": 0, "lf": 0, "lb": 0}
-    if id in [0, 1]:
-        wheel_speeds["r" + ["f", "b"][id]] = float(motor_power)
-    if id in [2, 3]:
-        wheel_speeds["l" + ["f", "b"][id - 2]] = float(motor_power)
-    rwheel_speed = wheel_speeds["rf"] - wheel_speeds["rb"]
-    lwheel_speed = wheel_speeds["lf"] - wheel_speeds["lb"]
-    motor_functions.drive_wheels(cli,
-                                 lwheel_speed=lwheel_speed,
-                                 rwheel_speed=rwheel_speed,
-                                 duration=feagi_settings['feagi_burst_speed'])
-    sleep(feagi_settings['feagi_burst_speed'])
-
 
 def vision_initalization(cli):
     cli.add_handler(pycozmo.event.EvtNewRawCameraImage, on_camera_image)
@@ -321,7 +302,7 @@ if __name__ == '__main__':
     threading.Thread(target=robot_status, args=(cli,), daemon=True).start()
     threading.Thread(target=vision_initalization, args=(cli,), daemon=True).start()
     threading.Thread(target=retina.vision_progress,
-                     args=(default_capabilities, feagi_opu_channel, api_address, feagi_settings,
+                     args=(default_capabilities,feagi_settings,
                            camera_data['vision'],), daemon=True).start()
     time.sleep(2)
     # vision ends
@@ -379,16 +360,52 @@ if __name__ == '__main__':
             # cv2.imshow("test",   raw_frame)
             # cv2.waitKey(30)
             if rgb:
-                message_to_feagi = pns.generate_feagi_data(rgb, msg_counter, datetime.now(),
-                                                           message_to_feagi)
-            battery = robot['battery']
+                message_to_feagi = pns.generate_feagi_data(rgb, message_to_feagi)
+            if robot['battery']:
+                message_to_feagi, capabilities['battery']['battery_max_value_list'], capabilities['battery']['battery_min_value_list'] = (
+                    sensors.create_data_for_feagi(
+                        cortical_id='i__bat',
+                        robot_data=robot['battery'],
+                        maximum_range=capabilities['battery']['battery_max_value_list'],
+                        minimum_range=capabilities['battery']['battery_min_value_list'],
+                        enable_symmetric=False,
+                        coumns=capabilities['battery']['battery_coumns'],
+                        message_to_feagi=message_to_feagi,
+                        has_range=True))
+
+            if robot['gyro']:
+                message_to_feagi, capabilities['gyro']['gyro_max_value_list'], \
+                capabilities['gyro']['gyro_min_value_list'] = sensors.create_data_for_feagi(
+                    cortical_id='i__gyr',
+                    robot_data=robot['gyro'],
+                    maximum_range=capabilities['gyro']['gyro_max_value_list'],
+                    minimum_range=capabilities['gyro']['gyro_min_value_list'],
+                    enable_symmetric=True,
+                    coumns=capabilities['gyro']['gyro_columns'],
+                    message_to_feagi=message_to_feagi)
+
+
+            # Add accelerator section
+            if robot['accelerator']:
+                message_to_feagi, capabilities['acceleration']['acceleration_max_value_list'], \
+                capabilities['acceleration']['acceleration_min_value_list'] = sensors.create_data_for_feagi(
+                    cortical_id='i__acc',
+                    robot_data=robot['accelerator'],
+                    maximum_range=capabilities['acceleration']['acceleration_max_value_list'],
+                    minimum_range=capabilities['acceleration']['acceleration_min_value_list'],
+                    enable_symmetric=True,
+                    coumns=capabilities['acceleration']['acceleration_columns'],
+                    message_to_feagi=message_to_feagi)
             if robot['ultrasonic']:
-                ultrasonic_data = robot['ultrasonic'][0]  # obtain ultrasonic data
-                message_to_feagi = sensors.add_ultrasonic_to_feagi_data(ultrasonic_data,
-                                                                        message_to_feagi)
-            message_to_feagi = sensors.add_acc_to_feagi_data(robot['accelerator'],
-                                                             message_to_feagi)
-            message_to_feagi = sensors.add_battery_to_feagi_data(battery, message_to_feagi)
+                message_to_feagi, capabilities['proximity']['proximity_max_distance'], \
+                capabilities['proximity']['proximity_min_distance'] = sensors.create_data_for_feagi(
+                    cortical_id='i__pro',
+                    robot_data=robot['ultrasonic'],
+                    maximum_range=capabilities['proximity']['proximity_max_distance'],
+                    minimum_range=capabilities['proximity']['proximity_min_distance'],
+                    enable_symmetric=False,
+                    coumns=capabilities['proximity']['proximity_coumns'],
+                    message_to_feagi=message_to_feagi)
             sleep(feagi_settings['feagi_burst_speed'])  # bottleneck
             pns.signals_to_feagi(message_to_feagi, feagi_ipu_channel, agent_settings, feagi_settings)
             message_to_feagi.clear()

@@ -1,1 +1,3 @@
-# 
+feagi_connector
+opencv-python
+websockets
