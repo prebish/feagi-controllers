@@ -88,8 +88,7 @@ if __name__ == "__main__":
                     if rgb['camera'] == {}:
                         break
                     else:
-                        message_to_feagi = pns.generate_feagi_data(rgb, msg_counter, datetime.now(),
-                                                                   message_to_feagi)
+                        message_to_feagi = pns.generate_feagi_data(rgb, message_to_feagi)
                 # Testing mode section
                 if capabilities['image_reader']['test_mode']:
                     success_rate, success, total = testing_mode.mode_testing(name_id,

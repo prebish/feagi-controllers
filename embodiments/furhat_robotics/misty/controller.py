@@ -239,8 +239,7 @@ if __name__ == "__main__":
                 if default_capabilities['camera']['blink'] != []:
                     raw_frame = default_capabilities['camera']['blink']
             if rgb:
-                message_to_feagi = pns.generate_feagi_data(rgb, msg_counter, datetime.now(),
-                                                           message_to_feagi)
+                message_to_feagi = pns.generate_feagi_data(rgb, message_to_feagi)
             # VISION ENDS
 
             sleep(feagi_settings['feagi_burst_speed'])  # bottleneck

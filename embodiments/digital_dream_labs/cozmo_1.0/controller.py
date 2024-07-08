@@ -360,8 +360,7 @@ if __name__ == '__main__':
             # cv2.imshow("test",   raw_frame)
             # cv2.waitKey(30)
             if rgb:
-                message_to_feagi = pns.generate_feagi_data(rgb, msg_counter, datetime.now(),
-                                                           message_to_feagi)
+                message_to_feagi = pns.generate_feagi_data(rgb, message_to_feagi)
             if robot['battery']:
                 message_to_feagi, capabilities['battery']['battery_max_value_list'], capabilities['battery']['battery_min_value_list'] = (
                     sensors.create_data_for_feagi(
@@ -407,9 +406,6 @@ if __name__ == '__main__':
                     enable_symmetric=False,
                     coumns=capabilities['proximity']['proximity_coumns'],
                     message_to_feagi=message_to_feagi)
-
-
-
             sleep(feagi_settings['feagi_burst_speed'])  # bottleneck
             pns.signals_to_feagi(message_to_feagi, feagi_ipu_channel, agent_settings, feagi_settings)
             message_to_feagi.clear()

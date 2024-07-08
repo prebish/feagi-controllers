@@ -266,8 +266,7 @@ if __name__ == '__main__':
                 rgb, capabilities)
 
             # INSERT SENSORS INTO the FEAGI DATA SECTION BEGIN
-            message_to_feagi = pns.generate_feagi_data(rgb, msg_counter, datetime.now(),
-                                                       message_to_feagi)
+            message_to_feagi = pns.generate_feagi_data(rgb,message_to_feagi)
             # Add gyro data into feagi data
             if gyro:
                 message_to_feagi, capabilities['gyro']['gyro_max_value_list'], \
