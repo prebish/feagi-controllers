@@ -18,10 +18,12 @@
             "type": "ipu",
             "disabled": false,
             "index": "00",
-            "video_device_index": 0,
+            "video_device_index": [0, 1],
             "video_loop": false,
             "mirror": false,
             "monitor": 0,
+            "size": [64, 64, 3],
+            "dev_index": 0,
             "image": "",
             "eccentricity_control": {
                 "0": 1,
