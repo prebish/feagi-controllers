@@ -35,6 +35,30 @@
             "disabled": "False",
             "index": "00",
             "mirror": "True"
+        },
+        "proximity": {
+            "sub_channel_count": 1,
+            "dev_index": 0,
+            "proximity_min_distance": [],
+            "proximity_max_distance": []
+        },
+        "acceleration": {
+            "sub_channel_count": 3,
+            "dev_index": 0,
+            "acceleration_max_value_list": [],
+            "acceleration_min_value_list": []
+            },
+        "gyro": {
+                "sub_channel_count": 3,
+                "dev_index": 0,
+                "gyro_max_value_list": [],
+                "gyro_min_value_list": []
+            },
+        "battery": {
+            "sub_channel_count": 1,
+            "dev_index": 0,
+            "battery_max_value_list": [100],
+            "battery_min_value_list": [0]
         }
     }
 }

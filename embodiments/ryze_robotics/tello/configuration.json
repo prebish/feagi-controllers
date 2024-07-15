@@ -14,19 +14,29 @@
         "compression": true
     },
     "capabilities": {
-        "gyro": {
-            "resolution": 20,
-            "range": [
-                -180,
-                180
-            ]
+        "proximity": {
+            "sub_channel_count": 1,
+            "dev_index": 0,
+            "proximity_min_distance": [10],
+            "proximity_max_distance": [400]
         },
-        "acc": {
-            "resolution": 20,
-            "range": [
-                -1200,
-                1200
-            ]
+        "acceleration": {
+                "sub_channel_count": 3,
+                "dev_index": 0,
+                "acceleration_max_value_list": [],
+                "acceleration_min_value_list": []
+            },
+        "gyro": {
+            "sub_channel_count": 3,
+            "dev_index": 0,
+            "gyro_max_value_list": [],
+            "gyro_min_value_list": []
+            },
+        "battery": {
+            "sub_channel_count": 1,
+            "dev_index": 0,
+            "battery_max_value_list": [100],
+            "battery_min_value_list": [0]
         },
         "camera": {
             "type": "ipu",
