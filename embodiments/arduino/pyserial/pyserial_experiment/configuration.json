@@ -9,20 +9,13 @@
     },
     "agent_settings": {
         "agent_data_port": 10007,
-        "agent_id": "pyserial",
+        "agent_id": "pyfirmata",
         "agent_type": "embodiment",
         "compression": true
     },
     "capabilities": {
         "arduino": {
             "port": "/dev/ttyACM0"
-        },
-        "analog": {
-            "max_value_list": [1,1 ,1 ,1, 1],
-            "min_value_list": [0,0,0,0,0],
-            "symmetric": false,
-            "sub_channel_count": 5,
-            "dev_index": 0
         }
     }
 }

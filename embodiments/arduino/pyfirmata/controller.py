@@ -151,16 +151,23 @@ if __name__ == "__main__":
                 if obtain_data:
                     location_string = str(pin) + "-0-0"
                     create_generic_input_dict['idgpio'][location_string] = 100
-            message_to_feagi = sensors.add_generic_input_to_feagi_data(create_generic_input_dict,
-                                                                       message_to_feagi)
+            message_to_feagi = sensors.add_generic_input_to_feagi_data(create_generic_input_dict, message_to_feagi)
         if analog_pin_board:
-            create_analog_data_list = dict()
-            create_analog_data_list['iagpio'] = dict()
-            for i in analog_pin_board:
-                position_of_analog = sensors.convert_sensor_to_ipu_data(0, 1, analog_pin_board[
-                    i].read(), i)
-                create_analog_data_list['iagpio'][position_of_analog] = 100
-            message_to_feagi = sensors.add_generic_input_to_feagi_data(create_analog_data_list,
-                                                                       message_to_feagi)
+            analog_encoded = dict()
+            for pin in range(len(analog_pin_board)):
+                analog_encoded[pin] = analog_pin_board[pin].read()
+            message_to_feagi, capabilities['analog']['max_value_list'], capabilities['analog'][
+                'min_value_list'] = (
+                sensors.create_data_for_feagi(
+                    cortical_id='iagpio',
+                    robot_data=analog_encoded,
+                    maximum_range=capabilities['analog']['max_value_list'],
+                    minimum_range=capabilities['analog']['min_value_list'],
+                    enable_symmetric=False,
+                    index=capabilities['analog']['dev_index'],
+                    count=capabilities['analog']['sub_channel_count'],
+                    message_to_feagi=message_to_feagi,
+                    has_range=True))
         pns.signals_to_feagi(message_to_feagi, feagi_ipu_channel, agent_settings, feagi_settings)
+        message_to_feagi.clear()
         sleep(feagi_settings['feagi_burst_speed'])
