@@ -65,14 +65,15 @@ def updating_encoder_position_in_bg():
     global runtime_data, capabilities, feagi_settings
     for i in range(1, capabilities['servo']['count'], 1):
         runtime_data['actual_encoder_position'][i] = deque([0, 0, 0, 0, 0])
+        runtime_data['for_feagi_data'][i-1] = 0
     while True:
         for i in range(1, capabilities['servo']['count'], 1):
-            if i != 2:
-                new_data = arm.get_encoder(i)
-                if new_data != -1:
-                    if runtime_data['actual_encoder_position'][i]:
-                        runtime_data['actual_encoder_position'][i].append(new_data)
-                        runtime_data['actual_encoder_position'][i].popleft()
+            new_data = arm.get_encoder(i)
+            if new_data != -1:
+                if runtime_data['actual_encoder_position'][i]:
+                    runtime_data['actual_encoder_position'][i].append(new_data)
+                    runtime_data['actual_encoder_position'][i].popleft()
+                    runtime_data['for_feagi_data'][i-1] = new_data
         sleep(0.01)
 
 
@@ -129,7 +130,8 @@ if __name__ == "__main__":
             "battery_charge_level": 1,
             "host_network": {},
             'servo_status': {},
-            'actual_encoder_position': {}
+            'actual_encoder_position': {},
+            'for_feagi_data': {}
         }
 
     config = FEAGI.build_up_from_configuration()
@@ -163,24 +165,17 @@ if __name__ == "__main__":
                 obtained_signals = pns.obtain_opu_data(message_from_feagi)
                 action(obtained_signals, arm)
 
-            # Encoder position
-            encoder_for_feagi = dict()
-            encoder_for_feagi['i_spos'] = dict()
-            try:
-                for encoder_data in runtime_data['actual_encoder_position']:
-                    encoder_for_feagi[encoder_data] = runtime_data['actual_encoder_position'][encoder_data][4]
-                    position_of_analog = sensors.convert_sensor_to_ipu_data(
-                        capabilities['servo']['servo_range'][str(encoder_data)][0],
-                        capabilities['servo']['servo_range'][str(encoder_data)][1],
-                        runtime_data['actual_encoder_position'][encoder_data][4],
-                        int(encoder_data) - 1,
-                        cortical_id='i_spos',
-                        symmetric=True)
-                    encoder_for_feagi['i_spos'][position_of_analog] = 100
-                message_to_feagi = sensors.add_generic_input_to_feagi_data(encoder_for_feagi, message_to_feagi)
-            except Exception as e:
-                print("error: ", e)
-                traceback.print_exc()
+            message_to_feagi, capabilities['servo']['max_value_list'], \
+                capabilities['servo']['min_value_list'] = sensors.create_data_for_feagi(
+                cortical_id='i_spos',
+                robot_data=runtime_data['for_feagi_data'],
+                maximum_range=capabilities['servo']['max_value_list'],
+                minimum_range=capabilities['servo']['min_value_list'],
+                enable_symmetric=True,
+                index=capabilities['servo']['dev_index'],
+                count=capabilities['servo']['sub_channel_count'],
+                message_to_feagi=message_to_feagi,
+                has_range=True)
 
             sleep(feagi_settings['feagi_burst_speed'])
             pns.signals_to_feagi(message_to_feagi, feagi_ipu_channel, agent_settings, feagi_settings)

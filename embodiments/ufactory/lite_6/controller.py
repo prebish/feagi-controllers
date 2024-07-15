@@ -183,8 +183,6 @@ if __name__ == "__main__":
     arm.set_pause_time(0)
     # UFACTORY ENDS
     pose_to_default(arm, capabilities['servo']['count'])
-    move_encoder(2, 40)
-    arm.set_servo_angle(angle=[0, 0, 40, 0, 0, 0], speed=speed)
 
     threading.Thread(target=updating_encoder_position_in_bg, args=(arm,), daemon=True).start()
     while True:

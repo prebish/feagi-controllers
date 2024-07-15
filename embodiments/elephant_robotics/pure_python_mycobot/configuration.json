@@ -26,8 +26,10 @@
             "5": [150, 3600],
             "6": [0, 4096]
         },
-        "max_value_list": [],
-        "min_value_list": []
+        "sub_channel_count": 6,
+        "dev_index": 0,
+        "max_value_list": [3600, 0.1, 3400, 3300, 3600, 4096],
+        "min_value_list": [200, 0, 400, 700, 150, 0]
     }
 }
 }

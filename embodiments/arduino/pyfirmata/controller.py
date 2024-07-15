@@ -164,7 +164,8 @@ if __name__ == "__main__":
                     maximum_range=capabilities['analog']['max_value_list'],
                     minimum_range=capabilities['analog']['min_value_list'],
                     enable_symmetric=False,
-                    coumns=capabilities['analog']['columns'],
+                    index=capabilities['analog']['dev_index'],
+                    count=capabilities['analog']['sub_channel_count'],
                     message_to_feagi=message_to_feagi,
                     has_range=True))
         pns.signals_to_feagi(message_to_feagi, feagi_ipu_channel, agent_settings, feagi_settings)

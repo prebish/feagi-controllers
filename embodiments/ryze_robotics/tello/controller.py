@@ -1,7 +1,6 @@
 import time
 import threading
 from djitellopy import Tello
-from datetime import datetime
 from version import __version__
 from feagi_connector import retina
 from feagi_connector import sensors
@@ -276,7 +275,8 @@ if __name__ == '__main__':
                     maximum_range=capabilities['gyro']['gyro_max_value_list'],
                     minimum_range=capabilities['gyro']['gyro_min_value_list'],
                     enable_symmetric=True,
-                    coumns=capabilities['gyro']['gyro_columns'],
+                    index=capabilities['gyro']['dev_index'],
+                    count=capabilities['gyro']['sub_channel_count'],
                     message_to_feagi=message_to_feagi)
             # Add battery data into feagi data
             if battery:
@@ -287,7 +287,8 @@ if __name__ == '__main__':
                         maximum_range=capabilities['battery']['battery_max_value_list'],
                         minimum_range=capabilities['battery']['battery_min_value_list'],
                         enable_symmetric=False,
-                        coumns=capabilities['battery']['battery_coumns'],
+                        index=capabilities['battery']['dev_index'],
+                        count=capabilities['battery']['sub_channel_count'],
                         message_to_feagi=message_to_feagi,
                         has_range=True))
             # Add accelerator data into feagi data
@@ -299,7 +300,8 @@ if __name__ == '__main__':
                     maximum_range=capabilities['acceleration']['acceleration_max_value_list'],
                     minimum_range=capabilities['acceleration']['acceleration_min_value_list'],
                     enable_symmetric=True,
-                    coumns=capabilities['acceleration']['acceleration_columns'],
+                    index=capabilities['acceleration']['dev_index'],
+                    count=capabilities['acceleration']['sub_channel_count'],
                     message_to_feagi=message_to_feagi)
             # Add sonar data into feagi data. Leveraging the same process as ultrasonic.
             if sonar:
@@ -310,10 +312,10 @@ if __name__ == '__main__':
                     maximum_range=capabilities['proximity']['proximity_max_distance'],
                     minimum_range=capabilities['proximity']['proximity_min_distance'],
                     enable_symmetric=False,
-                    coumns=capabilities['proximity']['proximity_coumns'],
+                    index=capabilities['proximity']['dev_index'],
+                    count=capabilities['proximity']['sub_channel_count'],
                     message_to_feagi=message_to_feagi,
                     has_range=True)
-            print(message_to_feagi)
             # Sending data to FEAGI
             pns.signals_to_feagi(message_to_feagi, feagi_ipu_channel, agent_settings, feagi_settings)
             message_to_feagi.clear()

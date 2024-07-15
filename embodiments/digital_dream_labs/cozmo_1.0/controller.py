@@ -48,7 +48,7 @@ runtime_data = {
 
 previous_frame_data = {}
 rgb = {'camera': {}}
-robot = {'accelerator': {}, "ultrasonic": [], "gyro": [], 'servo_head': [], "battery": [],
+robot = {'accelerator': {}, "proximity": [], "gyro": [], 'servo_head': [], "battery": [],
          'lift_height': []}
 camera_data = {"vision": []}
 
@@ -78,7 +78,7 @@ def on_robot_state(cli, pkt: pycozmo.protocol_encoder.RobotState):
     curr_path_segment: The ID of the current path segment.
     """
     robot['accelerator'] = {0: pkt.accel_x, 1: pkt.accel_y, 2: pkt.accel_z}
-    robot['ultrasonic'] = pkt.cliff_data_raw
+    robot['proximity'] = pkt.cliff_data_raw
     robot["gyro"] = [pkt.gyro_x, pkt.gyro_y, pkt.gyro_z]
     robot['servo_head'] = pkt.head_angle_rad
     robot['battery'] = [pkt.battery_voltage]
@@ -369,7 +369,8 @@ if __name__ == '__main__':
                         maximum_range=capabilities['battery']['battery_max_value_list'],
                         minimum_range=capabilities['battery']['battery_min_value_list'],
                         enable_symmetric=False,
-                        coumns=capabilities['battery']['battery_coumns'],
+                        index=capabilities['battery']['dev_index'],
+                        count=capabilities['battery']['sub_channel_count'],
                         message_to_feagi=message_to_feagi,
                         has_range=True))
 
@@ -381,7 +382,8 @@ if __name__ == '__main__':
                     maximum_range=capabilities['gyro']['gyro_max_value_list'],
                     minimum_range=capabilities['gyro']['gyro_min_value_list'],
                     enable_symmetric=True,
-                    coumns=capabilities['gyro']['gyro_columns'],
+                    index=capabilities['gyro']['dev_index'],
+                    count=capabilities['gyro']['sub_channel_count'],
                     message_to_feagi=message_to_feagi)
 
 
@@ -394,17 +396,19 @@ if __name__ == '__main__':
                     maximum_range=capabilities['acceleration']['acceleration_max_value_list'],
                     minimum_range=capabilities['acceleration']['acceleration_min_value_list'],
                     enable_symmetric=True,
-                    coumns=capabilities['acceleration']['acceleration_columns'],
+                    index=capabilities['acceleration']['dev_index'],
+                    count=capabilities['acceleration']['sub_channel_count'],
                     message_to_feagi=message_to_feagi)
-            if robot['ultrasonic']:
+            if robot['proximity']:
                 message_to_feagi, capabilities['proximity']['proximity_max_distance'], \
                 capabilities['proximity']['proximity_min_distance'] = sensors.create_data_for_feagi(
                     cortical_id='i__pro',
-                    robot_data=robot['ultrasonic'],
+                    robot_data=robot['proximity'],
                     maximum_range=capabilities['proximity']['proximity_max_distance'],
                     minimum_range=capabilities['proximity']['proximity_min_distance'],
                     enable_symmetric=False,
-                    coumns=capabilities['proximity']['proximity_coumns'],
+                    index=capabilities['proximity']['dev_index'],
+                    count=capabilities['proximity']['sub_channel_count'],
                     message_to_feagi=message_to_feagi)
             sleep(feagi_settings['feagi_burst_speed'])  # bottleneck
             pns.signals_to_feagi(message_to_feagi, feagi_ipu_channel, agent_settings, feagi_settings)

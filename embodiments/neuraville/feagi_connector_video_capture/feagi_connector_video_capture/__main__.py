@@ -1,17 +1,11 @@
 #!/usr/bin/env python3
 import argparse
-import subprocess
-import sys
-import os
-import sysconfig
-import feagi_connector_video_capture
-import traceback
 import requests
 from time import sleep
-from feagi_connector_video_capture.configuration import *
+import feagi_connector_video_capture
+from feagi_connector import feagi_interface as feagi
 
 if __name__ == '__main__':
-    # Check if feagi_connector has arg
     parser = argparse.ArgumentParser(description='configuration for any webcam')
     parser.add_argument('-loop', '--loop', help='Enable loop for the video', required=False)
     parser.add_argument('-ip', '--ip', help='Description for ip address argument', required=False)
@@ -24,6 +18,16 @@ if __name__ == '__main__':
     parser.add_argument('-magic_link', '--magic_link', help='Get the magic link from NRS button',
                         required=False)
     args = vars(parser.parse_args())
+
+    # # Check if feagi_connector has arg
+    current_path = feagi_connector_video_capture.__path__
+    feagi_settings, agent_settings, capabilities, message_to_feagi, configuration = feagi.configuration_load((str(current_path[0]) + '/'))
+    # feagi_settings = config['feagi_settings'].copy()
+    # agent_settings = config['agent_settings'].copy()
+    # default_capabilities = config['default_capabilities'].copy()
+    # message_to_feagi = config['message_to_feagi'].copy()
+    # capabilities = config['capabilities'].copy()
+
     if args['ip']:
         feagi_settings["feagi_host"] = args['ip']
     if args['loop'] == "true" or args['loop'] == "True":
@@ -32,7 +36,11 @@ if __name__ == '__main__':
         if args['device'] == "monitor":
             capabilities["camera"]["video_device_index"] = "monitor"
         else:
-            capabilities["camera"]["video_device_index"] = int(args['device'])
+            device_list = args['device'].split(',')
+            if len(device_list) > 1:
+                capabilities["camera"]["video_device_index"] = [int(device) for device in device_list]
+            else:
+                capabilities["camera"]["video_device_index"] = [int(device_list[0])]
     else:
         capabilities["camera"]["video_device_index"] = capabilities['camera']['video_device_index']
     if args['video']:

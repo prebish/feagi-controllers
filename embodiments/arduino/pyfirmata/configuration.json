@@ -21,7 +21,8 @@
             "max_value_list": [1,1 ,1 ,1, 1],
             "min_value_list": [0,0,0,0,0],
             "symmetric": false,
-            "columns": [0, 5]
+            "sub_channel_count": 5,
+            "dev_index": 0
         }
     }
 }

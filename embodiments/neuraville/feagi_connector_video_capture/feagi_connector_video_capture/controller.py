@@ -32,20 +32,16 @@ import screeninfo
 import mss
 import numpy
 
-camera_data = {"vision": {}}
+camera_data = {"vision": []}
 
 
 def process_video(video_path, capabilities):
     webcam_list = list()
     webcam_data_each = dict()
     if capabilities["camera"]["image"] == "":
-        if isinstance(video_path, int):
-            cam = cv2.VideoCapture(video_path)
-            print("CAM CREATED")
-        if isinstance(video_path, list):
-            for device in video_path:
-                new_cam = cv2.VideoCapture(device)
-                webcam_list.append(new_cam)
+        for device in video_path:
+            new_cam = cv2.VideoCapture(device)
+            webcam_list.append(new_cam)
     # cam.set(3, 320)
     # cam.set(4, 240)
     if capabilities['camera']['video_device_index'] == "monitor":
@@ -62,14 +58,13 @@ def process_video(video_path, capabilities):
                     pixels = static_image
                     # pixels = adjust_gamma(pixels)
             else:
-                if webcam_list:
-                    number_of_device = 0
-                    for i in webcam_list:
-                        check, new_data = i.read()
-                        webcam_data_each[number_of_device] = new_data
-                        number_of_device += 1
-                else:
-                    check, pixels = cam.read()
+                number_of_device = 0
+                for i in webcam_list:
+                    check, new_data = i.read()
+                    webcam_data_each[number_of_device] = new_data
+                    number_of_device += 1
+                # else:
+                #     check, pixels = cam.read()
         else:
             check = True
         if capabilities['camera']['video_device_index'] != "monitor":
@@ -97,12 +92,8 @@ def process_video(video_path, capabilities):
                 if webcam_data_each:
                     for device in webcam_data_each:
                         webcam_data_each[device] = cv2.flip(webcam_data_each[device], 1)
-                else:
-                    pixels = cv2.flip(pixels, 1)
             if webcam_data_each:
                 camera_data["vision"] = webcam_data_each.copy()
-            else:
-                camera_data["vision"] = pixels
             # print(camera_data)
     cam.release()
     cv2.destroyAllWindows()
@@ -117,6 +108,7 @@ def adjust_gamma(image, gamma=5.0):
 
 
 def main(feagi_auth_url, feagi_settings, agent_settings, capabilities, message_to_feagi):
+    print("full list: ", capabilities)
     threading.Thread(target=process_video, args=(capabilities['camera']['video_device_index'],
                                                  capabilities), daemon=True).start()
     # Generate runtime dictionary
@@ -151,37 +143,15 @@ def main(feagi_auth_url, feagi_settings, agent_settings, capabilities, message_t
     default_capabilities = pns.create_runtime_default_list(default_capabilities, capabilities)
     threading.Thread(target=pns.feagi_listener, args=(feagi_opu_channel,), daemon=True).start()
     threading.Thread(target=retina.vision_progress,
-                     args=(default_capabilities, feagi_opu_channel, api_address, feagi_settings,
-                           camera_data['vision'],), daemon=True).start()
+                     args=(default_capabilities, feagi_settings, camera_data['vision'],), daemon=True).start()
     while True:
         try:
             if len(camera_data['vision']) > 0:
-                if isinstance(camera_data['vision'], numpy.ndarray):
-                    raw_frame = camera_data['vision']
-                    if 'camera' in default_capabilities:
-                        if default_capabilities['camera']['blink'] != []:
-                            raw_frame = default_capabilities['camera']['blink']
-                    previous_frame_data, rgb, default_capabilities = retina.process_visual_stimuli(
-                        raw_frame,
-                        default_capabilities,
-                        previous_frame_data,
-                        rgb, capabilities)
-                elif isinstance(camera_data['vision'], dict):
-                    counter = 0
-                    for current_device in camera_data['vision']:
-                        raw_frame = camera_data['vision'][current_device]  # get each raw data from specific webcam
-                        if 'camera' in default_capabilities:
-                            if default_capabilities['camera']['blink'] != []:
-                                raw_frame = default_capabilities['camera']['blink']
-                        new_index = str(counter).zfill(2)  # basically up to 99 webcam supports
-                        default_capabilities['camera']['index'] = new_index
-                        previous_frame_data, rgb, default_capabilities = retina.process_visual_stimuli(
-                            raw_frame,
-                            default_capabilities,
-                            previous_frame_data,
-                            rgb, capabilities)
-                        counter += 1
-                default_capabilities['camera']['index'] = "00"  # reset to original and counter
+                previous_frame_data, rgb, default_capabilities = retina.process_visual_stimuli(
+                    camera_data['vision'],
+                    default_capabilities,
+                    previous_frame_data,
+                    rgb, capabilities)
                 default_capabilities['camera']['blink'] = []
             if rgb:
                 message_to_feagi = pns.generate_feagi_data(rgb, message_to_feagi)
