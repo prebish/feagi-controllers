@@ -1,0 +1,195 @@
+{
+   "description":"bluetooth_controller",
+   "version":"v0.0.1",
+   "feagi_settings":{
+      "feagi_url":null,
+      "feagi_dns":null,
+      "feagi_host":"127.0.0.1",
+      "feagi_api_port":8000
+   },
+   "agent_settings":{
+      "agent_data_port":10009,
+      "agent_id":"bluetooth_ctrl",
+      "agent_type":"embodiment",
+      "compression":true,
+      "godot_websocket_ip":"0.0.0.0",
+      "godot_websocket_port":9052
+   },
+   "capabilities":{
+     "actucators": {
+       "motor":{
+            "0":{
+              "disable": false,
+              "custom_name": "left_wheel",
+              "max_power":100,
+              "rolling_window_len":1
+            },
+            "1":{
+              "disable": false,
+              "custom_name": "right_wheel",
+              "max_power":100,
+              "rolling_window_len":1
+            }
+      },
+       "encoder_motor": {
+         "max_power": 4000,
+         "disable": false,
+         "custom_name": "stepper motor",
+         "rolling_window_len": 1
+       },
+       "servo": {
+         "0": {
+           "max_value": 0,
+           "min_value": 180,
+           "disable": false,
+           "custom_name": "servo 0"
+         }
+       }
+     },
+     "sensors": {
+        "ultrasonic": {
+       "ultrasonic_definition": {
+         "0": {
+           "disable": false,
+           "custom_name": "front_ultrasonic",
+           "front_distance_minimum": 0,
+           "front_distance_maximum": 300
+       },
+       "1": {
+         "disable": false,
+         "custom_name": "back_ulrasonic",
+         "front_distance_minimum": null,
+         "front_distance_maximum": null
+       }
+     }
+       },
+        "encoder_motor": {
+         "0": {
+           "max": 4000,
+           "min": 0,
+           "custom_name": "stepper motor encoder",
+           "disable": false
+         }
+       },
+        "eeg": {
+            "0": {
+               "disable": false,
+               "custom_name": "eeg_0",
+               "minimum": null,
+               "maximum": null
+            },
+            "1": {
+               "disable": false,
+               "custom_name": "eeg_1",
+               "minimum": null,
+               "maximum": null
+            },
+            "2": {
+               "disable": false,
+               "custom_name": "eeg_2",
+               "minimum": null,
+               "maximum": null
+            },
+            "3": {
+               "disable": false,
+               "custom_name": "eeg_3",
+               "minimum": null,
+               "maximum": null
+            }
+        },
+        "battery": {
+         "0": {
+            "disable": false,
+            "custom_name": "battery_0",
+            "max_value": 100,
+            "min_value": 0
+         }
+       },
+        "accelerometer": {
+           "0": {
+             "max_value": null,
+             "min_value": null,
+             "disable": false,
+             "custom_name": "accelerometer_0"
+           },
+           "1": {
+             "max_value": null,
+             "min_value": null,
+             "disable": false,
+             "custom_name": "accelerometer_1"
+           },
+           "2": {
+             "max_value": null,
+             "min_value": null,
+             "disable": false,
+             "custom_name": "accelerometer_2"
+           },
+           "3": {
+             "max_value": null,
+             "min_value": null,
+             "disable": false,
+             "custom_name": "accelerometer_3"
+           },
+           "4": {
+             "max_value": null,
+             "min_value": null,
+             "disable": false,
+             "custom_name": "accelerometer_4"
+           },
+           "5": {
+             "max_value": null,
+             "min_value": null,
+             "disable": false,
+             "custom_name": "accelerometer_5"
+           }
+         },
+        "servo_position": {
+          "0": {
+            "max_value": 0,
+            "min_value": 180,
+           "disable": false,
+           "custom_name": "servo position 0"}
+     },
+       "camera": {
+         "0": {
+           "disable": false,
+           "custom_name": "camera 0",
+           "index": "00",
+           "mirror": true,
+           "eccentricity_control": {
+                "0": 1,
+                "1": 1
+            },
+           "modulation_control": {
+                "0": 99,
+                "1": 99
+            },
+           "enhancement": {},
+           "threshold_default": [50, 255, 130, 51],
+           "vision_range": [1, 99],
+           "dev_index": 0,
+           "threshold_range": [1, 255]
+         },
+         "1": {
+           "disable": false,
+           "custom_name": "camera 1",
+           "index": "00",
+           "mirror": true,
+           "eccentricity_control": {
+                "0": 1,
+                "1": 1
+            },
+           "modulation_control": {
+                "0": 99,
+                "1": 99
+            },
+           "enhancement": {},
+           "threshold_default": [50, 255, 130, 51],
+           "vision_range": [1, 99],
+           "dev_index": 1,
+           "threshold_range": [1, 255]
+         }
+       }
+   }
+ }
+}
