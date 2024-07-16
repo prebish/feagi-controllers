@@ -74,6 +74,27 @@
            "disable": false,
            "custom_name": "led 1"
          }
+       },
+       "analog_output": {
+         "0": {
+              "max_value": 1,
+              "min_value": 0,
+              "disable": false,
+              "custom_name": "analog_output_0"
+         },
+         "1": {
+              "max_value": 1,
+              "min_value": 0,
+              "disable": false,
+              "custom_name": "analog_output_1"
+         },
+         "2": {
+              "max_value": 1,
+              "min_value": 0,
+              "disable": false,
+              "custom_name": "analog_output_2"
+         }
+
        }
      },
      "sensors": {
@@ -223,6 +244,27 @@
              "disable": false,
              "custom_name": "ir_1"
          }
+       },
+       "analog_input": {
+         "0": {
+              "max_value": 1,
+              "min_value": 0,
+              "disable": false,
+              "custom_name": "analog_input_0"
+         },
+         "1": {
+              "max_value": 1,
+              "min_value": 0,
+              "disable": false,
+              "custom_name": "analog_input_1"
+         },
+         "2": {
+              "max_value": 1,
+              "min_value": 0,
+              "disable": false,
+              "custom_name": "analog_input_2"
+         }
+
        }
    }
  }
