@@ -44,12 +44,41 @@
            "disable": false,
            "custom_name": "servo 0"
          }
+       },
+       "goio_output": {
+         "0": {
+           "pin_configuration": {
+                "2": 0,
+                "3": 0,
+                "4": 0,
+                "17": 0,
+                "27": 0,
+                "22": 0,
+                "10": 0,
+                "9": 0,
+                "11": 0,
+                "5": 0,
+                "6": 0,
+                "13": 0,
+                "19": 0,
+                "26": 0
+           }
+         }
+       },
+       "led": {
+         "0": {
+           "disable": false,
+           "custom_name": "led 0"
+         },
+          "1": {
+           "disable": false,
+           "custom_name": "led 1"
+         }
        }
      },
      "sensors": {
         "ultrasonic": {
-       "ultrasonic_definition": {
-         "0": {
+          "0": {
            "disable": false,
            "custom_name": "front_ultrasonic",
            "front_distance_minimum": 0,
@@ -61,7 +90,6 @@
          "front_distance_minimum": null,
          "front_distance_maximum": null
        }
-     }
        },
         "encoder_motor": {
          "0": {
@@ -107,40 +135,10 @@
        },
         "accelerometer": {
            "0": {
-             "max_value": null,
-             "min_value": null,
+             "max_value": [null, null, null],
+             "min_value": [null, null, null],
              "disable": false,
              "custom_name": "accelerometer_0"
-           },
-           "1": {
-             "max_value": null,
-             "min_value": null,
-             "disable": false,
-             "custom_name": "accelerometer_1"
-           },
-           "2": {
-             "max_value": null,
-             "min_value": null,
-             "disable": false,
-             "custom_name": "accelerometer_2"
-           },
-           "3": {
-             "max_value": null,
-             "min_value": null,
-             "disable": false,
-             "custom_name": "accelerometer_3"
-           },
-           "4": {
-             "max_value": null,
-             "min_value": null,
-             "disable": false,
-             "custom_name": "accelerometer_4"
-           },
-           "5": {
-             "max_value": null,
-             "min_value": null,
-             "disable": false,
-             "custom_name": "accelerometer_5"
            }
          },
         "servo_position": {
@@ -188,6 +186,42 @@
            "vision_range": [1, 99],
            "dev_index": 1,
            "threshold_range": [1, 255]
+         }
+       },
+       "gyrposcope": {
+           "0": {
+             "max_value": [null, null, null],
+             "min_value": [null, null, null],
+             "disable": false,
+             "custom_name": "gyro_0"
+           }
+       },
+       "gpio_input": {
+         "0": {
+           "port_configuration": {
+                "14": 1,
+                "15": 1,
+                "18": 1,
+                "23": 1,
+                "24": 1,
+                "25": 1,
+                "8": 1,
+                "7": 1,
+                "12": 1,
+                "16": 1,
+                "20": 1,
+                "21": 1
+           }
+         }
+       },
+       "infrared": {
+         "0": {
+             "disable": false,
+             "custom_name": "ir_0"
+         },
+         "1": {
+             "disable": false,
+             "custom_name": "ir_1"
          }
        }
    }
