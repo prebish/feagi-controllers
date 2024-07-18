@@ -16,7 +16,7 @@
       "godot_websocket_port":9052
    },
    "capabilities":{
-      "actucators":{
+      "output":{
          "motor":{
             "0":{
                "disable":false,
@@ -148,7 +148,8 @@
                "disable":false,
                "custom_name":"front_ultrasonic",
                "front_distance_minimum":0,
-               "front_distance_maximum":300
+               "front_distance_maximum":300,
+               "feagi_index": 0
             },
             "1":{
                "disable":false,
