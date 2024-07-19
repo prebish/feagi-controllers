@@ -130,7 +130,6 @@ if __name__ == "__main__":
                     create_data_list[cortical_id][position_in_feagi_location] = 100
                     if create_data_list[cortical_id]:
                         message_to_feagi = sensors.add_generic_input_to_feagi_data(create_data_list, message_to_feagi)
-            print(runtime_data)
 
 
             sleep(feagi_settings['feagi_burst_speed'])
