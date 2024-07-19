@@ -15,7 +15,7 @@ previous_data_frame = dict()
 
 class Arm:
     @staticmethod
-    def connection_initialize(port='/dev/cu.usbserial-023EDC85'):
+    def connection_initialize(port='/dev/ttyUSB0'):
         """
         :param port: The default would be '/dev/ttyUSB0'. If the port is different, put a different port.
         :return:
@@ -24,110 +24,54 @@ class Arm:
 
     @staticmethod
     def pose_to_default(arm, count):
-        for number_id in range(len(capabilities['output']['servo'])):
-            if number_id != 2:
-                runtime_data['servo_status'][number_id] = 2048
+        for number_id in range(count):
+            if not capabilities['output']['servo'][str(number_id)]['disable']:
                 arm.set_encoder(number_id, 2048)
+                runtime_data['servo_status'][number_id] = 2048
+            else:
+                runtime_data['servo_status'][number_id] = 'disabled'
 
-    @staticmethod
-    def power_convert(encoder_id, power):
-        if encoder_id % 2 == 0:
-            return -1 * power
-        else:
-            return abs(power)
 
-    @staticmethod
-    def encoder_converter(encoder_id):
-        """
-        This will convert from godot to motor's id. Let's say, you have 8x10 (width x depth from static_genome).
-        So, you click 4 to go forward. It will be like this:
-        o__mot': {'1-0-9': 1, '5-0-9': 1, '3-0-9': 1, '7-0-9': 1}
-        which is 1,3,5,7. So this code will convert from 1,3,5,7 to 0,1,2,3 on motor id.
-        Since 0-1 is motor 1, 2-3 is motor 2 and so on. In this case, 0 is for forward and 1 is for backward.
-        """
-        if encoder_id <= 1:
-            return 1
-        elif encoder_id <= 3:
-            return 2
-        elif encoder_id <= 5:
-            return 3
-        elif encoder_id <= 7:
-            return 4
-        elif encoder_id <= 9:
-            return 5
-        elif encoder_id <= 11:
-            return 6
-        else:
-            print("Input has been refused. Please put encoder ID.")
 
 
 def updating_encoder_position_in_bg():
     global runtime_data, capabilities, feagi_settings
-    for i in range(1, capabilities['output']['servo']['count'], 1):
+    for i in range(len(capabilities['output']['servo'])):
         runtime_data['actual_encoder_position'][i] = deque([0, 0, 0, 0, 0])
-        runtime_data['for_feagi_data'][i-1] = 0
+        runtime_data['for_feagi_data'][i] = 0
     while True:
-        for i in range(1, capabilities['output']['servo']['count'], 1):
-            new_data = arm.get_encoder(i)
+        for i in range(len(capabilities['output']['servo'])):
+            new_data = arm.get_encoder(i+1)
             if new_data != -1:
                 if runtime_data['actual_encoder_position'][i]:
                     runtime_data['actual_encoder_position'][i].append(new_data)
                     runtime_data['actual_encoder_position'][i].popleft()
-                    runtime_data['for_feagi_data'][i-1] = new_data
+                    runtime_data['for_feagi_data'][i] = new_data
         sleep(0.01)
-
-
-def move(arm, encoder_id, power):
-    max_range = capabilities['output']['servo'][str(encoder_id)]['max_value']
-    min_range = capabilities['output']['servo'][str(encoder_id)]['min_value']
-    pre_power = runtime_data['servo_status'][encoder_id] + power
-    if max_range >= pre_power >= min_range:
-        print("id: ", encoder_id, " and pre power: ", pre_power)
-        arm.set_encoder(encoder_id, pre_power)
-        runtime_data['servo_status'][encoder_id] = pre_power
-
-
-def move_encoder(arm, encoder_id, degree):
-    max_range = capabilities['output']['servo'][str(encoder_id)]['max_value']
-    min_range = capabilities['output']['servo'][str(encoder_id)]['min_value']
-    if max_range >= degree >= min_range:
-        arm.set_encoder(encoder_id, degree)
-        runtime_data['servo_status'][encoder_id] = degree
 
 
 def action(obtained_data, arm):
     recieve_servo_data = actuators.get_servo_data(obtained_data)
-    if 'servo_position' in obtained_data:
-        try:
-            if obtained_data['servo_position']:
-                for data_point in obtained_data['servo_position']:
-                    device_id = data_point + 1
-                    encoder_position = actuators.get_position_data(obtained_data['servo_position'][data_point], capabilities, device_id)
-                    move_encoder(arm, device_id, encoder_position)
-        except Exception as e:
-            print("ERROR: ", e)
-            traceback.print_exc()
+    recieve_servo_position_data = actuators.get_servo_position_data(obtained_data)
 
-    for id in recieve_servo_data:  # example output: {0: 100, 2: 100}
-        device_id = actuators.feagi_id_converter(id)
-        if not capabilities['output']['servo'][str(device_id)]['disable']:
-            servo_power = actuators.servo_generate_power(capabilities['output']["servo"][str(device_id)]["max_power"], recieve_servo_data[id], id)
-            move(arm, device_id, servo_power)
-            print('servo power: ', servo_power)
+    if recieve_servo_position_data:
+        for real_id in recieve_servo_position_data:
+            if not capabilities['output']['servo'][str(real_id)]['disable']:
+                new_power = actuators.get_position_data(recieve_servo_position_data[real_id], capabilities['output']['servo'][str(real_id)][ 'min_value'], capabilities['output']['servo'][str(real_id)][ 'max_value'])
+                arm.set_encoder(real_id + 1, new_power)
+                runtime_data['servo_status'][real_id] = new_power
 
-            # if 'servo' in obtained_data:
-            #     try:
-            #         if obtained_data['servo']:
-            #             for data_point in obtained_data['servo']:
-            #                 new_position = obtained_data['servo'][data_point]
-            #                 if data_point % 2 != 0:
-            #                     new_position *= -1
-            #                 device_id = (data_point // 2) + 1
-            #                 power = new_position
-            #                 move(arm, device_id, power)
-            #     except Exception as e:
-            #         print("ERROR: ", e)
-            #         traceback.print_exc()
+
+    if recieve_servo_data:
+        for real_id in recieve_servo_data:  # example output: {0: 100, 2: 100}
+            device_id = actuators.feagi_id_converter(real_id) + 1 # Since mycobot runs 1 to 6 instead of 0 to 5
+            converted_id = actuators.feagi_id_converter(real_id)
+            if not capabilities['output']['servo'][str(converted_id)]['disable']:
+                servo_power = actuators.servo_generate_power(capabilities['output']["servo"][str(converted_id)]["max_power"], recieve_servo_data[real_id], real_id)
+                pre_power = runtime_data['servo_status'][converted_id] + servo_power
+                new_power = actuators.servo_keep_boundaries(pre_power, capabilities['output']['servo'][str(converted_id)][ 'max_value'], capabilities['output']['servo'][str(converted_id)][ 'min_value'])
+                arm.set_encoder(device_id, new_power)
+                runtime_data['servo_status'][converted_id] = new_power
 
 
 if __name__ == "__main__":
@@ -160,11 +104,11 @@ if __name__ == "__main__":
 
     # MYCOBOT SECTION
     mycobot = Arm()
-    arm = mycobot.connection_initialize(port='/dev/cu.usbserial-023EDC85')
+    arm = mycobot.connection_initialize()
     arm.set_speed(100)
     mycobot.pose_to_default(arm, len(capabilities['output']['servo']))
     arm.release_servo(1)
-    # threading.Thread(target=updating_encoder_position_in_bg, daemon=True).start()
+    threading.Thread(target=updating_encoder_position_in_bg, daemon=True).start()
 
     while True:
         try:
@@ -173,19 +117,21 @@ if __name__ == "__main__":
                 pns.check_genome_status_no_vision(message_from_feagi)
                 obtained_signals = pns.obtain_opu_data(message_from_feagi)
                 action(obtained_signals, arm)
-                print(runtime_data['servo_status'])
+                # print(runtime_data['servo_status'])
 
-            # message_to_feagi, capabilities['output']['servo']['max_value_list'], \
-            #     capabilities['output']['servo']['min_value_list'] = sensors.create_data_for_feagi(
-            #     cortical_id='i_spos',
-            #     robot_data=runtime_data['for_feagi_data'],
-            #     maximum_range=capabilities['output']['servo']['max_value_list'],
-            #     minimum_range=capabilities['output']['servo']['min_value_list'],
-            #     enable_symmetric=True,
-            #     index=capabilities['output']['servo']['dev_index'],
-            #     count=capabilities['output']['servo']['sub_channel_count'],
-            #     message_to_feagi=message_to_feagi,
-            #     has_range=True)
+
+            for device_id in capabilities['input']['servo']:
+                if not capabilities['input']['servo'][device_id]['disable']:
+                    cortical_id = capabilities['input']['servo'][device_id]["cortical_id"]
+                    create_data_list = dict()
+                    create_data_list[cortical_id] = dict()
+                    capabilities['input']['servo'][device_id]['max_value'], capabilities['input']['servo'][device_id]['min_value'] = sensors.measuring_max_and_min_range(runtime_data['for_feagi_data'][int(device_id)],capabilities['input']['servo'][device_id]['max_value'],capabilities['input']['servo'][device_id]['min_value'])
+                    position_in_feagi_location = sensors.convert_sensor_to_ipu_data(capabilities['input']['servo'][device_id]['min_value'], capabilities['input']['servo'][device_id]['max_value'], runtime_data['for_feagi_data'][int(device_id)],  capabilities['input']['servo'][device_id]['feagi_index'],cortical_id=cortical_id, symmetric=True)
+                    create_data_list[cortical_id][position_in_feagi_location] = 100
+                    if create_data_list[cortical_id]:
+                        message_to_feagi = sensors.add_generic_input_to_feagi_data(create_data_list, message_to_feagi)
+            print(runtime_data)
+
 
             sleep(feagi_settings['feagi_burst_speed'])
             pns.signals_to_feagi(message_to_feagi, feagi_ipu_channel, agent_settings, feagi_settings)
