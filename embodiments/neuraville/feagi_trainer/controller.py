@@ -20,7 +20,6 @@ limitations under the License.
 import threading
 from time import sleep
 from datetime import datetime
-from feagi_connector import router
 from feagi_connector import testing_mode
 from feagi_connector import retina as retina
 from feagi_connector import pns_gateway as pns
@@ -65,9 +64,10 @@ if __name__ == "__main__":
     temporary_previous = dict()
     default_capabilities = {}  # It will be generated in process_visual_stimuli. See the
     default_capabilities = pns.create_runtime_default_list(default_capabilities, capabilities)
+    default_capabilities = retina.convert_new_json_to_old_json(default_capabilities)
     threading.Thread(target=retina.vision_progress, args=(default_capabilities, feagi_settings, camera_data['vision'],), daemon=True).start()
     while continue_loop:
-        image_obj = feagi_trainer.scan_the_folder(capabilities['image_reader']['path'])
+        image_obj = feagi_trainer.scan_the_folder(capabilities['input']['image_reader']['0']['path'])
         for image in image_obj:
             raw_frame = image[0]
             camera_data['vision'] = raw_frame
@@ -76,7 +76,7 @@ if __name__ == "__main__":
             # Post image into vision
             if start_timer == 0:
                 start_timer = datetime.now()
-            while capabilities['image_reader']['pause'] >= int((datetime.now() - start_timer).total_seconds()):
+            while capabilities['input']['image_reader']['0']['pause'] >= int((datetime.now() - start_timer).total_seconds()):
                 size_list = pns.resize_list
                 temporary_previous, rgb, default_capabilities = \
                     retina.process_visual_stimuli(
@@ -90,7 +90,7 @@ if __name__ == "__main__":
                     else:
                         message_to_feagi = pns.generate_feagi_data(rgb, message_to_feagi)
                 # Testing mode section
-                if capabilities['image_reader']['test_mode']:
+                if capabilities['input']['image_reader']['0']['test_mode']:
                     success_rate, success, total = testing_mode.mode_testing(name_id,
                                                                              pns.message_from_feagi,
                                                                              total, success,
@@ -103,4 +103,4 @@ if __name__ == "__main__":
             start_timer = 0
             message_to_feagi.clear()
         sleep(feagi_settings['burst_duration'])
-        continue_loop = capabilities['image_reader']['loop']
+        continue_loop = capabilities['input']['image_reader']['0']['loop']

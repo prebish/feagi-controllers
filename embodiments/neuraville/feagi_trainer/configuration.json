@@ -14,28 +14,34 @@
         "compression": true
     },
     "capabilities": {
-        "camera": {
-            "type": "ipu",
-            "disabled": false,
-            "index": "00",
-            "video_device_index": 0,
-            "image": "",
-            "video_loop": false,
-            "mirror": false,
-            "eccentricity_control": {
-                "0": 1,
-                "1": 1
+        "input": {
+            "camera": {
+                "0": {
+                    "type": "ipu",
+                    "disabled": false,
+                    "index": "00",
+                    "video_device_index": 0,
+                    "image": "",
+                    "video_loop": false,
+                    "mirror": false,
+                    "eccentricity_control": {
+                        "0": 1,
+                        "1": 1
+                    },
+                    "modulation_control": {
+                        "0": 99,
+                        "1": 99
+                    }
+                }
             },
-            "modulation_control": {
-                "0": 99,
-                "1": 99
+            "image_reader": {
+                "0": {
+                    "loop": true,
+                    "pause": 0,
+                    "path": "./",
+                    "test_mode": false
+                }
             }
-        },
-        "image_reader": {
-            "loop": true,
-            "pause": 0,
-            "path": "./",
-            "test_mode": false
         }
     }
 }
