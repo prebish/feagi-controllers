@@ -19,7 +19,7 @@
                 "0": {
                     "max_value": 0.6766715171374768,
                     "min_value": -0.33633231299858235,
-                    "max_power": 0.05,
+                    "max_power": 0.2,
                     "disable": false,
                     "custom_name": "servo 0"
                 },
@@ -86,14 +86,14 @@
                     "feagi_index": 0,
                     "disable": 0,
                     "max_value": [
-                        null,
-                        null,
-                        null
+                        3.0,
+                        3.0,
+                        3.0
                     ],
                     "min_value": [
-                        null,
-                        null,
-                        null
+                        -3.0,
+                        -3.0,
+                        -3.0
                     ],
                     "cortical_id": "i__gyr",
                     "custom_name": "gyro_0"
