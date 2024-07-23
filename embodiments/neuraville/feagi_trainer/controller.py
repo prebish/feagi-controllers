@@ -89,10 +89,20 @@ if __name__ == "__main__":
                         break
                     else:
                         message_to_feagi = pns.generate_feagi_data(rgb, message_to_feagi)
+
+                message_from_feagi = pns.message_from_feagi # Needs to re-structure this code to be
+                # more consistent
+
+                # location section
+                location_data = pns.recognize_location_data(message_from_feagi)
+                if location_data:
+                    print("location: ", location_data)
+
+
                 # Testing mode section
                 if capabilities['input']['image_reader']['0']['test_mode']:
                     success_rate, success, total = testing_mode.mode_testing(name_id,
-                                                                             pns.message_from_feagi,
+                                                                             message_from_feagi,
                                                                              total, success,
                                                                              success_rate)
                 else:
