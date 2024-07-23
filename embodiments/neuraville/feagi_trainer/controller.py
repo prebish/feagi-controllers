@@ -67,7 +67,7 @@ if __name__ == "__main__":
     default_capabilities = retina.convert_new_json_to_old_json(default_capabilities)
     threading.Thread(target=retina.vision_progress, args=(default_capabilities, feagi_settings, camera_data['vision'],), daemon=True).start()
     while continue_loop:
-        image_obj = feagi_trainer.scan_the_folder(capabilities['input']['image_reader']['0']['path'])
+        image_obj = feagi_trainer.scan_the_folder(capabilities['input']['image_reader']['0']['image_path'])
         for image in image_obj:
             raw_frame = image[0]
             camera_data['vision'] = raw_frame
@@ -76,7 +76,7 @@ if __name__ == "__main__":
             # Post image into vision
             if start_timer == 0:
                 start_timer = datetime.now()
-            while capabilities['input']['image_reader']['0']['pause'] >= int((datetime.now() - start_timer).total_seconds()):
+            while capabilities['input']['image_reader']['0']['image_display_duration'] >= int((datetime.now() - start_timer).total_seconds()):
                 size_list = pns.resize_list
                 temporary_previous, rgb, default_capabilities = \
                     retina.process_visual_stimuli(
@@ -109,6 +109,7 @@ if __name__ == "__main__":
                     success_rate, success, total = 0, 0, 0
                 pns.signals_to_feagi(message_to_feagi, feagi_ipu_channel, agent_settings, feagi_settings)
                 sleep(feagi_settings['burst_duration'])
+            sleep(capabilities['input']['image_reader']['0']['image_gap_duration'])
             previous_frame_data = temporary_previous.copy()
             start_timer = 0
             message_to_feagi.clear()
