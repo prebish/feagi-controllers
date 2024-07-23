@@ -92,22 +92,28 @@ if __name__ == "__main__":
     # the rest of controller runtime.
     default_capabilities = pns.create_runtime_default_list(default_capabilities, capabilities)
 
+    # This is for processing the data and updating in real-time based on the user's activity in BV,
+    # such as cortical size, blink, reload genome, and other backend tasks.
     if "camera" in capabilities['input']:
         threading.Thread(target=retina.vision_progress,
                          args=(default_capabilities, feagi_settings, camera_data['vision'],),
                          daemon=True).start()
     else:
-        # No vision included so using no_vision_progress background
+        # No vision included on the robot so using no_vision_progress background
         pns.check_genome_status_no_vision(message_from_feagi)
         feagi_settings['feagi_burst_speed'] = pns.check_refresh_rate(message_from_feagi,
-                                                                     feagi_settings[
-                                                                         'feagi_burst_speed'])
+                                                                     feagi_settings['feagi_burst_speed'])
 
     while True:
+        # The controller will grab the data from FEAGI in real-time
         message_from_feagi = pns.message_from_feagi
         if message_from_feagi:
+            # Translate from feagi data to human readable data
             obtained_signals = pns.obtain_opu_data(message_from_feagi)
             action(obtained_signals, capabilities)
+        # Sends to feagi data
         pns.signals_to_feagi(message_to_feagi, feagi_ipu_channel, agent_settings, feagi_settings)
+        # Clear data that is created by controller such as sensors
         message_to_feagi.clear()
+        # cool down everytime
         sleep(feagi_settings['feagi_burst_speed'])
