@@ -14,23 +14,26 @@
         "compression": true
     },
     "capabilities": {
-        "camera": {
-            "type": "ipu",
-            "disabled": false,
-            "index": "00",
-            "video_device_index": [0],
-            "video_loop": false,
-            "mirror": false,
-            "monitor": 0,
-            "dev_index": 0,
-            "image": "",
-            "eccentricity_control": {
-                "0": 1,
-                "1": 1
-            },
-            "modulation_control": {
-                "0": 99,
-                "1": 99
+        "input": {
+            "camera": {
+                "0": {
+                    "disabled": false,
+                    "index": "00",
+                    "video_device_index": [2,4],
+                    "video_loop": false,
+                    "mirror": false,
+                    "monitor": 0,
+                    "dev_index": 0,
+                    "image": "",
+                    "eccentricity_control": {
+                        "0": 1,
+                        "1": 1
+                    },
+                    "modulation_control": {
+                        "0": 99,
+                        "1": 99
+                    }
+                }
             }
         }
     }
