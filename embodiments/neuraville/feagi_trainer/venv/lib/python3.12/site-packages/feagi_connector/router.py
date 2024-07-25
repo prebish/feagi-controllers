@@ -215,7 +215,7 @@ def register_with_feagi(feagi_auth_url, feagi_settings, agent_settings, agent_ca
 
             network_output = requests.get(feagi_url + network_endpoint).json()
             # print(f"network_output ---- {network_output}")
-            if 'magic_link' not in feagi_settings:
+            if 'magic_link' not in feagi_settings and 'feagi_opu_port' not in feagi_settings:
                 feagi_settings['feagi_opu_port'] = network_output['feagi_opu_port']
             if feagi_settings:
                 print("Data from FEAGI::", feagi_settings)

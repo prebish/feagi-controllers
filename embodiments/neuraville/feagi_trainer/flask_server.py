@@ -15,9 +15,9 @@ def index():
             #image-container { box-shadow: 0 0 10px rgba(0,0,0,0.3); }
         </style>
     </head>
-    <body>
+    <body style="background-color:black;">
         <div id="image-container">
-            <img id="feagi-image" src="/image" alt="FEAGI Image">
+            <img id="feagi-image" src="/image" alt="FEAGI Image" style="max-height:800px; border:1px solid white;">
         </div>
         <script>
             setInterval(function() {

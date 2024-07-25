@@ -5,9 +5,6 @@ from collections import deque
 from feagi_connector import pns_gateway as pns
 from feagi_connector import feagi_interface as feagi
 
-motor_data = dict()
-
-
 def window_average(sequence):
     return sum(sequence) // len(sequence)
 
@@ -42,9 +39,9 @@ def servo_generate_power(power, feagi_power, id):
 
 def servo_negative_or_positive(id, power):
     if id % 2 == 0:
-        power = -1 * power
-    else:
         power = abs(power)
+    else:
+        power = -1 * power
     return power
 
 
@@ -61,50 +58,65 @@ def feagi_id_converter(id):
 
 def power_convert(motor_id, power):
     if motor_id % 2 == 0:
-        return -1 * power
-    else:
         return abs(power)
+    else:
+        return -1 * power
 
+# Motor section
 
-def get_motor_data(obtained_data, power_maximum, motor_count, moving_average, id_converter=False,
-                   power_inverse=False):
+def get_motor_data(obtained_data, moving_average):
     motor_data = dict()
+    processed_obtained_data = dict()
     if 'motor' in obtained_data:
         if obtained_data['motor'] is not {}:
-            for data_point in obtained_data['motor']:
-                device_power = obtained_data['motor'][data_point]
-                if id_converter:
-                    device_id = feagi_id_converter(data_point)
+            sorted_keys = sorted(obtained_data['motor'].keys(), key=int)
+            for data_point in sorted_keys:
+                device_power = power_convert(data_point, obtained_data['motor'][data_point])
+                device_id = feagi_id_converter(data_point)
+                if device_id in motor_data:
+                    motor_data[device_id] = motor_data[device_id] - obtained_data['motor'][data_point]
                 else:
-                    device_id = data_point
-                device_power = int(motor_generate_power(power_maximum, device_power, device_id))
-                if power_inverse:
-                    device_power = power_convert(data_point, device_power)
-                else:
-                    device_power = power_convert(data_point, (-1 * device_power))
-                if device_id in moving_average:
-                    moving_average = update_moving_average(moving_average, device_id, device_power)
-            for id in moving_average:
-                motor_data[id] = window_average(moving_average[id])
-    else:
-        for _ in range(motor_count):
-            moving_average[_].append(0)
-            moving_average[_].popleft()
+                    motor_data[device_id] = device_power
     return motor_data
 
+def pass_the_power_to_motor(power_maximum, device_power, device_id, moving_average_len):
+    device_power = int(motor_generate_power(power_maximum, device_power, device_id))
+    if device_id in moving_average_len:
+        moving_average_len = update_moving_average(moving_average_len, device_id, device_power)
+    moving_average_len[device_id].append(window_average(moving_average_len[device_id]))
+    moving_average_len[device_id].popleft()
+
+def rolling_window_update(stored_rolling_window_dict):
+    for _ in stored_rolling_window_dict:
+        stored_rolling_window_dict[_].append(0)
+        stored_rolling_window_dict[_].popleft()
+    return stored_rolling_window_dict
+
+
+def create_motor_rolling_window_len(length_window=0, current_rolling_window_dict={}, motor_id='0'):
+    rolling_window_len = length_window
+    rolling_window = current_rolling_window_dict.copy()
+    motor_id = int(motor_id)
+    if motor_id in rolling_window:
+        rolling_window[motor_id].update([0] * (rolling_window_len))
+    else:
+        rolling_window[motor_id] = deque([0] * rolling_window_len)
+    return rolling_window
 
 def update_moving_average(moving_average, device_id, device_power):
     moving_average[device_id].append(device_power)
     moving_average[device_id].popleft()
     return moving_average
 
+# Motor section ends
+
 
 def get_servo_data(obtained_data, converter_id=False):
     servo_data = dict()
     if 'servo' in obtained_data:
         for data_point in obtained_data['servo']:
-            device_power = servo_negative_or_positive(data_point,
-                                                      obtained_data['servo'][data_point])
+            device_power = servo_negative_or_positive(data_point, obtained_data['servo'][
+                data_point])
             if converter_id:
                 device_id = feagi_id_converter(data_point)
             else:
@@ -114,6 +126,18 @@ def get_servo_data(obtained_data, converter_id=False):
             else:
                 servo_data[device_id] = device_power
     return servo_data
+
+def get_servo_position_data(obtained_data):
+    servo_position_data = dict()
+    if 'servo_position' in obtained_data:
+        for data_point in obtained_data['servo_position']:
+            device_power = obtained_data['servo_position'][data_point]
+            device_id = data_point
+            if device_id in servo_position_data:
+                servo_position_data[device_id] += device_power
+            else:
+                servo_position_data[device_id] = device_power
+    return servo_position_data
 
 
 def check_emergency_stop(obtained_data):
@@ -183,8 +207,6 @@ def check_convert_gpio_to_input(obtained_data):
     return input_gpio_data
 
 
-def get_position_data(power, capabilities, device_id):
+def get_position_data(power, min_output, max_output):
     max_input = pns.full_list_dimension['o_spos']['cortical_dimensions'][2]
-    min_output = capabilities['servo']['servo_range'][str(device_id)][0]
-    max_output = capabilities['servo']['servo_range'][str(device_id)][1]
     return (power / max_input) * (max_output - min_output) + min_output

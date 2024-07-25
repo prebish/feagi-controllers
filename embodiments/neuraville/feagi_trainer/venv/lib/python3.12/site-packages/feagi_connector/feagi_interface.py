@@ -414,7 +414,45 @@ def reading_parameters_to_confirm_communication(feagi_settings, configuration, p
     parser.add_argument('-ip', '--ip', help='to use feagi_ip', required=False)
     parser.add_argument('-port', '--port', help='to use feagi_port', required=False)
     args = vars(parser.parse_args())
-    if feagi_settings['feagi_url'] or args['magic'] or args['magic_link']:
+    if args['port']:
+        feagi_settings['feagi_opu_port'] = args['port']
+    else:
+        feagi_settings['feagi_opu_port'] = os.environ.get('FEAGI_OPU_PORT', "3000")
+
+    if args['magic'] or args['magic_link']:
+        if args['magic'] or args['magic_link']:
+            for arg in args:
+                if args[arg] is not None:
+                    feagi_settings['magic_link'] = args[arg]
+                    break
+            configuration['feagi_settings']['feagi_url'] = feagi_settings['magic_link']
+            with open(path+'configuration.json', 'w') as f:
+                json.dump(configuration, f, indent=4)
+        else:
+            feagi_settings['magic_link'] = feagi_settings['feagi_url']
+        url_response = json.loads(requests.get(feagi_settings['magic_link']).text)
+        feagi_settings['feagi_dns'] = url_response['feagi_url']
+        feagi_settings['feagi_api_port'] = url_response['feagi_api_port']
+    elif args['ip']:
+        # # FEAGI REACHABLE CHECKER # #
+        feagi_flag = False
+        print("retrying...")
+        print("Waiting on FEAGI...")
+        if args['ip']:
+            feagi_settings['feagi_host'] = args['ip']
+        if 'feagi_url' in configuration['feagi_settings']:
+            del configuration['feagi_settings']['feagi_url']
+        if 'feagi_dns' in feagi_settings:
+            del feagi_settings['feagi_dns']
+        if 'magic_link' in feagi_settings:
+            del feagi_settings['magic_link']
+            with open(path+'configuration.json', 'w') as f:
+                json.dump(configuration, f, indent=4)
+        while not feagi_flag:
+            feagi_flag = is_FEAGI_reachable(os.environ.get('FEAGI_HOST_INTERNAL', feagi_settings["feagi_host"]),
+                                            int(os.environ.get('FEAGI_OPU_PORT', feagi_settings['feagi_opu_port'])))
+            sleep(2)
+    elif feagi_settings['feagi_url']:
         if args['magic'] or args['magic_link']:
             for arg in args:
                 if args[arg] is not None:
@@ -436,7 +474,7 @@ def reading_parameters_to_confirm_communication(feagi_settings, configuration, p
         if args['ip']:
             feagi_settings['feagi_host'] = args['ip']
         while not feagi_flag:
-            feagi_flag = is_FEAGI_reachable(os.environ.get('FEAGI_HOST_INTERNAL', feagi_settings["feagi_host"]),int(os.environ.get('FEAGI_OPU_PORT', "3000")))
+            feagi_flag = is_FEAGI_reachable(os.environ.get('FEAGI_HOST_INTERNAL', feagi_settings["feagi_host"]),int(os.environ.get('FEAGI_OPU_PORT', feagi_settings['feagi_opu_port'])))
             sleep(2)
     return feagi_settings, configuration
 

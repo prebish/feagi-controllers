@@ -345,83 +345,84 @@ def process_visual_stimuli(raw_frame, capabilities, previous_frame_data, rgb, ac
         temp_dict = {0:raw_frame}
         raw_frame = temp_dict.copy()
     capabilities = pns.create_runtime_default_list(capabilities, actual_capabilities)
-    if pns.resize_list:
-        current_dimension_list = pns.resize_list
-        one_data_vision = {}
-        for obtain_raw_data in raw_frame:
-            if capabilities["camera"]["mirror"]:
-                raw_frame[obtain_raw_data] = cv2.flip(raw_frame[obtain_raw_data], 1)
-            region_coordinates = vision_region_coordinates(frame_width=raw_frame[obtain_raw_data].shape[1],
-                                                           frame_height=raw_frame[obtain_raw_data].shape[0],
-                                                           x1=abs(capabilities['camera']['eccentricity_control']['0']),
-                                                           x2=abs(capabilities['camera']['modulation_control']['0']),
-                                                           y1=abs(capabilities['camera']['eccentricity_control']['1']),
-                                                           y2=abs(capabilities['camera']['modulation_control']['1']),
-                                                           camera_index=capabilities['camera']['index'],
-                                                           size_list=current_dimension_list)
-            if not region_coordinates:
-              if not (capabilities['camera']['index'] + '_C') in current_dimension_list:
-                pns.resize_list.update(obtain_cortical_vision_size(capabilities['camera']['index'], pns.full_list_dimension))
-            segmented_frame_data = split_vision_regions(coordinates=region_coordinates, raw_frame_data=raw_frame[obtain_raw_data])
-            if len(one_data_vision) == 0:
-                for region in segmented_frame_data:
-                    one_data_vision[region] = []
-            compressed_data = dict()
+    if not capabilities['camera']['disabled']:
+        if pns.resize_list:
+            current_dimension_list = pns.resize_list
+            one_data_vision = {}
+            for obtain_raw_data in raw_frame:
+                if capabilities["camera"]["mirror"]:
+                    raw_frame[obtain_raw_data] = cv2.flip(raw_frame[obtain_raw_data], 1)
+                region_coordinates = vision_region_coordinates(frame_width=raw_frame[obtain_raw_data].shape[1],
+                                                               frame_height=raw_frame[obtain_raw_data].shape[0],
+                                                               x1=abs(capabilities['camera']['eccentricity_control']['0']),
+                                                               x2=abs(capabilities['camera']['modulation_control']['0']),
+                                                               y1=abs(capabilities['camera']['eccentricity_control']['1']),
+                                                               y2=abs(capabilities['camera']['modulation_control']['1']),
+                                                               camera_index=capabilities['camera']['index'],
+                                                               size_list=current_dimension_list)
+                if not region_coordinates:
+                  if not (capabilities['camera']['index'] + '_C') in current_dimension_list:
+                    pns.resize_list.update(obtain_cortical_vision_size(capabilities['camera']['index'], pns.full_list_dimension))
+                segmented_frame_data = split_vision_regions(coordinates=region_coordinates, raw_frame_data=raw_frame[obtain_raw_data])
+                if len(one_data_vision) == 0:
+                    for region in segmented_frame_data:
+                        one_data_vision[region] = []
+                compressed_data = dict()
 
-            for cortical in segmented_frame_data:
-                name = 'iv' + cortical
-                updated_size = [pns.full_template_information_corticals['IPU']['supported_devices'][name]['resolution'][0], pns.full_template_information_corticals['IPU']['supported_devices'][name]['resolution'][1], current_dimension_list[cortical][2]]
-                compressed_data[cortical] = effect(downsize_regions(segmented_frame_data[cortical], updated_size), capabilities)
-                if len(one_data_vision[cortical]) == 0: # update the newest data into empty one_data_vision
-                    one_data_vision[cortical] = compressed_data[cortical]
-                else:
-                    one_data_vision[cortical] = numpy.concatenate((one_data_vision[cortical], compressed_data[cortical]), axis=1)
-                    if (len(raw_frame) - 1) == obtain_raw_data: # Reach to end of the list for camera
-                        one_data_vision[cortical] = cv2.resize(one_data_vision[cortical],
-                                                               [pns.full_template_information_corticals['IPU']['supported_devices'][name]['resolution'][0],
-                                                                pns.full_template_information_corticals['IPU']['supported_devices'][name]['resolution'][1]],
-                                                               interpolation=cv2.INTER_AREA)
+                for cortical in segmented_frame_data:
+                    name = 'iv' + cortical
+                    updated_size = [pns.full_template_information_corticals['IPU']['supported_devices'][name]['resolution'][0], pns.full_template_information_corticals['IPU']['supported_devices'][name]['resolution'][1], current_dimension_list[cortical][2]]
+                    compressed_data[cortical] = effect(downsize_regions(segmented_frame_data[cortical], updated_size), capabilities)
+                    if len(one_data_vision[cortical]) == 0: # update the newest data into empty one_data_vision
+                        one_data_vision[cortical] = compressed_data[cortical]
+                    else:
+                        one_data_vision[cortical] = numpy.concatenate((one_data_vision[cortical], compressed_data[cortical]), axis=1)
+                        if (len(raw_frame) - 1) == obtain_raw_data: # Reach to end of the list for camera
+                            one_data_vision[cortical] = cv2.resize(one_data_vision[cortical],
+                                                                   [pns.full_template_information_corticals['IPU']['supported_devices'][name]['resolution'][0],
+                                                                    pns.full_template_information_corticals['IPU']['supported_devices'][name]['resolution'][1]],
+                                                                   interpolation=cv2.INTER_AREA)
 
-        vision_dict = dict()
+            vision_dict = dict()
 
-        # for segment in compressed_data:
-        #     cv2.imshow(segment, compressed_data[segment])
-        # if cv2.waitKey(30) & 0xFF == ord('q'):
-        #     pass
-        for get_region in one_data_vision:
-            if current_dimension_list[get_region][2] == 3:
-              if previous_frame_data != {}:
-                  if get_region in previous_frame_data:
-                    vision_dict[get_region] = change_detector(
-                        previous_frame_data[get_region],
-                        one_data_vision[get_region],
-                        capabilities, compare_image, get_region)
-                  else:
-                    vision_dict[get_region] = change_detector(
-                        np.zeros((3, 3, 3)),
-                        one_data_vision[get_region],
-                        capabilities, compare_image, get_region)
-            else:
-                if previous_frame_data != {}:
-                    if get_region in previous_frame_data:
-                        vision_dict[get_region] = change_detector_grayscale(
+            # for segment in compressed_data:
+            #     cv2.imshow(segment, compressed_data[segment])
+            # if cv2.waitKey(30) & 0xFF == ord('q'):
+            #     pass
+            for get_region in one_data_vision:
+                if current_dimension_list[get_region][2] == 3:
+                  if previous_frame_data != {}:
+                      if get_region in previous_frame_data:
+                        vision_dict[get_region] = change_detector(
                             previous_frame_data[get_region],
                             one_data_vision[get_region],
                             capabilities, compare_image, get_region)
-                    else:
-                        vision_dict[get_region] = change_detector_grayscale(
+                      else:
+                        vision_dict[get_region] = change_detector(
                             np.zeros((3, 3, 3)),
                             one_data_vision[get_region],
                             capabilities, compare_image, get_region)
-        if previous_frame_data:
-          previous_frame_data.update(one_data_vision)
-        else:
-          previous_frame_data = one_data_vision
-        if 'camera' in rgb:
-          rgb['camera'].update(vision_dict)
-        else:
-          rgb['camera'] = vision_dict
-        return previous_frame_data, rgb, capabilities
+                else:
+                    if previous_frame_data != {}:
+                        if get_region in previous_frame_data:
+                            vision_dict[get_region] = change_detector_grayscale(
+                                previous_frame_data[get_region],
+                                one_data_vision[get_region],
+                                capabilities, compare_image, get_region)
+                        else:
+                            vision_dict[get_region] = change_detector_grayscale(
+                                np.zeros((3, 3, 3)),
+                                one_data_vision[get_region],
+                                capabilities, compare_image, get_region)
+            if previous_frame_data:
+              previous_frame_data.update(one_data_vision)
+            else:
+              previous_frame_data = one_data_vision
+            if 'camera' in rgb:
+              rgb['camera'].update(vision_dict)
+            else:
+              rgb['camera'] = vision_dict
+            return previous_frame_data, rgb, capabilities
     return pns.resize_list, pns.resize_list, capabilities  # sending empty dict
 
 
@@ -536,3 +537,16 @@ def effect(image, capabilities):
                    capabilities['camera']['enhancement'][2]
         image = np.array(adjusted, dtype=np.uint8)
     return image
+
+
+def convert_new_json_to_old_json(capabilities, index='0'):
+    """
+    Converts the new JSON format to the old JSON format.
+    """
+    new_capabilities = {
+        'camera': {}
+    }
+    if 'input' in capabilities and 'camera' in capabilities['input']:
+        if index in capabilities['input']['camera']:
+            new_capabilities['camera'].update(capabilities['input']['camera'][index])
+    return new_capabilities

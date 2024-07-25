@@ -16,21 +16,20 @@ See the License for the specific language governing permissions and
 limitations under the License.
 ==============================================================================
 """
-import cv2 # OpenCV
 from datetime import datetime
-import requests
 import shutil
 import threading
 from time import sleep
 import webbrowser
-from feagi_connector import router
 from feagi_connector import testing_mode
-from feagi_connector import retina as retina
+from feagi_connector import retina
 from feagi_connector import pns_gateway as pns
 from feagi_connector.version import __version__
 from feagi_connector import trainer as feagi_trainer
 from feagi_connector import feagi_interface as feagi
+from process_image import process_image
 
+# Open browser window to display images
 def open_browser():
     webbrowser.open('http://localhost:5000')
 
@@ -82,58 +81,11 @@ if __name__ == "__main__":
     # Create runtime default capabilities list
     default_capabilities = {}  # It will be generated in process_visual_stimuli. See the
     default_capabilities = pns.create_runtime_default_list(default_capabilities, capabilities)
-
-    # Customize and show actual image
-    def process_image(raw_frame):
-        # Define the coordinates for the box
-        top_left = (160, 60)
-        bottom_right = (400, 240)
-
-        # Define the border thickness
-        border_thickness = 3
-
-        # Draw the outer black rectangle (border)
-        cv2.rectangle(raw_frame, 
-                    (top_left[0] - border_thickness, top_left[1] - border_thickness),
-                    (bottom_right[0] + border_thickness, bottom_right[1] + border_thickness),
-                    (0, 0, 0), border_thickness)
-
-        # Draw the inner green rectangle
-        cv2.rectangle(raw_frame, top_left, bottom_right, (0, 255, 0), 2)
-
-        # Add text to the image in the top left of the box
-        text = "FEAGI Perception: dog"
-        text_position = (top_left[0], top_left[1] + 5)  # Adjusted to fit background
-
-        # Font and text size
-        font = cv2.FONT_HERSHEY_SIMPLEX
-        font_scale = 0.6
-        font_thickness = 2
-
-        # Calculate the width and height of the text box
-        (text_width, text_height), baseline = cv2.getTextSize(text, font, font_scale, font_thickness)
-        text_height += baseline
-
-        # Create a rectangle filled with black color for the text background
-        background_top_left = (text_position[0], text_position[1] - text_height)
-        background_bottom_right = (text_position[0] + text_width, text_position[1] + baseline)
-        cv2.rectangle(raw_frame, background_top_left, background_bottom_right, (0, 0, 0), cv2.FILLED)
-
-        # Put the text over the black rectangle
-        cv2.putText(raw_frame, text, text_position, font, font_scale, (0, 255, 0), font_thickness)
-
-        # Save the processed image to a file
-        image_path = 'latest_image.jpg'
-        cv2.imwrite(image_path, raw_frame)
-        print("Image updated")
-
-
-    # Start a thread to process vision progress
+    default_capabilities = retina.convert_new_json_to_old_json(default_capabilities)
     threading.Thread(target=retina.vision_progress, args=(default_capabilities, feagi_settings, camera_data['vision'],), daemon=True).start()
     # Main loop for processing images
     while continue_loop:
-        # Scan the folder for images
-        image_obj = feagi_trainer.scan_the_folder(capabilities['image_reader']['path'])
+        image_obj = feagi_trainer.scan_the_folder(capabilities['input']['image_reader']['0']['image_path'])
         for image in image_obj:
             raw_frame = image[0]
             camera_data['vision'] = raw_frame
@@ -141,9 +93,7 @@ if __name__ == "__main__":
             message_to_feagi = feagi_trainer.id_training_with_image(message_to_feagi, name_id)
             if start_timer == 0:
                 start_timer = datetime.now()
-
-            # Process images until the specified pause duration
-            while capabilities['image_reader']['pause'] >= int((datetime.now() - start_timer).total_seconds()):
+            while capabilities['input']['image_reader']['0']['image_display_duration'] >= int((datetime.now() - start_timer).total_seconds()):
                 size_list = pns.resize_list
                 temporary_previous, rgb, default_capabilities = \
                     retina.process_visual_stimuli(
@@ -162,10 +112,19 @@ if __name__ == "__main__":
                     else:
                         message_to_feagi = pns.generate_feagi_data(rgb, message_to_feagi)
 
-                # If in test mode, perform mode testing
-                if capabilities['image_reader']['test_mode']:
+                message_from_feagi = pns.message_from_feagi # Needs to re-structure this code to be
+                # more consistent
+
+                # location section
+                location_data = pns.recognize_location_data(message_from_feagi)
+                if location_data:
+                    print("location: ", location_data)
+
+
+                # Testing mode section
+                if capabilities['input']['image_reader']['0']['test_mode']:
                     success_rate, success, total = testing_mode.mode_testing(name_id,
-                                                                             pns.message_from_feagi,
+                                                                             message_from_feagi,
                                                                              total, success,
                                                                              success_rate)
                 else:
@@ -174,12 +133,10 @@ if __name__ == "__main__":
                 pns.signals_to_feagi(message_to_feagi, feagi_ipu_channel, agent_settings, feagi_settings)
                 # Sleep for the burst duration specified in the settings
                 sleep(feagi_settings['burst_duration'])
-
-            # Update the previous frame data and reset the timer
+            sleep(capabilities['input']['image_reader']['0']['image_gap_duration'])
             previous_frame_data = temporary_previous.copy()
             start_timer = 0
             message_to_feagi.clear()
         # Sleep for the burst duration before the next iteration
         sleep(feagi_settings['burst_duration'])
-        # Continue the loop based on the loop setting in capabilities
-        continue_loop = capabilities['image_reader']['loop']
+        continue_loop = capabilities['input']['image_reader']['0']['loop']

@@ -1,1 +1,50 @@
-{"description": "feagi_trainer_configuration", "version": "v0.0.0", "feagi_settings": {"feagi_url": "https://us-staging-composer.neurorobotics.studio/v1/public/regional/magic/feagi_session?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1aWQiOiJ2MVFDdDZGU1BnUklMZ3FoWmlIVHNKeExjenQyIn0.v2Lsh1YNQ9hI2F9E9sh238_3XRZJK9lxqpqnekPCMV4", "feagi_dns": null, "feagi_host": "127.0.0.1", "feagi_api_port": "8000", "magic_link": "https://us-staging-composer.neurorobotics.studio/v1/public/regional/magic/feagi_session?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1aWQiOiJ2MVFDdDZGU1BnUklMZ3FoWmlIVHNKeExjenQyIn0.v2Lsh1YNQ9hI2F9E9sh238_3XRZJK9lxqpqnekPCMV4"}, "agent_settings": {"agent_data_port": 10009, "agent_id": "feagi_trainer", "agent_type": "embodiment", "compression": true}, "capabilities": {"camera": {"type": "ipu", "disabled": false, "index": "00", "video_device_index": 0, "image": "", "video_loop": false, "mirror": false, "eccentricity_control": {"0": 1, "1": 1}, "modulation_control": {"0": 99, "1": 99}}, "image_reader": {"loop": true, "pause": 0, "path": "./", "test_mode": false}}}
+{
+    "description": "feagi_trainer_configuration",
+    "version": "v0.0.0",
+    "feagi_settings": {
+        "feagi_url": "https://us-staging-composer.neurorobotics.studio/v1/public/regional/magic/feagi_session?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1aWQiOiJ2MVFDdDZGU1BnUklMZ3FoWmlIVHNKeExjenQyIn0.v2Lsh1YNQ9hI2F9E9sh238_3XRZJK9lxqpqnekPCMV4",
+        "feagi_dns": null,
+        "feagi_host": "127.0.0.1",
+        "feagi_api_port": "8000",
+        "magic_link": "https://us-staging-composer.neurorobotics.studio/v1/public/regional/magic/feagi_session?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1aWQiOiJ2MVFDdDZGU1BnUklMZ3FoWmlIVHNKeExjenQyIn0.v2Lsh1YNQ9hI2F9E9sh238_3XRZJK9lxqpqnekPCMV4",
+        "feagi_opu_port": "3000"
+    },
+    "agent_settings": {
+        "agent_data_port": 10009,
+        "agent_id": "feagi_trainer",
+        "agent_type": "embodiment",
+        "compression": true
+    },
+    "capabilities": {
+        "input": {
+            "camera": {
+                "0": {
+                    "type": "ipu",
+                    "disabled": false,
+                    "index": "00",
+                    "video_device_index": 0,
+                    "image": "",
+                    "video_loop": false,
+                    "mirror": false,
+                    "eccentricity_control": {
+                        "0": 1,
+                        "1": 1
+                    },
+                    "modulation_control": {
+                        "0": 99,
+                        "1": 99
+                    }
+                }
+            },
+            "image_reader": {
+                "0": {
+                    "loop": true,
+                    "image_display_duration": 0,
+                    "image_path": "./",
+                    "test_mode": false,
+                    "image_gap_duration": 0
+                }
+            }
+        }
+    }
+}

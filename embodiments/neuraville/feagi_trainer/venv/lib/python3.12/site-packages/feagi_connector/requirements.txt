@@ -1,0 +1,4 @@
+opencv-python
+feagi-connector
+requests
+zmq

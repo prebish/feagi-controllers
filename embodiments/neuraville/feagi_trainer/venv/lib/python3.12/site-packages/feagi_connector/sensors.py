@@ -85,23 +85,20 @@ def convert_sensor_to_ipu_data(min_output, max_output, raw_data, device_id, cort
     return None
 
 
-def measuring_max_and_min_range(current_data, position, max_value_list, min_value_list):
+def measuring_max_and_min_range(current_data, max_value, min_value):
     """
     This function is useful if you don't know the range of maximum and minimum values for a sensor.
     It will measure and update the maximum and minimum values over time.
     """
-    if position < len(max_value_list):
-        if not max_value_list[position]:
-            max_value_list.append(1)
-            min_value_list.append(0)
-    else:
-        max_value_list.append(1)
-        min_value_list.append(0)
-    if current_data > max_value_list[position]:
-        max_value_list[position] = current_data
-    if current_data < min_value_list[position]:
-        min_value_list[position] = current_data
-    return max_value_list, min_value_list
+    if not max_value:
+        max_value = 0.1
+    if not min_value:
+        min_value = 0
+    if current_data > max_value:
+        max_value = current_data
+    if current_data < min_value:
+        min_value = current_data
+    return max_value, min_value
 
 
 def convert_ir_to_ipu_data(obtain_ir_list_from_robot, count, message_to_feagi):
@@ -123,39 +120,37 @@ def convert_ir_to_ipu_data(obtain_ir_list_from_robot, count, message_to_feagi):
     return message_to_feagi
 
 
-def create_data_for_feagi(cortical_id='', robot_data=[], maximum_range=[], minimum_range=[], enable_symmetric=False, index=1, count=1, message_to_feagi={}, has_range=False):
+def create_data_for_feagi(cortical_id='', robot_data=[], maximum_value=0.1, minimum_value=0, enable_symmetric=False, index=1, count = 0, message_to_feagi={}):
 
     create_data_list = dict()
     create_data_list[cortical_id] = dict()
     start_point = (index * count)
     feagi_data_position = start_point
-    for position in range(count):
-        new_feagi_data_position = position + feagi_data_position
-        if not has_range:
-            maximum_range, minimum_range = (measuring_max_and_min_range(robot_data[position],
-                                                                        position,
-                                                                        maximum_range,
-                                                                        minimum_range))
-        try:
-            position_of_analog = convert_sensor_to_ipu_data(
-                minimum_range[position],
-                maximum_range[position],
-                robot_data[position],
-                new_feagi_data_position,
-                cortical_id=cortical_id,
-                symmetric=enable_symmetric)
-            create_data_list[cortical_id][position_of_analog] = 100
-        except Exception as e:
-            pass
-            # print(f"Caught an unexpected exception: {e}")
-            # print(f"Exception type: {type(e).__name__}")
-            # traceback.print_exc()
-            # print("position: ", position, " and robot data: ", robot_data)
+    new_feagi_data_position = position + feagi_data_position
+    maximum_value, minimum_value = (measuring_max_and_min_range(robot_data[position],
+                                                                position,
+                                                                maximum_value,
+                                                                minimum_value))
+    try:
+        position_in_feagi_location = convert_sensor_to_ipu_data(
+            minimum_value,
+            maximum_value,
+            robot_data[position],
+            new_feagi_data_position,
+            cortical_id=cortical_id,
+            symmetric=enable_symmetric)
+        create_data_list[cortical_id][position_in_feagi_location] = 100
+    except Exception as e:
+        pass
+        # print(f"Caught an unexpected exception: {e}")
+        # print(f"Exception type: {type(e).__name__}")
+        # traceback.print_exc()
+        # print("position: ", position, " and robot data: ", robot_data)
     if create_data_list[cortical_id]:
         message_to_feagi = add_generic_input_to_feagi_data(create_data_list, message_to_feagi)
-        return message_to_feagi, maximum_range, minimum_range
+        return message_to_feagi, maximum_value, minimum_value
     else:
-        return message_to_feagi, maximum_range, minimum_range
+        return message_to_feagi, maximum_value, minimum_value
 
 
 def convert_xyz_to_012(old_dictionary_data):
