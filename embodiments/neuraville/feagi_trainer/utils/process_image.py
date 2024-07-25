@@ -1,6 +1,8 @@
-import cv2 # OpenCV
+# Modifies an image and saves it for sending
+import cv2 
 
 def process_image(raw_frame):
+    copied_frame = raw_frame.copy()
     # Define the coordinates for the box
     top_left = (160, 60)
     bottom_right = (400, 240)
@@ -9,13 +11,13 @@ def process_image(raw_frame):
     border_thickness = 3
 
     # Draw the outer black rectangle (border)
-    cv2.rectangle(raw_frame, 
+    cv2.rectangle(copied_frame, 
                 (top_left[0] - border_thickness, top_left[1] - border_thickness),
                 (bottom_right[0] + border_thickness, bottom_right[1] + border_thickness),
                 (0, 0, 0), border_thickness)
 
     # Draw the inner green rectangle
-    cv2.rectangle(raw_frame, top_left, bottom_right, (0, 255, 0), 2)
+    cv2.rectangle(copied_frame, top_left, bottom_right, (0, 255, 0), 2)
 
     # Add text to the image in the top left of the box
     text = "FEAGI Perception: dog"
@@ -33,12 +35,12 @@ def process_image(raw_frame):
     # Create a rectangle filled with black color for the text background
     background_top_left = (text_position[0], text_position[1] - text_height)
     background_bottom_right = (text_position[0] + text_width, text_position[1] + baseline)
-    cv2.rectangle(raw_frame, background_top_left, background_bottom_right, (0, 0, 0), cv2.FILLED)
+    cv2.rectangle(copied_frame, background_top_left, background_bottom_right, (0, 0, 0), cv2.FILLED)
 
     # Put the text over the black rectangle
-    cv2.putText(raw_frame, text, text_position, font, font_scale, (0, 255, 0), font_thickness)
+    cv2.putText(copied_frame, text, text_position, font, font_scale, (0, 255, 0), font_thickness)
 
     # Save the processed image to a file
-    image_path = 'latest_image.jpg'
-    cv2.imwrite(image_path, raw_frame)
-    print("Image updated")
+    image_path = 'utils/latest_image.jpg'
+    cv2.imwrite(image_path, copied_frame)
+    # print("Image updated")

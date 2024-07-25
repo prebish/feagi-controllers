@@ -2,12 +2,10 @@
     "description": "feagi_trainer_configuration",
     "version": "v0.0.0",
     "feagi_settings": {
-        "feagi_url": "https://us-staging-composer.neurorobotics.studio/v1/public/regional/magic/feagi_session?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1aWQiOiJ2MVFDdDZGU1BnUklMZ3FoWmlIVHNKeExjenQyIn0.v2Lsh1YNQ9hI2F9E9sh238_3XRZJK9lxqpqnekPCMV4",
+        "feagi_url": null,
         "feagi_dns": null,
         "feagi_host": "127.0.0.1",
-        "feagi_api_port": "8000",
-        "magic_link": "https://us-staging-composer.neurorobotics.studio/v1/public/regional/magic/feagi_session?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1aWQiOiJ2MVFDdDZGU1BnUklMZ3FoWmlIVHNKeExjenQyIn0.v2Lsh1YNQ9hI2F9E9sh238_3XRZJK9lxqpqnekPCMV4",
-        "feagi_opu_port": "3000"
+        "feagi_api_port": 8000
     },
     "agent_settings": {
         "agent_data_port": 10009,

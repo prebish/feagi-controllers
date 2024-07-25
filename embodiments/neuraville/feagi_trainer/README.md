@@ -17,14 +17,14 @@ In CMD/Terminal, run:
 3. `python3 -m venv venv` (for Windows, `python -m venv venv`)
 4. `source venv/bin/activate`
 5. Once the venv is activated, run:
-   1. Linux / Mac:
-      1. `pip3 install -r requirements.txt`
-      2. `python3 controller.py --magic_link "<insert link here>" (replace <insert link here> without removing the quotes in the command).`
-   2. Windows:
-      1. `pip install -r requirements.txt`
-      2. `python controller.py --magic_link "<insert link here>" (replace <insert link here> without removing the quotes in the command).`
+   - Linux / Mac:
+     1. `pip3 install -r requirements.txt`
+     2. `python3 controller.py --magic_link "<insert link here>" (replace <insert link here> without removing the quotes in the command).`
+   - Windows:
+     1. `pip install -r requirements.txt`
+     2. `python controller.py --magic_link "<insert link here>" (replace <insert link here> without removing the quotes in the command).`
 
-At this point, the websocket should be successfully connected.
+At this point, the websocket should be successfully connected. You should see a log of the websocket URL (`wss:// . . .`), with no errors following.
 
 ## Customizing the Trainer
 

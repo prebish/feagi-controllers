@@ -1,3 +1,4 @@
+# Runs a server that displays the latest processed image in the browser with HTML
 from flask import Flask, send_file, render_template_string
 import os
 
@@ -11,13 +12,13 @@ def index():
     <head>
         <title>FEAGI Image Viewer</title>
         <style>
-            body { display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; background-color: #f0f0f0; }
-            #image-container { box-shadow: 0 0 10px rgba(0,0,0,0.3); }
+            body { display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; background-color: black; }
+            #image-container { max-height:90vh; border:1px solid white; }
         </style>
     </head>
-    <body style="background-color:black;">
+    <body>
         <div id="image-container">
-            <img id="feagi-image" src="/image" alt="FEAGI Image" style="max-height:800px; border:1px solid white;">
+            <img id="feagi-image" src="/image" alt="FEAGI Image">
         </div>
         <script>
             setInterval(function() {
@@ -31,7 +32,7 @@ def index():
 
 @app.route('/image')
 def get_image():
-    image_path = 'latest_image.jpg'
+    image_path = os.path.join(os.path.dirname(__file__), 'latest_image.jpg')
     if os.path.exists(image_path):
         return send_file(image_path, mimetype='image/jpeg')
     else:

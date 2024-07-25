@@ -17,7 +17,8 @@ limitations under the License.
 ==============================================================================
 """
 from datetime import datetime
-import shutil
+from utils.process_image import process_image
+# import shutil
 import threading
 from time import sleep
 import webbrowser
@@ -27,7 +28,6 @@ from feagi_connector import pns_gateway as pns
 from feagi_connector.version import __version__
 from feagi_connector import trainer as feagi_trainer
 from feagi_connector import feagi_interface as feagi
-from process_image import process_image
 
 # Open browser window to display images
 def open_browser():
@@ -85,6 +85,7 @@ if __name__ == "__main__":
     threading.Thread(target=retina.vision_progress, args=(default_capabilities, feagi_settings, camera_data['vision'],), daemon=True).start()
     # Main loop for processing images
     while continue_loop:
+        # Grabs all images in this directory
         image_obj = feagi_trainer.scan_the_folder(capabilities['input']['image_reader']['0']['image_path'])
         for image in image_obj:
             raw_frame = image[0]
@@ -100,13 +101,13 @@ if __name__ == "__main__":
                         raw_frame,
                         default_capabilities,
                         previous_frame_data,
-                        rgb, capabilities, False)
+                        rgb, capabilities, False) # this is done from start to end in keynote. 
                 
                 # Process the image
                 process_image(raw_frame)
 
                 # If camera data is available, generate data for FEAGI
-                if 'camera' in rgb:
+                if 'camera' in rgb: # This is the data wrapped for feagi data to read
                     if rgb['camera'] == {}:
                         break
                     else:
@@ -119,7 +120,6 @@ if __name__ == "__main__":
                 location_data = pns.recognize_location_data(message_from_feagi)
                 if location_data:
                     print("location: ", location_data)
-
 
                 # Testing mode section
                 if capabilities['input']['image_reader']['0']['test_mode']:
