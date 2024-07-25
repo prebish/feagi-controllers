@@ -13,7 +13,7 @@ def index():
         <title>FEAGI Image Viewer</title>
         <style>
             body { display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; background-color: black; }
-            img { max-height:90vh; min-height: 500px; border:1px solid white; }
+            img { max-height:90vh; border:1px solid white; }
         </style>
     </head>
     <body>

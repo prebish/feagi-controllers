@@ -105,8 +105,8 @@ if __name__ == "__main__":
                         rgb, capabilities, False) # processes visual data into FEAGI-comprehensible form
 
                 # Process the image to show FEAGI selection boxes on image in browser
-                if len(default_capabilities['hardcode_for_kat']) > 0:
-                    process_image(default_capabilities['hardcode_for_kat'])
+                # if len(default_capabilities['hardcode_for_kat']) > 0:
+                #     process_image(default_capabilities['hardcode_for_kat'])
 
                 # If camera data is available, generate data for FEAGI
                 if 'camera' in rgb: # This is the data wrapped for feagi data to read
@@ -120,8 +120,9 @@ if __name__ == "__main__":
 
                 # location section
                 location_data = pns.recognize_location_data(message_from_feagi)
-                # if location_data:
-                #     print("location: ", location_data)
+                if location_data:
+                    print("location: ", location_data)
+                    process_image(default_capabilities['hardcode_for_kat'], location_data)
 
                 # Testing mode section
                 if capabilities['input']['image_reader']['0']['test_mode']:
