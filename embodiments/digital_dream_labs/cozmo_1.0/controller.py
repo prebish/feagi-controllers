@@ -389,7 +389,7 @@ if __name__ == '__main__':
                         start_point = capabilities['input']['gyro'][device_id]["feagi_index"] * len(capabilities['input']['gyro'])
                         feagi_data_position = start_point
                         try:
-                            for device_id in range(len(capabilities['input']['gyro']['0']['max_value'])):
+                            for device_id in range(len(capabilities['input']['gyro'][device_id]['max_value'])):
                                 capabilities['input']['gyro']['0']['max_value'][device_id], capabilities['input']['gyro']['0']['min_value'][device_id] = sensors.measuring_max_and_min_range(robot['gyro'][device_id],
                                                                     capabilities['input']['gyro']['0']['max_value'][device_id],
                                                                     capabilities['input']['gyro']['0']['min_value'][device_id])
