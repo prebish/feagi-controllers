@@ -84,6 +84,7 @@ if __name__ == "__main__":
     default_capabilities = retina.convert_new_json_to_old_json(default_capabilities)
     threading.Thread(target=retina.vision_progress, args=(default_capabilities, feagi_settings, camera_data['vision'],), daemon=True).start()
     # Main loop for processing images
+    default_capabilities['hardcode_for_kat'] = []
     while continue_loop:
         # Grabs all images in this directory
         image_obj = feagi_trainer.scan_the_folder(capabilities['input']['image_reader']['0']['image_path'])
@@ -101,10 +102,11 @@ if __name__ == "__main__":
                         raw_frame,
                         default_capabilities,
                         previous_frame_data,
-                        rgb, capabilities, False) # this is done from start to end in keynote. 
-                
-                # Process the image
-                process_image(raw_frame)
+                        rgb, capabilities, False) # processes visual data into FEAGI-comprehensible form
+
+                # Process the image to show FEAGI selection boxes on image in browser
+                if len(default_capabilities['hardcode_for_kat']) > 0:
+                    process_image(default_capabilities['hardcode_for_kat'])
 
                 # If camera data is available, generate data for FEAGI
                 if 'camera' in rgb: # This is the data wrapped for feagi data to read
@@ -118,8 +120,8 @@ if __name__ == "__main__":
 
                 # location section
                 location_data = pns.recognize_location_data(message_from_feagi)
-                if location_data:
-                    print("location: ", location_data)
+                # if location_data:
+                #     print("location: ", location_data)
 
                 # Testing mode section
                 if capabilities['input']['image_reader']['0']['test_mode']:
