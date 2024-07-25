@@ -17,9 +17,12 @@ limitations under the License.
 ==============================================================================
 """
 import cv2 # OpenCV
+from datetime import datetime
+import requests
+import shutil
 import threading
 from time import sleep
-from datetime import datetime
+import webbrowser
 from feagi_connector import router
 from feagi_connector import testing_mode
 from feagi_connector import retina as retina
@@ -27,6 +30,11 @@ from feagi_connector import pns_gateway as pns
 from feagi_connector.version import __version__
 from feagi_connector import trainer as feagi_trainer
 from feagi_connector import feagi_interface as feagi
+
+def open_browser():
+    webbrowser.open('http://localhost:5000')
+
+threading.Timer(1.0, open_browser).start()
 
 # This block of code will execute if this script is run as the main module
 if __name__ == "__main__":
@@ -80,7 +88,7 @@ if __name__ == "__main__":
         # Define the coordinates for the box
         top_left = (160, 60)
         bottom_right = (400, 240)
-        
+
         # Define the border thickness
         border_thickness = 3
 
@@ -114,10 +122,11 @@ if __name__ == "__main__":
         # Put the text over the black rectangle
         cv2.putText(raw_frame, text, text_position, font, font_scale, (0, 255, 0), font_thickness)
 
-        # Display the image in a window with this string title
-        cv2.imshow('Image Shown to FEAGI', raw_frame)
-        cv2.waitKey(0)  # Wait for a key press to close the window
-        cv2.destroyAllWindows()  # Close all OpenCV windows
+        # Save the processed image to a file
+        image_path = 'latest_image.jpg'
+        cv2.imwrite(image_path, raw_frame)
+        print("Image updated")
+
 
     # Start a thread to process vision progress
     threading.Thread(target=retina.vision_progress, args=(default_capabilities, feagi_settings, camera_data['vision'],), daemon=True).start()
