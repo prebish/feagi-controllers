@@ -36,8 +36,8 @@ def get_corners(location_data, original_size=(32, 32), target_size=(60, 60)):
     return top_left_scaled, bottom_right_scaled
 
 
-def process_image(image, latest_image, location_data=None):
-    # global latest_image_info
+def process_image(image, location_data=None):
+# def process_image(image, latest_image, location_data=None):
 
     # if location_data is None and latest_image_info["image"] is image:
     #     location_data = latest_image_info["location_data"]

@@ -36,7 +36,7 @@ def open_browser():
 threading.Timer(1.0, open_browser).start()
 
 # Latest location data for browser image display
-latest_image_info = {"image": None, "location_data": None}
+# latest_image_info = {"image": None, "location_data": None}
 
 # This block of code will execute if this script is run as the main module
 if __name__ == "__main__":
@@ -92,7 +92,7 @@ if __name__ == "__main__":
         # Grabs all images in this directory
         image_obj = feagi_trainer.scan_the_folder(capabilities['input']['image_reader']['0']['image_path'])
         for image in image_obj:
-            latest_image_info = {"image": None, "location_data": None}
+            # latest_image_info = {"image": None, "location_data": None}
             raw_frame = image[0]
             camera_data['vision'] = raw_frame
             name_id = image[1]
@@ -128,10 +128,12 @@ if __name__ == "__main__":
                 # location section
                 location_data = pns.recognize_location_data(message_from_feagi)
                 if location_data:
+                    process_image(modified_data['00_C'], location_data)
                     # print("location: ", location_data)
-                    latest_image_info["location_data"] = location_data
-                    latest_image_info["image"] = default_capabilities['hardcode_for_kat']
-                process_image(modified_data['00_C'], latest_image_info['image'], latest_image_info['location_data'])
+                    # latest_image_info["location_data"] = location_data
+                    # latest_image_info["image"] = modified_data['00_C']
+                else:
+                    process_image(modified_data['00_C'])
 
                 # Testing mode section
                 if capabilities['input']['image_reader']['0']['test_mode']:
