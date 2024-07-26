@@ -92,20 +92,21 @@ if __name__ == "__main__":
     while continue_loop:
         # Grabs all images in this directory
         image_obj = feagi_trainer.scan_the_folder(capabilities['input']['image_reader']['0']['image_path'])
+        latest_image_id = None
+        # Iterate through images
         for image in image_obj:
             raw_frame = image[0]
             camera_data['vision'] = raw_frame
             name_id = image[1]
-            # Update image ID for the Flask server
+            # Update image ID for Flask server to display
             image_id = key = next(iter(name_id))
             img_coords.update_image_ids(image_id, None)
-            new_image_id, feagi_image_id = img_coords.get_latest_ids()
-            print('new_image_id', new_image_id)
             # Carry on with the image processing
             message_to_feagi = feagi_trainer.id_training_with_image(message_to_feagi, name_id)
             if start_timer == 0:
                 start_timer = datetime.now()
             while capabilities['input']['image_reader']['0']['image_display_duration'] >= int((datetime.now() - start_timer).total_seconds()):
+                print('while loop goin crazyyyy')
                 size_list = pns.resize_list
                 message_from_feagi = pns.message_from_feagi # Needs to re-structure this code to be more consistent
                 temporary_previous, rgb, default_capabilities, modified_data = \
@@ -115,22 +116,24 @@ if __name__ == "__main__":
                         previous_frame_data,
                         rgb, capabilities, False) # processes visual data into FEAGI-comprehensible form
                 
-
-
+                # When FEAGI sends a recognition ID, update it for Flask server to display
                 if 'opu_data' in message_from_feagi:
                     recognition_id = pns.detect_ID_data(message_from_feagi)
-                    # print('recognition_id', recognition_id) 
-                    if (recognition_id):
-                        print('recognition_id', recognition_id) # example: {'0-5-0': 100}
-                        feagi_image_id = key = next(iter(recognition_id))
+                    if (recognition_id): 
+                        feagi_image_id = key = next(iter(recognition_id)) # example recognition_id: {'0-5-0': 100}
                         img_coords.update_image_ids(None, feagi_image_id)
-                        # new_image_id, new_feagi_image_id = img_coords.get_latest_ids()
-                        # print('feagi_image_id', new_feagi_image_id)
 
                 # Show user image currently sent to FEAGI, with a bounding box showing FEAGI's location data if it exists
                 location_data = pns.recognize_location_data(message_from_feagi)
                 if previous_frame_data:
-                    process_image(modified_data['00_C'], location_data)
+                    new_image_id, feagi_image_id = img_coords.get_latest_ids()
+                    # print ('calling process_image', image_id)
+                    if location_data:
+                        print('location_data:', location_data)
+                        process_image(modified_data['00_C'], location_data)
+                    elif latest_image_id != new_image_id:
+                        latest_image_id = new_image_id
+                        process_image(modified_data['00_C'], None)
 
                 # If camera data is available, generate data for FEAGI
                 if 'camera' in rgb: # This is the data wrapped for feagi data to read
