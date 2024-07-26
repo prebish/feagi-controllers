@@ -37,10 +37,10 @@
       "image_reader": {
         "0": {
           "loop": true,
-          "image_display_duration": 3,
+          "image_display_duration": 2,
           "image_path": "./",
           "test_mode": false,
-          "image_gap_duration": 2
+          "image_gap_duration": 1
         }
       }
     }
