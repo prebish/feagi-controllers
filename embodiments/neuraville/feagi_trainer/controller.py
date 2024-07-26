@@ -106,7 +106,6 @@ if __name__ == "__main__":
             if start_timer == 0:
                 start_timer = datetime.now()
             while capabilities['input']['image_reader']['0']['image_display_duration'] >= int((datetime.now() - start_timer).total_seconds()):
-                print('while loop goin crazyyyy')
                 size_list = pns.resize_list
                 message_from_feagi = pns.message_from_feagi # Needs to re-structure this code to be more consistent
                 temporary_previous, rgb, default_capabilities, modified_data = \
