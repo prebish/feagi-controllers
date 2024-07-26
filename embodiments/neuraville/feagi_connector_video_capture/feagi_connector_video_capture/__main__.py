@@ -3,6 +3,7 @@ import argparse
 import requests
 from time import sleep
 import feagi_connector_video_capture
+from feagi_connector import retina
 from feagi_connector import feagi_interface as feagi
 
 if __name__ == '__main__':
@@ -22,6 +23,7 @@ if __name__ == '__main__':
     # # Check if feagi_connector has arg
     current_path = feagi_connector_video_capture.__path__
     feagi_settings, agent_settings, capabilities, message_to_feagi, configuration = feagi.configuration_load((str(current_path[0]) + '/'))
+    # capabilities = retina.convert_new_json_to_old_json(capabilities)  # temporary
     # feagi_settings = config['feagi_settings'].copy()
     # agent_settings = config['agent_settings'].copy()
     # default_capabilities = config['default_capabilities'].copy()
@@ -31,24 +33,22 @@ if __name__ == '__main__':
     if args['ip']:
         feagi_settings["feagi_host"] = args['ip']
     if args['loop'] == "true" or args['loop'] == "True":
-        capabilities["camera"]["video_loop"] = bool(args['loop'])
+        capabilities['input']['camera']['0']["video_loop"] = bool(args['loop'])
     if args['device']:
         if args['device'] == "monitor":
-            capabilities["camera"]["video_device_index"] = "monitor"
+            capabilities['input']['camera']['0']["video_device_index"] = "monitor"
         else:
             device_list = args['device'].split(',')
             if len(device_list) > 1:
-                capabilities["camera"]["video_device_index"] = [int(device) for device in device_list]
+                capabilities['input']['camera']['0']["video_device_index"] = [int(device) for device in device_list]
             else:
-                capabilities["camera"]["video_device_index"] = [int(device_list[0])]
-    else:
-        capabilities["camera"]["video_device_index"] = capabilities['camera']['video_device_index']
+                capabilities['input']['camera']['0']["video_device_index"] = [int(device_list[0])]
     if args['video']:
-        capabilities["camera"]["video_device_index"] = args['video']
+        capabilities['input']['camera']['0']["video_device_index"] = args['video']
     if args['port']:
         feagi_settings["feagi_api_port"] = args['port']
     if args['image']:
-      capabilities["camera"]["image"] = args['image']
+        capabilities['input']['camera']['0']["image"] = args['image']
     if args['magic_link']:
         network_output = requests.get(args['magic_link']).json()
         capabilities['feagi_url'] = network_output['feagi_url']
