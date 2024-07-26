@@ -101,8 +101,8 @@ if __name__ == "__main__":
                 start_timer = datetime.now()
             while capabilities['input']['image_reader']['0']['image_display_duration'] >= int((datetime.now() - start_timer).total_seconds()):
                 size_list = pns.resize_list
-                temporary_previous, rgb, default_capabilities = \
-                    retina.process_visual_stimuli(
+                temporary_previous, rgb, default_capabilities, modified_data = \
+                    retina.process_visual_stimuli_trainer(
                         raw_frame,
                         default_capabilities,
                         previous_frame_data,
@@ -131,7 +131,7 @@ if __name__ == "__main__":
                     # print("location: ", location_data)
                     latest_image_info["location_data"] = location_data
                     latest_image_info["image"] = default_capabilities['hardcode_for_kat']
-                process_image(default_capabilities['hardcode_for_kat'], latest_image_info['image'], latest_image_info['location_data'])
+                process_image(modified_data['00_C'], latest_image_info['image'], latest_image_info['location_data'])
 
                 # Testing mode section
                 if capabilities['input']['image_reader']['0']['test_mode']:
