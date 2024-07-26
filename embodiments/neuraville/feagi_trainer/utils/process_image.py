@@ -36,8 +36,13 @@ def get_corners(location_data, original_size=(32, 32), target_size=(60, 60)):
     return top_left_scaled, bottom_right_scaled
 
 
-def process_image(raw_frame, location_data=None):
-    copied_frame = raw_frame.copy()
+def process_image(image, latest_image, location_data=None):
+    # global latest_image_info
+
+    # if location_data is None and latest_image_info["image"] is image:
+    #     location_data = latest_image_info["location_data"]
+
+    copied_frame = image.copy()
 
     # Resize the image while maintaining aspect ratio
     target_width = 500
