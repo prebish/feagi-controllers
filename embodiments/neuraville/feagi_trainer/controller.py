@@ -18,6 +18,7 @@ limitations under the License.
 """
 from datetime import datetime
 from utils.process_image import process_image
+import utils.dynamic_image_coordinates as img_coords
 # import shutil
 import threading
 from time import sleep
@@ -86,31 +87,50 @@ if __name__ == "__main__":
     default_capabilities = pns.create_runtime_default_list(default_capabilities, capabilities)
     default_capabilities = retina.convert_new_json_to_old_json(default_capabilities)
     threading.Thread(target=retina.vision_progress, args=(default_capabilities, feagi_settings, camera_data['vision'],), daemon=True).start()
+
     # Main loop for processing images
-    default_capabilities['hardcode_for_kat'] = []
     while continue_loop:
         # Grabs all images in this directory
         image_obj = feagi_trainer.scan_the_folder(capabilities['input']['image_reader']['0']['image_path'])
         for image in image_obj:
-            # latest_image_info = {"image": None, "location_data": None}
             raw_frame = image[0]
             camera_data['vision'] = raw_frame
             name_id = image[1]
+            # Update image ID for the Flask server
+            image_id = key = next(iter(name_id))
+            img_coords.update_image_ids(image_id, None)
+            new_image_id, feagi_image_id = img_coords.get_latest_ids()
+            print('new_image_id', new_image_id)
+            # Carry on with the image processing
             message_to_feagi = feagi_trainer.id_training_with_image(message_to_feagi, name_id)
             if start_timer == 0:
                 start_timer = datetime.now()
             while capabilities['input']['image_reader']['0']['image_display_duration'] >= int((datetime.now() - start_timer).total_seconds()):
                 size_list = pns.resize_list
+                message_from_feagi = pns.message_from_feagi # Needs to re-structure this code to be more consistent
                 temporary_previous, rgb, default_capabilities, modified_data = \
                     retina.process_visual_stimuli_trainer(
                         raw_frame,
                         default_capabilities,
                         previous_frame_data,
                         rgb, capabilities, False) # processes visual data into FEAGI-comprehensible form
+                
 
-                # Process the image to show FEAGI selection boxes on image in browser
-                # if len(default_capabilities['hardcode_for_kat']) > 0:
-                #     process_image(default_capabilities['hardcode_for_kat'])
+
+                if 'opu_data' in message_from_feagi:
+                    recognition_id = pns.detect_ID_data(message_from_feagi)
+                    # print('recognition_id', recognition_id) 
+                    if (recognition_id):
+                        print('recognition_id', recognition_id) # example: {'0-5-0': 100}
+                        feagi_image_id = key = next(iter(recognition_id))
+                        img_coords.update_image_ids(None, feagi_image_id)
+                        # new_image_id, new_feagi_image_id = img_coords.get_latest_ids()
+                        # print('feagi_image_id', new_feagi_image_id)
+
+                # Show user image currently sent to FEAGI, with a bounding box showing FEAGI's location data if it exists
+                location_data = pns.recognize_location_data(message_from_feagi)
+                if previous_frame_data:
+                    process_image(modified_data['00_C'], location_data)
 
                 # If camera data is available, generate data for FEAGI
                 if 'camera' in rgb: # This is the data wrapped for feagi data to read
@@ -118,22 +138,6 @@ if __name__ == "__main__":
                         break
                     else:
                         message_to_feagi = pns.generate_feagi_data(rgb, message_to_feagi)
-
-                message_from_feagi = pns.message_from_feagi # Needs to re-structure this code to be
-                # more consistent
-                # if (message_from_feagi):
-                #     print('message', message_from_feagi)
-                    # get id recognition message
-
-                # location section
-                location_data = pns.recognize_location_data(message_from_feagi)
-                if location_data:
-                    process_image(modified_data['00_C'], location_data)
-                    # print("location: ", location_data)
-                    # latest_image_info["location_data"] = location_data
-                    # latest_image_info["image"] = modified_data['00_C']
-                else:
-                    process_image(modified_data['00_C'])
 
                 # Testing mode section
                 if capabilities['input']['image_reader']['0']['test_mode']:

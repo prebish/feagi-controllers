@@ -14,7 +14,6 @@
     "compression": true
   },
   "capabilities": {
-    "hardcode_for_kat": [],
     "input": {
       "camera": {
         "0": {
@@ -38,7 +37,7 @@
       "image_reader": {
         "0": {
           "loop": true,
-          "image_display_duration": 0,
+          "image_display_duration": 2,
           "image_path": "./",
           "test_mode": false,
           "image_gap_duration": 0
