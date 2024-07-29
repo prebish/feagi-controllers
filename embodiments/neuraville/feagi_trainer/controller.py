@@ -95,8 +95,9 @@ if __name__ == "__main__":
 
                 # location section
                 location_data = pns.recognize_location_data(message_from_feagi)
-                if location_data:
-                    print("location: ", location_data)
+                if 'opu_data' in message_from_feagi:
+                    if location_data:
+                        print("location: ", location_data)
 
 
                 # Testing mode section
