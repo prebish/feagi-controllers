@@ -53,3 +53,22 @@ optional arguments:
                         Change the ZMQ port. Use 30000 for Docker and 3000 for localhost.
 
 ```
+
+# KNOWN ISSUE WITH SSL ERROR ON MAC!
+
+If you see an error like this:
+```commandline
+NotOpenSSLWarning: urllib3 v2 only supports OpenSSL 1.1.1+, currently the 'ssl' module is compiled with 'LibreSSL 2.8.3'. See: https://github.com/urllib3/urllib3/issues/3020
+  warnings.warn(
+```
+
+This issue occurs due to Mac's security, which is perfectly acceptable and understandable.
+
+To fix this, follow these steps:
+
+1. Open Finder.
+2. Go to Applications (on the left side).
+3. Click on Python 3.x.
+4. Double-click on `Install Certificates....ommand` file.
+5. Wait for it to be done then close the terminal it popped.
+6. Re-run your Python script.
