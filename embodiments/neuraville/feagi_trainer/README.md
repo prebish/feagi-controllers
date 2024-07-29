@@ -28,6 +28,10 @@ At this point, the websocket should be successfully connected. You should see a 
 
 ## Customizing the Trainer
 
-### Displaying an Image
+### Displaying Images
 
--
+- A trainer has been built to send FEAGI images and display the image in the browser with FEAGI's guess of what that image is.
+- To use it, after doing the installation steps above, open a separate terminal and run the Flask server with `python utils/flask_server.py`
+- You can manually test FEAGI's ID recognition output:
+  1. In the brain visualizer GUI, click the + beside Cortical Areas, click Output, and select ID recognition from the dropdown.
+  2. Shift + click anywhere in the ID recognition cortical area and hit space to activate. You should see "FEAGI Guess" update above the image in the separate browser window. It will change depending on the selected voxel.

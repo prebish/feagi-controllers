@@ -19,7 +19,6 @@ limitations under the License.
 from datetime import datetime
 from utils.process_image import process_image
 import utils.dynamic_image_coordinates as img_coords
-# import shutil
 import threading
 from time import sleep
 import webbrowser
@@ -35,9 +34,6 @@ def open_browser():
     webbrowser.open('http://localhost:5000')
 
 threading.Timer(1.0, open_browser).start()
-
-# Latest location data for browser image display
-# latest_image_info = {"image": None, "location_data": None}
 
 # This block of code will execute if this script is run as the main module
 if __name__ == "__main__":
@@ -120,12 +116,15 @@ if __name__ == "__main__":
                     recognition_id = pns.detect_ID_data(message_from_feagi)
                     if (recognition_id): 
                         feagi_image_id = key = next(iter(recognition_id)) # example recognition_id: {'0-5-0': 100}
+                        print('updating', feagi_image_id)
                         img_coords.update_image_ids(None, feagi_image_id)
 
                 # Show user image currently sent to FEAGI, with a bounding box showing FEAGI's location data if it exists
                 location_data = pns.recognize_location_data(message_from_feagi)
                 if previous_frame_data:
-                    new_image_id, feagi_image_id = img_coords.get_latest_ids()
+                    data = img_coords.get_latest_ids()
+                    new_image_id = data.get('image_id', '')
+                    feagi_image_id = data.get('feagi_image_id', '')
                     # print ('calling process_image', image_id)
                     if location_data:
                         print('location_data:', location_data)
