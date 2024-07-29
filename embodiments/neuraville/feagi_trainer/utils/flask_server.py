@@ -31,7 +31,7 @@ def index():
                     outline: 0;
                     cursor: pointer;
                     color: white;
-                    background-color: rgb(84, 105, 212);
+                    background-color: rgb(25, 118, 210);
                     border-radius: 4px;
                     font-size: 14px;
                     font-weight: 500;
@@ -39,7 +39,7 @@ def index():
                     display: inline-block;
                     min-height: 28px;
                 }
-            button:hover { background-color: rgb(64, 85, 192); }
+            button:hover { background-color: rgb(33, 150, 243); }
         </style>
     </head>
     <body>
@@ -47,7 +47,7 @@ def index():
             <div style="width: 100%; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center;">
             <div style="width: 55px;"></div>
                 <h2 style="margin: 0; vertical-align: center;">Fitness <span id="fitness-percent" style="font-size: 1.2rem">0%</span></h2> 
-                <button id="reset-button">Reset</button>
+                <button id="reset-button" title="Reset all visible data and timer">Reset</button>
             </div>
             <div style="display: flex; gap: 5px; margin-bottom: 10px;">
                 <h3>Correct: <span id="correct-count">{{ correct_count}}</span></h3>

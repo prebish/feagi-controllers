@@ -2,7 +2,7 @@ import json
 import time
 import os
 
-file_path = 'image_training_data.json'
+file_path = 'utils/image_training_data.json'
 
 static_data = {
         "image_id": "",
