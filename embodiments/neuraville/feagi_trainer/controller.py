@@ -31,7 +31,7 @@ from feagi_connector import feagi_interface as feagi
 
 # Open browser window to display images
 def open_browser():
-    webbrowser.open('http://localhost:5000')
+    webbrowser.open('http://localhost:4001')
 
 threading.Timer(1.0, open_browser).start()
 
@@ -116,7 +116,6 @@ if __name__ == "__main__":
                     recognition_id = pns.detect_ID_data(message_from_feagi)
                     if (recognition_id): 
                         feagi_image_id = key = next(iter(recognition_id)) # example recognition_id: {'0-5-0': 100}
-                        print('updating', feagi_image_id)
                         img_coords.update_image_ids(None, feagi_image_id)
 
                 # Show user image currently sent to FEAGI, with a bounding box showing FEAGI's location data if it exists
@@ -127,7 +126,6 @@ if __name__ == "__main__":
                     feagi_image_id = data.get('feagi_image_id', '')
                     # print ('calling process_image', image_id)
                     if location_data:
-                        print('location_data:', location_data)
                         process_image(modified_data['00_C'], location_data)
                     elif latest_image_id != new_image_id:
                         latest_image_id = new_image_id

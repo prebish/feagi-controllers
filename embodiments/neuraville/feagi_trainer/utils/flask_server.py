@@ -150,11 +150,11 @@ def reset_timer_and_data():
         "last_feagi_time": None
     }
 
-    with open('image_training_data.json', 'w') as file:
+    with open('utils/image_training_data.json', 'w') as file:
         json.dump(static_data, file, indent=4)
 
     return jsonify({'status': 'success', 'start_time': start_time, 'reset_data': static_data})
 
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5000, debug=True)
+    app.run(host='0.0.0.0', port=4001, debug=True)

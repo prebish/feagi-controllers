@@ -13,6 +13,10 @@
     "agent_type": "embodiment",
     "compression": true
   },
+  "trainer_settings": {
+    "host": "127.0.0.1",
+    "port": 4001
+  },
   "capabilities": {
     "input": {
       "camera": {
