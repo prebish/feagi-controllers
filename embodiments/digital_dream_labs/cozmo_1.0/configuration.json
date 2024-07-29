@@ -48,11 +48,12 @@
         },
         "input": {
             "camera": {
+                "0":  {
                 "type": "ipu",
                 "disable": "False",
                 "index": "00",
                 "mirror": "True"
-            },
+            }},
             "proximity": {
                 "0": {
                     "disable": false,
