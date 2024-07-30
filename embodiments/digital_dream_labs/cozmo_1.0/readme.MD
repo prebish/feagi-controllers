@@ -23,3 +23,23 @@ Assuming you already have playground up running.
 6. You can now run the controller as described in step #6 above.
 
 # Extra flags
+Example command: `python controller.py --help`
+```commandline
+optional arguments:
+  -h, --help            Show this help message and exit.
+  
+  -magic_link MAGIC_LINK, --magic_link MAGIC_LINK
+                        Use a magic link. You can find your magic link from NRS studio.
+                        
+  -magic-link MAGIC_LINK, --magic-link MAGIC_LINK
+                        Use a magic link. You can find your magic link from NRS studio.
+                        
+  -magic MAGIC, --magic MAGIC
+                        Use a magic link. You can find your magic link from NRS studio.
+                        
+  -ip IP, --ip IP       Specify the FEAGI IP address.
+  
+  -port PORT, --port PORT
+                        Change the ZMQ port. Use 30000 for Docker and 3000 for localhost.
+
+```
