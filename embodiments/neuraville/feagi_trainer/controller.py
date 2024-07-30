@@ -97,7 +97,8 @@ if __name__ == "__main__":
             name_id = image[1]
             # Update image ID for Flask server to display
             image_id = key = next(iter(name_id))
-            img_coords.update_image_ids(image_id, None)
+            static = img_coords.update_image_ids(image_id, None)
+            print(static)
             # Carry on with the image processing
             message_to_feagi = feagi_trainer.id_training_with_image(message_to_feagi, name_id)
             if start_timer == 0:
@@ -122,15 +123,15 @@ if __name__ == "__main__":
                 # Show user image currently sent to FEAGI, with a bounding box showing FEAGI's location data if it exists
                 location_data = pns.recognize_location_data(message_from_feagi)
                 if previous_frame_data:
-                    data = img_coords.get_latest_ids()
-                    new_image_id = data.get('image_id', '')
-                    feagi_image_id = data.get('feagi_image_id', '')
+                    # static = img_coords.get_latest_ids(static)
+                    new_image_id = static.get('image_id', '')
+                    feagi_image_id = static.get('feagi_image_id', '')
                     # print ('calling process_image', image_id)
                     if location_data:
                         process_image(modified_data['00_C'], location_data)
                     elif latest_image_id != new_image_id:
                         latest_image_id = new_image_id
-                        process_image(modified_data['00_C'], None)
+                        process_image(modified_data['00_C'])
 
                 # If camera data is available, generate data for FEAGI
                 if 'camera' in rgb: # This is the data wrapped for feagi data to read
