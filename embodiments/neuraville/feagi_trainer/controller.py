@@ -39,8 +39,8 @@ def run_app():
     flask_server.start_app()
 
 # Needs to add configuration to toggle this. It should be default to false.
-# app_thread = threading.Thread(target=run_app)
-# app_thread.start()
+app_thread = threading.Thread(target=run_app)
+app_thread.start()
 threading.Timer(1.0, open_browser).start()
 
 # This block of code will execute if this script is run as the main module
