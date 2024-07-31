@@ -1,8 +1,8 @@
 import time
 
-# Create JSON file if it doesn't exist
-def create_file_if_not_exists(static_data):
-    if not static_data:  # generate once
+# Use latest static data or start from base values
+def get_static_data(static_data):
+    if not static_data: 
         return {
             "image_id": "",
             "feagi_image_id": "",
@@ -17,7 +17,7 @@ def create_file_if_not_exists(static_data):
 
 # Update IDs and counts
 def update_image_ids(new_image_id=None, new_feagi_image_id=None, static={}):
-    static = create_file_if_not_exists(static)
+    static = get_static_data(static)
 
     if static:
         # Get existing values or set defaults
