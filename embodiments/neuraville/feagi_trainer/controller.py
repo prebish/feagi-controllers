@@ -17,11 +17,12 @@ limitations under the License.
 ==============================================================================
 """
 from datetime import datetime
-from utils.process_image import process_image
-import utils.dynamic_image_coordinates as img_coords
+from process_image import *
+import dynamic_image_coordinates as img_coords
 import threading
 from time import sleep
 import webbrowser
+import flask_server
 from feagi_connector import testing_mode
 from feagi_connector import retina
 from feagi_connector import pns_gateway as pns
@@ -29,10 +30,17 @@ from feagi_connector.version import __version__
 from feagi_connector import trainer as feagi_trainer
 from feagi_connector import feagi_interface as feagi
 
+
 # Open browser window to display images
 def open_browser():
     webbrowser.open('http://localhost:4001')
 
+def run_app():
+    flask_server.start_app()
+
+# Needs to add configuration to toggle this. It should be default to false.
+# app_thread = threading.Thread(target=run_app)
+# app_thread.start()
 threading.Timer(1.0, open_browser).start()
 
 # This block of code will execute if this script is run as the main module
@@ -41,7 +49,7 @@ if __name__ == "__main__":
     runtime_data = {"vision": {}, "current_burst_id": None, "stimulation_period": None,
                     "feagi_state": None,
                     "feagi_network": None}
-    
+
     # Load configurations and settings for FEAGI, agents, capabilities, and messages
     config = feagi.build_up_from_configuration()
     feagi_settings = config['feagi_settings'].copy()
@@ -83,12 +91,15 @@ if __name__ == "__main__":
     default_capabilities = {}  # It will be generated in process_visual_stimuli. See the
     default_capabilities = pns.create_runtime_default_list(default_capabilities, capabilities)
     default_capabilities = retina.convert_new_json_to_old_json(default_capabilities)
-    threading.Thread(target=retina.vision_progress, args=(default_capabilities, feagi_settings, camera_data['vision'],), daemon=True).start()
+    threading.Thread(target=retina.vision_progress,
+                     args=(default_capabilities, feagi_settings, camera_data['vision'],),
+                     daemon=True).start()
 
     # Main loop for processing images
     while continue_loop:
         # Grabs all images in this directory
-        image_obj = feagi_trainer.scan_the_folder(capabilities['input']['image_reader']['0']['image_path'])
+        image_obj = feagi_trainer.scan_the_folder(
+            capabilities['input']['image_reader']['0']['image_path'])
         latest_image_id = None
         # Iterate through images
         for image in image_obj:
@@ -98,26 +109,30 @@ if __name__ == "__main__":
             # Update image ID for Flask server to display
             image_id = key = next(iter(name_id))
             static = img_coords.update_image_ids(image_id, None)
-            print(static)
+            flask_server.latest_static = static
+            print("controller: ", static)
             # Carry on with the image processing
             message_to_feagi = feagi_trainer.id_training_with_image(message_to_feagi, name_id)
             if start_timer == 0:
                 start_timer = datetime.now()
-            while capabilities['input']['image_reader']['0']['image_display_duration'] >= int((datetime.now() - start_timer).total_seconds()):
+            while capabilities['input']['image_reader']['0']['image_display_duration'] >= int(
+                    (datetime.now() - start_timer).total_seconds()):
                 size_list = pns.resize_list
-                message_from_feagi = pns.message_from_feagi # Needs to re-structure this code to be more consistent
+                message_from_feagi = pns.message_from_feagi  # Needs to re-structure this code to be more consistent
                 temporary_previous, rgb, default_capabilities, modified_data = \
                     retina.process_visual_stimuli_trainer(
                         raw_frame,
                         default_capabilities,
                         previous_frame_data,
-                        rgb, capabilities, False) # processes visual data into FEAGI-comprehensible form
-                
+                        rgb, capabilities,
+                        False)  # processes visual data into FEAGI-comprehensible form
+
                 # When FEAGI sends a recognition ID, update it for Flask server to display
                 if 'opu_data' in message_from_feagi:
                     recognition_id = pns.detect_ID_data(message_from_feagi)
-                    if (recognition_id): 
-                        feagi_image_id = key = next(iter(recognition_id)) # example recognition_id: {'0-5-0': 100}
+                    if (recognition_id):
+                        feagi_image_id = key = next(
+                            iter(recognition_id))  # example recognition_id: {'0-5-0': 100}
                         img_coords.update_image_ids(None, feagi_image_id)
 
                 # Show user image currently sent to FEAGI, with a bounding box showing FEAGI's location data if it exists
@@ -134,12 +149,12 @@ if __name__ == "__main__":
                         process_image(modified_data['00_C'])
 
                 # If camera data is available, generate data for FEAGI
-                if 'camera' in rgb: # This is the data wrapped for feagi data to read
+                if 'camera' in rgb:  # This is the data wrapped for feagi data to read
                     if rgb['camera'] == {}:
                         break
                     else:
                         message_to_feagi = pns.generate_feagi_data(rgb, message_to_feagi)
-                message_from_feagi = pns.message_from_feagi # Needs to re-structure this code to be
+                message_from_feagi = pns.message_from_feagi  # Needs to re-structure this code to be
                 # more consistent
 
                 # location section
@@ -156,7 +171,8 @@ if __name__ == "__main__":
                 else:
                     success_rate, success, total = 0, 0, 0
                 # Send signals to FEAGI
-                pns.signals_to_feagi(message_to_feagi, feagi_ipu_channel, agent_settings, feagi_settings)
+                pns.signals_to_feagi(message_to_feagi, feagi_ipu_channel, agent_settings,
+                                     feagi_settings)
                 # Sleep for the burst duration specified in the settings
                 sleep(feagi_settings['burst_duration'])
             sleep(capabilities['input']['image_reader']['0']['image_gap_duration'])
