@@ -153,21 +153,53 @@ if __name__ == "__main__":
                     create_generic_input_dict['idgpio'][location_string] = 100
             message_to_feagi = sensors.add_generic_input_to_feagi_data(create_generic_input_dict, message_to_feagi)
         if analog_pin_board:
-            analog_encoded = dict()
-            for pin in range(len(analog_pin_board)):
-                analog_encoded[pin] = analog_pin_board[pin].read()
-            message_to_feagi, capabilities['analog']['max_value_list'], capabilities['analog'][
-                'min_value_list'] = (
-                sensors.create_data_for_feagi(
-                    cortical_id='iagpio',
-                    robot_data=analog_encoded,
-                    maximum_range=capabilities['analog']['max_value_list'],
-                    minimum_range=capabilities['analog']['min_value_list'],
-                    enable_symmetric=False,
-                    index=capabilities['analog']['dev_index'],
-                    count=capabilities['analog']['sub_channel_count'],
-                    message_to_feagi=message_to_feagi,
-                    has_range=True))
+            for device_id in capabilities['input']['analog']:
+                if not capabilities['input']['analog'][device_id]['disable']:
+                    analog_data = analog_pin_board[int(device_id)].read()
+                    cortical_id = capabilities['input']['analog'][device_id]["cortical_id"]
+                    create_data_list = dict()
+                    create_data_list[cortical_id] = dict()
+                    start_point = capabilities['input']['analog'][device_id]["feagi_index"] * len(
+                        capabilities['input']['analog'])
+                    feagi_data_position = start_point
+                    capabilities['input']['analog'][device_id]['maximum_value'], \
+                    capabilities['input']['analog'][device_id][
+                        'minimum_value'] = sensors.measuring_max_and_min_range(analog_data,
+                                                                               capabilities[
+                                                                                   'input'][
+                                                                                   'analog'][device_id][
+                                                                                   'maximum_value'],
+                                                                               capabilities[
+                                                                                   'input'][
+                                                                                   'analog'][device_id][
+                                                                                   'minimum_value'])
+
+                    position_in_feagi_location = sensors.convert_sensor_to_ipu_data(
+                        capabilities['input']['analog'][device_id]['minimum_value'],
+                        capabilities['input']['analog'][device_id]['maximum_value'],
+                        analog_data,
+                        capabilities['input']['analog'][device_id]['feagi_index'],
+                        cortical_id=cortical_id)
+                    create_data_list[cortical_id][position_in_feagi_location] = 100
+                    if create_data_list[cortical_id]:
+                        message_to_feagi = sensors.add_generic_input_to_feagi_data(create_data_list,
+                                                                                   message_to_feagi)
+
+            # analog_encoded = dict()
+            # for pin in range(len(analog_pin_board)):
+            #     analog_encoded[pin] = analog_pin_board[pin].read()
+            # message_to_feagi, capabilities['analog']['max_value_list'], capabilities['analog'][
+            #     'min_value_list'] = (
+            #     sensors.create_data_for_feagi(
+            #         cortical_id='iagpio',
+            #         robot_data=analog_encoded,
+            #         maximum_range=capabilities['analog']['max_value_list'],
+            #         minimum_range=capabilities['analog']['min_value_list'],
+            #         enable_symmetric=False,
+            #         index=capabilities['analog']['dev_index'],
+            #         count=capabilities['analog']['sub_channel_count'],
+            #         message_to_feagi=message_to_feagi,
+            #         has_range=True))
         pns.signals_to_feagi(message_to_feagi, feagi_ipu_channel, agent_settings, feagi_settings)
         message_to_feagi.clear()
         sleep(feagi_settings['feagi_burst_speed'])
