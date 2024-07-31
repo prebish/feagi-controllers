@@ -69,10 +69,10 @@ if __name__ == "__main__":
     threading.Thread(target=retina.vision_progress, args=(default_capabilities, feagi_settings, camera_data['vision'],), daemon=True).start()
     while continue_loop:
         image_obj = feagi_trainer.scan_the_folder(capabilities['input']['image_reader']['0']['image_path'])
-        if not list(image_obj):
-            if flag: # Not creative enough to naming better one.
-                print("No image detected in the folder, please install new image in the same folder. See more information, please visit readme.MD.")
-                flag = False
+        # if not list(image_obj):
+        #     if flag: # Not creative enough to naming better one.
+        #         print("No image detected in the folder, please install new image in the same folder. See more information, please visit readme.MD.")
+        #         flag = False
         for image in image_obj:
             raw_frame = image[0]
             camera_data['vision'] = raw_frame
