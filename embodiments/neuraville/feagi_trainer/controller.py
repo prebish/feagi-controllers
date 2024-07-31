@@ -16,24 +16,19 @@ See the License for the specific language governing permissions and
 limitations under the License.
 ==============================================================================
 """
-from datetime import datetime
-from process_image import *
-import dynamic_image_coordinates as img_coords
 import threading
-from time import sleep
-import webbrowser
 import flask_server
-from feagi_connector import testing_mode
+from time import sleep
+from process_image import *
+from datetime import datetime
 from feagi_connector import retina
+from feagi_connector import testing_mode
 from feagi_connector import pns_gateway as pns
+import dynamic_image_coordinates as img_coords
 from feagi_connector.version import __version__
-from feagi_connector import trainer as feagi_trainer
 from feagi_connector import feagi_interface as feagi
+from feagi_connector import trainer as feagi_trainer
 
-
-# Open browser window to display images
-def open_browser():
-    webbrowser.open('http://localhost:4001')
 
 def run_app():
     flask_server.start_app()
@@ -41,7 +36,6 @@ def run_app():
 # Needs to add configuration to toggle this. It should be default to false.
 app_thread = threading.Thread(target=run_app)
 app_thread.start()
-threading.Timer(1.0, open_browser).start()
 
 # This block of code will execute if this script is run as the main module
 if __name__ == "__main__":
@@ -108,9 +102,7 @@ if __name__ == "__main__":
             name_id = image[1]
             # Update image ID for Flask server to display
             image_id = key = next(iter(name_id))
-            static = img_coords.update_image_ids(image_id, None)
-            flask_server.latest_static = static
-            print("controller: ", static)
+            flask_server.latest_static = img_coords.update_image_ids(new_image_id=image_id, new_feagi_image_id=None, static=flask_server.latest_static)
             # Carry on with the image processing
             message_to_feagi = feagi_trainer.id_training_with_image(message_to_feagi, name_id)
             if start_timer == 0:
@@ -118,7 +110,7 @@ if __name__ == "__main__":
             while capabilities['input']['image_reader']['0']['image_display_duration'] >= int(
                     (datetime.now() - start_timer).total_seconds()):
                 size_list = pns.resize_list
-                message_from_feagi = pns.message_from_feagi  # Needs to re-structure this code to be more consistent
+                message_from_feagi = pns.message_from_feagi
                 temporary_previous, rgb, default_capabilities, modified_data = \
                     retina.process_visual_stimuli_trainer(
                         raw_frame,
@@ -131,16 +123,17 @@ if __name__ == "__main__":
                 if 'opu_data' in message_from_feagi:
                     recognition_id = pns.detect_ID_data(message_from_feagi)
                     if (recognition_id):
-                        feagi_image_id = key = next(
-                            iter(recognition_id))  # example recognition_id: {'0-5-0': 100}
-                        img_coords.update_image_ids(None, feagi_image_id)
+                        feagi_image_id = key = next(iter(recognition_id))  # example recognition_id: {'0-5-0': 100}
+                        flask_server.latest_static = img_coords.update_image_ids(new_image_id=None,
+                                                             new_feagi_image_id=feagi_image_id,
+                                                             static=flask_server.latest_static)
 
                 # Show user image currently sent to FEAGI, with a bounding box showing FEAGI's location data if it exists
                 location_data = pns.recognize_location_data(message_from_feagi)
                 if previous_frame_data:
                     # static = img_coords.get_latest_ids(static)
-                    new_image_id = static.get('image_id', '')
-                    feagi_image_id = static.get('feagi_image_id', '')
+                    new_image_id = flask_server.latest_static.get('image_id', '')
+                    feagi_image_id = flask_server.latest_static.get('feagi_image_id', '')
                     # print ('calling process_image', image_id)
                     if location_data:
                         process_image(modified_data['00_C'], location_data)
@@ -159,9 +152,9 @@ if __name__ == "__main__":
 
                 # location section
                 location_data = pns.recognize_location_data(message_from_feagi)
-                if 'opu_data' in message_from_feagi:
-                    if location_data:
-                        print("location: ", location_data)
+                # if 'opu_data' in message_from_feagi: # Shouldn't even print at all
+                #     if location_data:
+                #         print("location: ", location_data)
                 # Testing mode section
                 if capabilities['input']['image_reader']['0']['test_mode']:
                     success_rate, success, total = testing_mode.mode_testing(name_id,
@@ -175,6 +168,7 @@ if __name__ == "__main__":
                                      feagi_settings)
                 # Sleep for the burst duration specified in the settings
                 sleep(feagi_settings['burst_duration'])
+            blank_image()  # reset the image or during gap
             sleep(capabilities['input']['image_reader']['0']['image_gap_duration'])
             previous_frame_data = temporary_previous.copy()
             start_timer = 0
