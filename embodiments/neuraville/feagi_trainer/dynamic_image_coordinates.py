@@ -60,4 +60,4 @@ def update_image_ids(new_image_id=None, new_feagi_image_id=None, static={}):
         }
     else:
         print('No data found to update.')
-        return static_data
+        return static

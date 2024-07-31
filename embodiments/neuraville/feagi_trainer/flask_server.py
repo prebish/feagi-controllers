@@ -1,16 +1,19 @@
 # Creates a browser window to show user images sent to FEAGI, its selections of objects within them, etc.
-from flask import Flask, send_file, render_template_string, jsonify
-import dynamic_image_coordinates as img_coords
-import json
-import logging
 import os
 import time
+import logging
+from flask import Flask, send_file, render_template_string, jsonify
 
-logging.basicConfig(level=logging.DEBUG)
+# logging.basicConfig(level=logging.DEBUG)
+log = logging.getLogger('werkzeug')
+log.setLevel(logging.CRITICAL)
 
 app = Flask(__name__)
 
 start_time = time.time()
+
+latest_static = {}
+
 
 @app.route('/')
 def index():
@@ -118,6 +121,7 @@ def index():
     '''
     return render_template_string(html, runtime=f"{runtime:.2f}")
 
+
 # Fetch latest image sent to FEAGI
 @app.route('/image')
 def get_image():
@@ -127,20 +131,21 @@ def get_image():
     else:
         return "Image not found", 404
 
+
 # Fetch latest image ID and any FEAGI recognition ID
 @app.route('/latest_ids')
 def latest_ids():
-    data = img_coords.get_latest_ids() 
-    print(data)
-    return jsonify(data)
+    global latest_static
+    return jsonify(latest_static)
+
 
 # Reset timer and data
 @app.route('/reset_timer_and_data')
 def reset_timer_and_data():
-    global start_time
+    global start_time, latest_static
     start_time = time.time()
 
-    static_data = {
+    latest_static = {
         "image_id": "",
         "feagi_image_id": "",
         "correct_count": 0,
@@ -150,11 +155,9 @@ def reset_timer_and_data():
         "last_feagi_time": None
     }
 
-    with open('utils/image_training_data.json', 'w') as file:
-        json.dump(static_data, file, indent=4)
-
-    return jsonify({'status': 'success', 'start_time': start_time, 'reset_data': static_data})
+    return jsonify({'status': 'success', 'start_time': start_time, 'reset_data': latest_static})
 
 
-if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=4001, debug=True)
+def start_app():
+    app.run(host='0.0.0.0', port=4001, debug=False, use_reloader=False)
+

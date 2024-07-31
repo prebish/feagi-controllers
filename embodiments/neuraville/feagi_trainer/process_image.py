@@ -1,5 +1,9 @@
 # Modifies an image and saves it for sending
-import cv2 
+import cv2
+import numpy as np
+
+default_blank = np.zeros((500, 500, 3), dtype=np.uint8)
+
 
 def get_corners(location_data, original_size=(32, 32), target_size=(60, 60)):
     # Initialize variables to store min and max coordinates
@@ -47,41 +51,47 @@ def process_image(image, location_data=None):
     resized_frame = cv2.resize(copied_frame, (target_width, target_height))
 
     if location_data:
-        top_left, bottom_right = get_corners(location_data, original_size=(32, 32), target_size=resized_frame.shape[1::-1])
+        top_left, bottom_right = get_corners(location_data, original_size=(32, 32),
+                                             target_size=resized_frame.shape[1::-1])
 
         # Define the border thickness
         border_thickness = 3
 
         # Draw the outer black rectangle (border)
-        cv2.rectangle(resized_frame, 
-                    (top_left[0] - border_thickness, top_left[1] - border_thickness),
-                    (bottom_right[0] + border_thickness, bottom_right[1] + border_thickness),
-                    (0, 0, 0), border_thickness)
+        cv2.rectangle(resized_frame,
+                      (top_left[0] - border_thickness, top_left[1] - border_thickness),
+                      (bottom_right[0] + border_thickness, bottom_right[1] + border_thickness),
+                      (0, 0, 0), border_thickness)
 
         # Draw the inner green rectangle
         cv2.rectangle(resized_frame, top_left, bottom_right, (0, 255, 0), 2)
 
-        # Add text to the image in the top left of the box
-        # text = "FEAGI Perception: dog"
-        # text_position = (top_left[0], top_left[1] + 5)  # Adjusted to fit background
+    # Save the processed image to a file
+    image_path = 'latest_image.jpg'
+    cv2.imwrite(image_path, resized_frame)
 
-        # # Font and text size
-        # font = cv2.FONT_HERSHEY_SIMPLEX
-        # font_scale = 0.6
-        # font_thickness = 2
 
-        # # Calculate the width and height of the text box
-        # (text_width, text_height), baseline = cv2.getTextSize(text, font, font_scale, font_thickness)
-        # text_height += baseline
+def blank_image(location_data=None):
+    global default_blank
+    resized_frame = default_blank
 
-        # # Create a rectangle filled with black color for the text background
-        # background_top_left = (text_position[0], text_position[1] - text_height)
-        # background_bottom_right = (text_position[0] + text_width, text_position[1] + baseline)
-        # cv2.rectangle(resized_frame, background_top_left, background_bottom_right, (0, 0, 0), cv2.FILLED)
 
-        # # Put the text over the black rectangle
-        # cv2.putText(resized_frame, text, text_position, font, font_scale, (0, 255, 0), font_thickness)
+    if location_data:
+        top_left, bottom_right = get_corners(location_data, original_size=(32, 32),
+                                             target_size=resized_frame.shape[1::-1])
+
+        # Define the border thickness
+        border_thickness = 3
+
+        # Draw the outer black rectangle (border)
+        cv2.rectangle(resized_frame,
+                      (top_left[0] - border_thickness, top_left[1] - border_thickness),
+                      (bottom_right[0] + border_thickness, bottom_right[1] + border_thickness),
+                      (0, 0, 0), border_thickness)
+
+        # Draw the inner green rectangle
+        cv2.rectangle(resized_frame, top_left, bottom_right, (0, 255, 0), 2)
 
     # Save the processed image to a file
-    image_path = 'utils/latest_image.jpg'
+    image_path = 'latest_image.jpg'
     cv2.imwrite(image_path, resized_frame)
