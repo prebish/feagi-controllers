@@ -38,21 +38,21 @@ camera_data = {"vision": []}
 def process_video(video_path, capabilities):
     webcam_list = list()
     webcam_data_each = dict()
-    if capabilities["camera"]["image"] == "":
+    if capabilities['input']['camera']['0']["image"] == "":
         for device in video_path:
             new_cam = cv2.VideoCapture(device)
             webcam_list.append(new_cam)
     # cam.set(3, 320)
     # cam.set(4, 240)
-    if capabilities['camera']['video_device_index'] == "monitor":
+    if capabilities['input']['camera']['0']['video_device_index'] == "monitor":
         all_monitors = screeninfo.get_monitors()  # Needs to create an IPU for this
     pixels = []
     static_image = []
     while True:
-        if capabilities['camera']['video_device_index'] != "monitor":
-            if capabilities["camera"]["image"] != "":
+        if capabilities['input']['camera']['0']['video_device_index'] != "monitor":
+            if capabilities['input']['camera']['0']["image"] != "":
                 if static_image == []:
-                    pixels = cv2.imread(capabilities["camera"]["image"], -1)
+                    pixels = cv2.imread(capabilities['input']['camera']['0']["image"], -1)
                     static_image = pixels
                 else:
                     pixels = static_image
@@ -67,15 +67,15 @@ def process_video(video_path, capabilities):
                 #     check, pixels = cam.read()
         else:
             check = True
-        if capabilities['camera']['video_device_index'] != "monitor":
-            if bool(capabilities["camera"]["video_loop"]):
+        if capabilities['input']['camera']['0']['video_device_index'] != "monitor":
+            if bool(capabilities['input']['camera']['0']["video_loop"]):
                 if check:
                     sleep(0.05)
                 else:
                     cam.set(cv2.CAP_PROP_POS_FRAMES, 0)
-        if capabilities['camera']['video_device_index'] == "monitor":
+        if capabilities['input']['camera']['0']['video_device_index'] == "monitor":
             with mss.mss() as sct:
-                monitors = all_monitors[capabilities['camera']['monitor']]
+                monitors = all_monitors[capabilities['input']['camera']['0']['monitor']]
                 monitor = {
                     "top": monitors.y,
                     "left": monitors.x,
@@ -84,11 +84,11 @@ def process_video(video_path, capabilities):
 
                 img = numpy.array(sct.grab(monitor))
                 pixels = cv2.cvtColor(img, cv2.COLOR_RGBA2RGB)
-            if capabilities["camera"]["mirror"]:
+            if capabilities['input']['camera']['0']["mirror"]:
                 pixels = cv2.flip(pixels, 1)
             camera_data["vision"] = pixels
         else:
-            if capabilities["camera"]["mirror"]:
+            if capabilities['input']['camera']['0']["mirror"]:
                 if webcam_data_each:
                     for device in webcam_data_each:
                         webcam_data_each[device] = cv2.flip(webcam_data_each[device], 1)
@@ -109,7 +109,7 @@ def adjust_gamma(image, gamma=5.0):
 
 def main(feagi_auth_url, feagi_settings, agent_settings, capabilities, message_to_feagi):
     print("full list: ", capabilities)
-    threading.Thread(target=process_video, args=(capabilities['camera']['video_device_index'],
+    threading.Thread(target=process_video, args=(capabilities['input']['camera']['0']['video_device_index'],
                                                  capabilities), daemon=True).start()
     # Generate runtime dictionary
     runtime_data = {"vision": {}, "current_burst_id": None, "stimulation_period": None,
@@ -141,9 +141,9 @@ def main(feagi_auth_url, feagi_settings, agent_settings, capabilities, message_t
     default_capabilities = {}  # It will be generated in process_visual_stimuli. See the
     # overwrite manual
     default_capabilities = pns.create_runtime_default_list(default_capabilities, capabilities)
+    default_capabilities = retina.convert_new_json_to_old_json(default_capabilities)  # temporary
     threading.Thread(target=pns.feagi_listener, args=(feagi_opu_channel,), daemon=True).start()
-    threading.Thread(target=retina.vision_progress,
-                     args=(default_capabilities, feagi_settings, camera_data['vision'],), daemon=True).start()
+    threading.Thread(target=retina.vision_progress, args=(default_capabilities, feagi_settings, camera_data['vision'],), daemon=True).start()
     while True:
         try:
             if len(camera_data['vision']) > 0:

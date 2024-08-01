@@ -14,35 +14,70 @@
         "compression": true
     },
     "capabilities": {
-        "proximity": {
-            "sub_channel_count": 1,
-            "dev_index": 0,
-            "proximity_min_distance": [10],
-            "proximity_max_distance": [400]
-        },
-        "acceleration": {
-                "sub_channel_count": 3,
-                "dev_index": 0,
-                "acceleration_max_value_list": [],
-                "acceleration_min_value_list": []
+        "input": {
+            "gyro": {
+                "0": {
+                    "feagi_index": 0,
+                    "disable": 0,
+                    "max_value": [
+                        3.0,
+                        3.0,
+                        3.0
+                    ],
+                    "min_value": [
+                        -3.0,
+                        -3.0,
+                        -3.0
+                    ],
+                    "cortical_id": "i__gyr",
+                    "custom_name": "gyro_0"
+                }
+                },
+            "proximity": {
+                "0": {
+                    "disable": false,
+                    "feagi_index": 0,
+                    "proximity_min_distance": null,
+                    "proximity_max_distance": null,
+                    "cortical_id": "i__pro",
+                    "custom_name": "proximity_0"
+                }
             },
-        "gyro": {
-            "sub_channel_count": 3,
-            "dev_index": 0,
-            "gyro_max_value_list": [],
-            "gyro_min_value_list": []
+            "battery": {
+                "0": {
+                    "disable": false,
+                    "feagi_index": 0,
+                    "minimum_value": 0,
+                    "maximum_value": 100,
+                    "cortical_id": "i__bat",
+                    "custom_name": "battery_0"
+                }
             },
-        "battery": {
-            "sub_channel_count": 1,
-            "dev_index": 0,
-            "battery_max_value_list": [100],
-            "battery_min_value_list": [0]
-        },
-        "camera": {
-            "type": "ipu",
-            "disabled": "False",
-            "index": "00",
-            "mirror": "True"
-        }
+            "accelerator": {
+                "0": {
+                    "feagi_index": 0,
+                    "disable": 0,
+                    "max_value": [
+                        null,
+                        null,
+                        null
+                    ],
+                    "min_value": [
+                        null,
+                        null,
+                        null
+                    ],
+                    "cortical_id": "i__acc",
+                    "custom_name": "accelerometer_0"
+                }
+            },
+            "camera": {
+                "0": {
+                    "type": "ipu",
+                    "disable": "False",
+                    "index": "00",
+                    "mirror": "True"
+                }
+            }
     }
-}
+}}

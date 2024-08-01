@@ -17,12 +17,49 @@
         "arduino": {
             "port": "/dev/ttyACM0"
         },
-        "analog": {
-            "max_value_list": [1,1 ,1 ,1, 1],
-            "min_value_list": [0,0,0,0,0],
-            "symmetric": false,
-            "sub_channel_count": 5,
-            "dev_index": 0
+        "input": {
+            "analog": {
+                "0": {
+                    "disable": false,
+                    "feagi_index": 0,
+                    "minimum_value": 0,
+                    "maximum_value": 1,
+                    "cortical_id": "iagpio",
+                    "custom_name": "analog_pin_0"
+                },
+                "1": {
+                    "disable": false,
+                    "feagi_index": 1,
+                    "minimum_value": 0,
+                    "maximum_value": 1,
+                    "cortical_id": "iagpio",
+                    "custom_name": "analog_pin_1"
+                },
+                "2": {
+                    "disable": false,
+                    "feagi_index": 2,
+                    "minimum_value": 0,
+                    "maximum_value": 1,
+                    "cortical_id": "iagpio",
+                    "custom_name": "analog_pin_2"
+                },
+                "3": {
+                    "disable": false,
+                    "feagi_index": 3,
+                    "minimum_value": 0,
+                    "maximum_value": 1,
+                    "cortical_id": "iagpio",
+                    "custom_name": "analog_pin_3"
+                },
+                "4": {
+                    "disable": false,
+                    "feagi_index": 4,
+                    "minimum_value": 0,
+                    "maximum_value": 1,
+                    "cortical_id": "iagpio",
+                    "custom_name": "analog_pin_4"
+                }
+            }
         }
     }
 }
