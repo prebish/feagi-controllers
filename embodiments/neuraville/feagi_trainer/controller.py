@@ -90,25 +90,28 @@ if __name__ == "__main__":
                      daemon=True).start()
 
     # Main loop for processing images
+    new_cam = cv2.VideoCapture(2)
     while continue_loop:
         # Grabs all images in this directory
-        image_obj = feagi_trainer.scan_the_folder(
-            capabilities['input']['image_reader']['0']['image_path'])
+        # image_obj = feagi_trainer.scan_the_folder(
+        #     capabilities['input']['image_reader']['0']['image_path'])
         latest_image_id = None
         # Iterate through images
-        for image in image_obj:
-            raw_frame = image[0]
+        for image in range(1):
+            # raw_frame = image[0]
+            check, raw_frame = new_cam.read()
             camera_data['vision'] = raw_frame
-            name_id = image[1]
+            # name_id = image[1]
+            name_id = "0-0-0"
             # Update image ID for Flask server to display
-            image_id = key = next(iter(name_id))
+            # image_id = key = next(iter(name_id))
+            image_id = "0-0-0"
             flask_server.latest_static = img_coords.update_image_ids(new_image_id=image_id, new_feagi_image_id=None, static=flask_server.latest_static)
             # Carry on with the image processing
             message_to_feagi = feagi_trainer.id_training_with_image(message_to_feagi, name_id)
-            if start_timer == 0:
+            if start_timer == 0.0:
                 start_timer = datetime.now()
-            while capabilities['input']['image_reader']['0']['image_display_duration'] >= int(
-                    (datetime.now() - start_timer).total_seconds()):
+            while float(capabilities['input']['image_reader']['0']['image_display_duration']) >= (datetime.now() - start_timer).total_seconds():
                 size_list = pns.resize_list
                 message_from_feagi = pns.message_from_feagi
                 temporary_previous, rgb, default_capabilities, modified_data = \
@@ -141,6 +144,8 @@ if __name__ == "__main__":
                         latest_image_id = new_image_id
                         process_image(modified_data['00_C'])
 
+                if modified_data:
+                    flask_server.latest_data = modified_data['00_C']
                 # If camera data is available, generate data for FEAGI
                 if 'camera' in rgb:  # This is the data wrapped for feagi data to read
                     if rgb['camera'] == {}:
@@ -167,11 +172,11 @@ if __name__ == "__main__":
                 pns.signals_to_feagi(message_to_feagi, feagi_ipu_channel, agent_settings,
                                      feagi_settings)
                 # Sleep for the burst duration specified in the settings
-                sleep(feagi_settings['burst_duration'])
+                sleep(0.05)
             blank_image()  # reset the image or during gap
             sleep(capabilities['input']['image_reader']['0']['image_gap_duration'])
             previous_frame_data = temporary_previous.copy()
-            start_timer = 0
+            start_timer = 0.0
             message_to_feagi.clear()
         # Sleep for the burst duration before the next iteration
         sleep(feagi_settings['burst_duration'])
