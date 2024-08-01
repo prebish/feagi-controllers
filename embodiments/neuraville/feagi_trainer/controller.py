@@ -136,10 +136,12 @@ if __name__ == "__main__":
                     feagi_image_id = flask_server.latest_static.get('feagi_image_id', '')
                     # print ('calling process_image', image_id)
                     if location_data:
-                        process_image(modified_data['00_C'], location_data)
+                        if '00_C' in modified_data:
+                            process_image(modified_data['00_C'], location_data)
                     elif latest_image_id != new_image_id:
                         latest_image_id = new_image_id
-                        process_image(modified_data['00_C'])
+                        if '00_C' in modified_data:
+                            process_image(modified_data['00_C'])
 
                 # If camera data is available, generate data for FEAGI
                 if 'camera' in rgb:  # This is the data wrapped for feagi data to read
