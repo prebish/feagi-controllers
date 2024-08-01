@@ -1,12 +1,7 @@
-import os
-import json
 import time
-import argparse
 import threading
 from djitellopy import Tello
-from datetime import datetime
 from version import __version__
-from feagi_connector import router
 from feagi_connector import retina
 from feagi_connector import sensors
 from feagi_connector import actuators
@@ -15,7 +10,7 @@ from feagi_connector import feagi_interface as FEAGI
 
 previous_frame_data = dict()
 flag = False
-camera_data = {"vision": {}}
+camera_data = {"vision": []}
 speed = {'0': 50}
 
 
@@ -24,9 +19,7 @@ def get_battery(full_data):
     full data should be a raw data of get_current_state().
     This will return the battery using the raw full data
     """
-    new_data = dict()
-    new_data['battery_charge_level'] = full_data['bat']
-    return new_data
+    return full_data['bat']
 
 
 def get_ultrasonic(full_data):
@@ -34,7 +27,9 @@ def get_ultrasonic(full_data):
     full data should be a raw data of get_current_state().
     This will return the battery using the raw full data
     """
-    return full_data['tof'] * 0.01  # convert to meter unit
+    if full_data['tof'] > 400:
+        full_data['tof'] = 400
+    return full_data['tof']  # convert to meter unit
 
 
 def get_gyro(full_data):
@@ -45,15 +40,9 @@ def get_gyro(full_data):
     """
     new_data = dict()
     try:
-        new_data['0'] = convert_gyro_into_feagi(full_data['pitch'],
-                                                capabilities['gyro']['resolution'],
-                                                capabilities['acc']['range'])
-        new_data['1'] = convert_gyro_into_feagi(full_data['roll'],
-                                                capabilities['gyro']['resolution'],
-                                                capabilities['acc']['range'])
-        new_data['2'] = convert_gyro_into_feagi(full_data['yaw'],
-                                                capabilities['gyro']['resolution'],
-                                                capabilities['acc']['range'])
+        new_data[0] = full_data['pitch']
+        new_data[1] = full_data['roll']
+        new_data[2] = full_data['yaw']
         return new_data
     except Exception as e:
         print("ERROR STARTS WITH: ", e)
@@ -66,14 +55,9 @@ def get_accelerator(full_data):
     """
     new_data = dict()
     try:
-        new_data['0'] = convert_gyro_into_feagi(full_data['agx'],
-                                                capabilities['acc']['resolution'],
-                                                capabilities['acc']['range'])
-        new_data['1'] = convert_gyro_into_feagi(full_data['agy'],
-                                                capabilities['acc']['resolution'],
-                                                capabilities['acc']['range'])
-        new_data['2'] = offset_z(full_data['agz'], capabilities['acc']['resolution'],
-                                 capabilities['acc']['range'])
+        new_data[0] = full_data['agx']
+        new_data[1] = full_data['agy']
+        new_data[2] = full_data['agz']
         return new_data
     except Exception as e:
         print("ERROR STARTS WITH: ", e)
@@ -165,25 +149,6 @@ def navigate_to_xyz(self, x=0, y=0, z=0, s=0):
     self.send_command_without_return(cmd)
 
 
-def convert_gyro_into_feagi(value, resolution, range_number):
-    new_value = value - (range_number[0])
-    return (new_value * resolution) / (range_number[1] - range_number[0])
-
-
-def offset_z(value, resolution, range_number):
-    """"
-    Gravity is 9.8 m/s^2 however when the drone is on the table, it should be at zero. This
-    offset will keep it to zero if the value is between than 2 and -2, it will be zero.
-    """
-    new_value = value - (range_number[0])
-    new_value = (new_value * resolution) / (range_number[1] - range_number[0])
-    if new_value > 2:
-        return new_value
-    elif new_value < -2:
-        return new_value
-    else:
-        return 0
-
 
 def action(obtained_signals):
     global speed
@@ -243,6 +208,9 @@ if __name__ == '__main__':
     default_capabilities = config['default_capabilities'].copy()
     message_to_feagi = config['message_to_feagi'].copy()
     capabilities = config['capabilities'].copy()
+    default_capabilities = retina.convert_new_json_to_old_json(default_capabilities)  # temporary
+    print("cap: ", capabilities)
+    print("default: ", default_capabilities)
 
     # # # FEAGI registration # # # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
     # - - - - - - - - - - - - - - - - - - #
@@ -270,7 +238,7 @@ if __name__ == '__main__':
     start_camera(tello)
 
     # overwrite manual
-    threading.Thread(target=retina.vision_progress, args=(default_capabilities, feagi_opu_channel, api_address, feagi_settings, camera_data['vision'],), daemon=True).start()
+    threading.Thread(target=retina.vision_progress, args=(default_capabilities, feagi_settings, camera_data['vision'],), daemon=True).start()
 
     while True:
         try:
@@ -284,8 +252,7 @@ if __name__ == '__main__':
             gyro = get_gyro(data)
             acc = get_accelerator(data)
             sonar = get_ultrasonic(data)
-            bat = get_battery(data)
-            battery = bat['battery_charge_level']
+            battery = get_battery(data)
             raw_frame = full_frame(tello)
             camera_data['vision'] = raw_frame
             default_capabilities['camera']['blink'] = []
@@ -299,17 +266,116 @@ if __name__ == '__main__':
                 rgb, capabilities)
 
             # INSERT SENSORS INTO the FEAGI DATA SECTION BEGIN
-            message_to_feagi = pns.generate_feagi_data(rgb, msg_counter, datetime.now(),
-                                                       message_to_feagi)
+            message_to_feagi = pns.generate_feagi_data(rgb,message_to_feagi)
             # Add gyro data into feagi data
-            message_to_feagi = sensors.add_gyro_to_feagi_data(gyro, message_to_feagi)
-            # Add battery data into feagi data
-            message_to_feagi = sensors.add_battery_to_feagi_data(battery, message_to_feagi)
-            # Add accelerator data into feagi data
-            message_to_feagi = sensors.add_acc_to_feagi_data(acc, message_to_feagi)
-            # Add sonar data into feagi data. Leveraging the same process as ultrasonic.
-            message_to_feagi = sensors.add_ultrasonic_to_feagi_data(sonar, message_to_feagi)
+            if gyro:
+                for device_id in capabilities['input']['gyro']:
+                    if not capabilities['input']['gyro'][device_id]['disable']:
+                        cortical_id = capabilities['input']['gyro'][device_id]["cortical_id"]
+                        create_data_list = dict()
+                        create_data_list[cortical_id] = dict()
+                        start_point = capabilities['input']['gyro'][device_id]["feagi_index"] * len(capabilities['input']['gyro'])
+                        feagi_data_position = start_point
+                        try:
+                            for device_id in range(len(capabilities['input']['gyro'][device_id]['max_value'])):
+                                capabilities['input']['gyro']['0']['max_value'][device_id], capabilities['input']['gyro']['0']['min_value'][device_id] = sensors.measuring_max_and_min_range(gyro[device_id],
+                                                                    capabilities['input']['gyro']['0']['max_value'][device_id],
+                                                                    capabilities['input']['gyro']['0']['min_value'][device_id])
 
+                                position_in_feagi_location = sensors.convert_sensor_to_ipu_data(
+                                    capabilities['input']['gyro']['0']['min_value'][device_id],
+                                    capabilities['input']['gyro']['0']['max_value'][device_id],
+                                    gyro[device_id],
+                                    capabilities['input']['gyro']['0']['feagi_index'] + device_id,
+                                    cortical_id=cortical_id,
+                                    symmetric=True)
+                                create_data_list[cortical_id][position_in_feagi_location] = 100
+                            if create_data_list[cortical_id]:
+                                message_to_feagi = sensors.add_generic_input_to_feagi_data(create_data_list, message_to_feagi)
+                        except:
+                            pass
+                # message_to_feagi, capabilities['gyro']['gyro_max_value_list'], \
+                #     capabilities['gyro']['gyro_min_value_list'] = sensors.create_data_for_feagi(
+                #     cortical_id='i__gyr',
+                #     robot_data=gyro,
+                #     maximum_range=capabilities['gyro']['gyro_max_value_list'],
+                #     minimum_range=capabilities['gyro']['gyro_min_value_list'],
+                #     enable_symmetric=True,
+                #     index=capabilities['gyro']['dev_index'],
+                #     count=capabilities['gyro']['sub_channel_count'],
+                #     message_to_feagi=message_to_feagi)
+            # Add battery data into feagi data
+            if battery:
+                for device_id in capabilities['input']['battery']:
+                    if not capabilities['input']['battery'][device_id]['disable']:
+                        cortical_id = capabilities['input']['battery'][device_id]["cortical_id"]
+                        create_data_list = dict()
+                        create_data_list[cortical_id] = dict()
+                        start_point = capabilities['input']['battery'][device_id]["feagi_index"] * len(capabilities['input']['battery'])
+                        feagi_data_position = start_point
+                        capabilities['input']['battery']['0']['maximum_value'], capabilities['input']['battery']['0']['minimum_value'] = sensors.measuring_max_and_min_range(battery,
+                                                            capabilities['input']['battery']['0']['maximum_value'],
+                                                            capabilities['input']['battery']['0']['minimum_value'])
+
+                        position_in_feagi_location = sensors.convert_sensor_to_ipu_data(
+                                                            capabilities['input']['battery']['0']['minimum_value'],
+                                                           capabilities['input']['battery']['0']['maximum_value'],
+                                                           battery,
+                                                           capabilities['input']['battery']['0']['feagi_index'],
+                                                           cortical_id=cortical_id)
+                        create_data_list[cortical_id][position_in_feagi_location] = 100
+                        if create_data_list[cortical_id]:
+                            message_to_feagi = sensors.add_generic_input_to_feagi_data(create_data_list, message_to_feagi)
+
+            # Add accelerator data into feagi data
+            if acc:
+                for device_id in capabilities['input']['accelerator']:
+                    if not capabilities['input']['accelerator'][device_id]['disable']:
+                        cortical_id = capabilities['input']['accelerator'][device_id]["cortical_id"]
+                        create_data_list = dict()
+                        create_data_list[cortical_id] = dict()
+                        start_point = capabilities['input']['accelerator'][device_id]["feagi_index"] * len(capabilities['input']['accelerator'])
+                        feagi_data_position = start_point
+                        try:
+                            for device_id in range(len(capabilities['input']['accelerator']['0']['max_value'])):
+                                capabilities['input']['accelerator']['0']['max_value'][device_id], capabilities['input']['accelerator']['0']['min_value'][device_id] = sensors.measuring_max_and_min_range(acc[device_id],
+                                                                    capabilities['input']['accelerator']['0']['max_value'][device_id],
+                                                                    capabilities['input']['accelerator']['0']['min_value'][device_id])
+
+                                position_in_feagi_location = sensors.convert_sensor_to_ipu_data(
+                                    capabilities['input']['accelerator']['0']['min_value'][device_id],
+                                    capabilities['input']['accelerator']['0']['max_value'][device_id],
+                                    acc[device_id],
+                                    capabilities['input']['accelerator']['0']['feagi_index'] + device_id,
+                                    cortical_id=cortical_id,
+                                    symmetric=True)
+                                create_data_list[cortical_id][position_in_feagi_location] = 100
+                            if create_data_list[cortical_id]:
+                                message_to_feagi = sensors.add_generic_input_to_feagi_data(create_data_list, message_to_feagi)
+                        except:
+                            pass
+            # Add sonar data into feagi data. Leveraging the same process as ultrasonic.
+            if sonar:
+                for device_id in capabilities['input']['proximity']:
+                    if not capabilities['input']['proximity'][device_id]['disable']:
+                        cortical_id = capabilities['input']['proximity'][device_id]["cortical_id"]
+                        create_data_list = dict()
+                        create_data_list[cortical_id] = dict()
+                        start_point = capabilities['input']['proximity'][device_id]["feagi_index"] * len(capabilities['input']['proximity'])
+                        feagi_data_position = start_point
+                        capabilities['input']['proximity']['0']['proximity_max_distance'], capabilities['input']['proximity']['0']['proximity_min_distance'] = sensors.measuring_max_and_min_range(sonar,
+                                                            capabilities['input']['proximity']['0']['proximity_max_distance'],
+                                                            capabilities['input']['proximity']['0']['proximity_min_distance'])
+
+                        position_in_feagi_location = sensors.convert_sensor_to_ipu_data(
+                                                            capabilities['input']['proximity']['0']['proximity_min_distance'],
+                                                           capabilities['input']['proximity']['0']['proximity_max_distance'],
+                                                           sonar,
+                                                           capabilities['input']['proximity']['0']['feagi_index'],
+                                                           cortical_id=cortical_id)
+                        create_data_list[cortical_id][position_in_feagi_location] = 100
+                        if create_data_list[cortical_id]:
+                            message_to_feagi = sensors.add_generic_input_to_feagi_data(create_data_list, message_to_feagi)
             # Sending data to FEAGI
             pns.signals_to_feagi(message_to_feagi, feagi_ipu_channel, agent_settings, feagi_settings)
             message_to_feagi.clear()

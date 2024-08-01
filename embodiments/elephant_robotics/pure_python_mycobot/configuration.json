@@ -13,19 +13,105 @@
         "agent_type": "embodiment",
         "compression": true
     },
-"capabilities": {
-    "servo": {
-        "type": "opu",
-        "disabled": "False",
-        "count": 7,
-        "servo_range": {
-            "1": [200, 3600],
-            "2": [0, 0],
-            "3": [400, 3400],
-            "4": [700, 3300],
-            "5": [150, 3600],
-            "6": [0, 4096]
+    "capabilities": {
+        "output": {
+            "servo": {
+                "0": {
+                    "max_value": 3600,
+                    "min_value": 200,
+                    "max_power": 100,
+                    "disable": false,
+                    "custom_name": "servo 0"
+                },
+                "1": {
+                    "max_value": 0.1,
+                    "min_value": 0,
+                    "max_power": 10,
+                    "disable": true,
+                    "custom_name": "servo 1"
+                },
+                "2": {
+                    "max_value": 3400,
+                    "min_value": 700,
+                    "max_power": 50,
+                    "disable": false,
+                    "custom_name": "servo 2"
+                },
+                "3": {
+                    "max_value": 3400,
+                    "min_value": 400,
+                    "max_power": 50,
+                    "disable": false,
+                    "custom_name": "servo 3"
+                },
+                "4": {
+                    "max_value": 3600,
+                    "min_value": 150,
+                    "max_power": 50,
+                    "disable": false,
+                    "custom_name": "servo 4"
+                },
+                "5": {
+                    "max_value": 4096,
+                    "min_value": 0,
+                    "max_power": 50,
+                    "disable": false,
+                    "custom_name": "servo 5"
+                }
+            }
+        },
+        "input": {
+            "servo": {
+                "0": {
+                    "max_value": 3600,
+                    "min_value": 200,
+                    "disable": false,
+                    "cortical_id": "i_spos",
+                    "feagi_index": 0,
+                    "custom_name": "servo 0"
+                },
+                "1": {
+                    "max_value": 0.1,
+                    "min_value": 0,
+                    "max_power": 10,
+                    "feagi_index": 1,
+                    "cortical_id": "i_spos",
+                    "custom_name": "servo 1",
+                    "disable": false
+                },
+                "2": {
+                    "max_value": 3400,
+                    "min_value": 700,
+                    "disable": false,
+                    "cortical_id": "i_spos",
+                    "custom_name": "servo 2",
+                    "feagi_index": 2
+                },
+                "3": {
+                    "max_value": 3400,
+                    "min_value": 400,
+                    "disable": false,
+                    "feagi_index": 3,
+                    "cortical_id": "i_spos",
+                    "custom_name": "servo 3"
+                },
+                "4": {
+                    "max_value": 3600,
+                    "min_value": 150,
+                    "disable": false,
+                    "feagi_index": 4,
+                    "cortical_id": "i_spos",
+                    "custom_name": "servo 4"
+                },
+                "5": {
+                    "max_value": 4096,
+                    "min_value": 0,
+                    "feagi_index": 5,
+                    "cortical_id": "i_spos",
+                    "disable": false,
+                    "custom_name": "servo 5"
+                }
+            }
         }
     }
-}
 }

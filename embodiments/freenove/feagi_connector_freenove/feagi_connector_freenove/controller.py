@@ -585,8 +585,7 @@ def main(feagi_auth_url, feagi_settings, agent_settings, capabilities):
                 default_capabilities['camera']['blink'] = []
                 # Wrapping camera data into a frame for FEAGI
                 if rgb:
-                    message_to_feagi = pns.generate_feagi_data(rgb, msg_counter, datetime.now(),
-                                                               message_to_feagi)
+                    message_to_feagi = pns.generate_feagi_data(rgb, message_to_feagi)
             # add IR data into feagi data
             ir_list = ir_data[0] if ir_data else []
             message_to_feagi = sensors.add_infrared_to_feagi_data(ir_list, message_to_feagi,
