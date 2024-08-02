@@ -90,22 +90,21 @@ if __name__ == "__main__":
                      daemon=True).start()
 
     # Main loop for processing images
-    new_cam = cv2.VideoCapture(0)
+    # new_cam = cv2.VideoCapture(2) # webcam
     while continue_loop:
         # Grabs all images in this directory
-        # image_obj = feagi_trainer.scan_the_folder(
-        #     capabilities['input']['image_reader']['0']['image_path'])
+        image_obj = feagi_trainer.scan_the_folder(capabilities['input']['image_reader']['0']['image_path'])
         latest_image_id = None
         # Iterate through images
-        for image in range(1):
-            # raw_frame = image[0]
-            check, raw_frame = new_cam.read()
+        for image in image_obj:
+            raw_frame = image[0]
+            # check, raw_frame = new_cam.read() # webcam
             camera_data['vision'] = raw_frame
-            # name_id = image[1]
-            name_id = "0-0-0"
+            name_id = image[1]
+            # name_id = "0-0-0" # webcam
             # Update image ID for Flask server to display
-            # image_id = key = next(iter(name_id))
-            image_id = "0-0-0"
+            image_id = key = next(iter(name_id))
+            # image_id = "0-0-0" # webcam
             flask_server.latest_static = img_coords.update_image_ids(new_image_id=image_id, new_feagi_image_id=None, static=flask_server.latest_static)
             # Carry on with the image processing
             message_to_feagi = feagi_trainer.id_training_with_image(message_to_feagi, name_id)
@@ -134,20 +133,16 @@ if __name__ == "__main__":
                 # Show user image currently sent to FEAGI, with a bounding box showing FEAGI's location data if it exists
                 location_data = pns.recognize_location_data(message_from_feagi)
                 if previous_frame_data:
-                    # static = img_coords.get_latest_ids(static)
                     new_image_id = flask_server.latest_static.get('image_id', '')
                     feagi_image_id = flask_server.latest_static.get('feagi_image_id', '')
-                    # print ('calling process_image', image_id)
                     if location_data:
                         if '00_C' in modified_data:
-                            process_image(modified_data['00_C'], location_data)
+                            flask_server.latest_data = process_image(modified_data['00_C'],
+                                                                   location_data)
                     elif latest_image_id != new_image_id:
                         latest_image_id = new_image_id
                         if '00_C' in modified_data:
-                            process_image(modified_data['00_C'])
-
-                if modified_data:
-                    flask_server.latest_data = modified_data['00_C']
+                            flask_server.latest_data = process_image(modified_data['00_C'])
                 # If camera data is available, generate data for FEAGI
                 if 'camera' in rgb:  # This is the data wrapped for feagi data to read
                     if rgb['camera'] == {}:
@@ -159,10 +154,6 @@ if __name__ == "__main__":
 
                 # location section
                 location_data = pns.recognize_location_data(message_from_feagi)
-                # if 'opu_data' in message_from_feagi: # Shouldn't even print at all
-                #     if location_data:
-                #         print("location: ", location_data)
-                # Testing mode section
                 if capabilities['input']['image_reader']['0']['test_mode']:
                     success_rate, success, total = testing_mode.mode_testing(name_id,
                                                                              message_from_feagi,
@@ -174,7 +165,7 @@ if __name__ == "__main__":
                 pns.signals_to_feagi(message_to_feagi, feagi_ipu_channel, agent_settings,
                                      feagi_settings)
                 # Sleep for the burst duration specified in the settings
-                sleep(0.05)
+                sleep(feagi_settings['burst_duration'])
             blank_image()  # reset the image or during gap
             sleep(capabilities['input']['image_reader']['0']['image_gap_duration'])
             previous_frame_data = temporary_previous.copy()

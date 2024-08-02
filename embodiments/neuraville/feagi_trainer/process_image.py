@@ -65,10 +65,8 @@ def process_image(image, location_data=None):
 
         # Draw the inner green rectangle
         cv2.rectangle(resized_frame, top_left, bottom_right, (0, 255, 0), 2)
-
-    # Save the processed image to a file
-    image_path = 'latest_image.jpg'
-    cv2.imwrite(image_path, resized_frame)
+        return resized_frame
+    return resized_frame
 
 
 def blank_image(location_data=None):
@@ -92,6 +90,5 @@ def blank_image(location_data=None):
         # Draw the inner green rectangle
         cv2.rectangle(resized_frame, top_left, bottom_right, (0, 255, 0), 2)
 
-    # Save the processed image to a file
-    image_path = 'latest_image.jpg'
-    cv2.imwrite(image_path, resized_frame)
+        return resized_frame
+    return default_blank
