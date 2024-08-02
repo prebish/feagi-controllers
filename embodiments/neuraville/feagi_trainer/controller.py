@@ -99,6 +99,7 @@ if __name__ == "__main__":
         for image in image_obj:
             raw_frame = image[0]
             flask_server.latest_raw_image = raw_frame
+            flask_server.latest_static['raw_image_dimensions'] = f"{raw_frame.shape[1]} x {raw_frame.shape[0]}"
             # check, raw_frame = new_cam.read() # webcam
             camera_data['vision'] = raw_frame
             name_id = image[1]
@@ -131,19 +132,21 @@ if __name__ == "__main__":
                                                              new_feagi_image_id=feagi_image_id,
                                                              static=flask_server.latest_static)
 
-                # Show user image currently sent to FEAGI, with a bounding box showing FEAGI's location data if it exists
+                # Process current image sent to FEAGI with bounding box
                 location_data = pns.recognize_location_data(message_from_feagi)
                 if previous_frame_data:
+                    # Add image's dimensions to HTML display data
+                    flask_server.latest_static['image_dimensions'] = f"{modified_data['00_C'].shape[1]} x {modified_data['00_C'].shape[0]}"
                     new_image_id = flask_server.latest_static.get('image_id', '')
                     feagi_image_id = flask_server.latest_static.get('feagi_image_id', '')
                     if location_data:
                         if '00_C' in modified_data:
-                            flask_server.latest_data = process_image(modified_data['00_C'],
+                            flask_server.latest_image = process_image(modified_data['00_C'],
                                                                    location_data)
                     elif latest_image_id != new_image_id:
                         latest_image_id = new_image_id
                         if '00_C' in modified_data:
-                            flask_server.latest_data = process_image(modified_data['00_C'])
+                            flask_server.latest_image = process_image(modified_data['00_C'])
                 # If camera data is available, generate data for FEAGI
                 if 'camera' in rgb:  # This is the data wrapped for feagi data to read
                     if rgb['camera'] == {}:

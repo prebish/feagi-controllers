@@ -9,6 +9,8 @@ def get_static_data(static_data):
             "correct_count": 0,
             "incorrect_count": 0,
             "no_reply_count": 0,
+            "image_dimensions": "",
+            "raw_image_dimensions": "",
             "last_image_time": None,
             "last_feagi_time": None
         }
@@ -26,6 +28,8 @@ def update_image_ids(new_image_id=None, new_feagi_image_id=None, static={}):
         correct_count = static.get('correct_count', 0)
         incorrect_count = static.get('incorrect_count', 0)
         no_reply_count = static.get('no_reply_count', 0)
+        image_dimensions = static.get('image_dimensions', 0)
+        raw_image_dimensions = static.get('raw_image_dimensions', 0)
         last_image_time = static.get('last_image_time', None)
         last_feagi_time = static.get('last_feagi_time', None)
 
@@ -55,6 +59,8 @@ def update_image_ids(new_image_id=None, new_feagi_image_id=None, static={}):
             'correct_count': correct_count,
             'incorrect_count': incorrect_count,
             'no_reply_count': no_reply_count,
+            'image_dimensions': image_dimensions,
+            'raw_image_dimensions': raw_image_dimensions,
             'last_image_time': last_image_time,
             'last_feagi_time': last_feagi_time
         }

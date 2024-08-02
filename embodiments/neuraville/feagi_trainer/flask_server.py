@@ -13,9 +13,19 @@ app = Flask(__name__)
 
 start_time = time.time()
 
-latest_static = {}
-latest_data = np.zeros((480, 640, 3), dtype=np.uint8)
-latest_raw_image = np.zeros((480, 640, 3), dtype=np.uint8)
+latest_static = {
+        "image_id": "",
+        "feagi_image_id": "",
+        "correct_count": 0,
+        "incorrect_count": 0,
+        "no_reply_count": 0,
+        "image_dimensions": "",
+        "raw_image_dimensions": "",
+        "last_image_time": None,
+        "last_feagi_time": None
+    }
+latest_image = []
+latest_raw_image = []
 
 @app.route('/')
 def index():
@@ -42,7 +52,7 @@ def index():
                     color: lightgrey;
                     font-weight: 500;
                 }
-                h3 {
+                h3, h4 {
                     margin-top: 0px;
                     margin-bottom: 0px;
                 }
@@ -50,10 +60,10 @@ def index():
                     color: white;
                 }
                 img {
-                    max-height: 90vh;
-                    max-width: 400px;
-                    min-height: 64px;
-                    min-width: 64px;
+                    max-height: 450px;
+                    max-width: 450px;
+                    min-height: 32px;
+                    min-width: 32px;
                     border: 1px solid white;
                 }
                 button {
@@ -86,6 +96,7 @@ def index():
                 }
                 .image-container {
                     min-width: 175px;
+                    min-height: 175px;
                     padding: 10px;
                     display: flex; 
                     flex-direction: column; 
@@ -95,6 +106,7 @@ def index():
                 }
                 .stats-container {
                     min-width: 175px;
+                    max-height: 250px;
                     padding: 10px;
                     display: flex;
                     flex-direction: column;
@@ -119,16 +131,22 @@ def index():
                 <div class="image-container">
                     <h3 style="align-self: margin-bottom: 5px">Correct Image: <span id="image-id">{{ image_id }}</span></h3>
                     <h3>FEAGI Guess: <span id="feagi-image-id">{{ feagi_image_id }}</span></h3>
-                    <h3>Image FEAGI Sees</h3>
-                    <div id="unsupported-message" style="display: none; color: red;">
-                        Video display is not supported in Firefox.
-                    </div>
-                    <div id="image-parent" style="width: 100%; display: flex; justify-content: center;">  
-                       <img src="{{ url_for('video_feed') }}" alt="video feed"/> 
-                    </div>
-                    <h3>Actual Image</h3>
-                    <div id="raw-image-parent" style="width: 100%; display: flex; justify-content: center;">  
-                        <img src="{{ url_for('raw_frame_feed') }}" alt="raw frame"/> 
+                    <div style="display: flex; align-items: flex-end; gap: 10px;">
+                        <div class="image-hider">
+                            <h3 style="text-align: center; color: white;">Image FEAGI Sees <span id="image-dimensions">{{ image_width }} x {{ image_height }}</span></h3>
+                            <div id="image-parent" style="width: 100%; display: flex; justify-content: center;">  
+                                <img src="{{ url_for('video_feed') }}" alt="video feed"/> 
+                            </div>
+                        </div>
+                        <div class="image-hider">
+                            <h3 style="text-align: center; color: white;">Actual Image <span id="raw-image-dimensions">{{ raw_image_width }} x {{ raw_image_height }}</span></h3>
+                            <div id="raw-image-parent" style="width: 100%; display: flex; justify-content: center;">  
+                                <img src="{{ url_for('raw_frame_feed') }}" alt="raw frame"/> 
+                            </div>
+                        </div>
+                        <div id="unsupported-message" style="display: none; color: red;">
+                            Image/video display is not supported in Firefox.
+                         </div>
                     </div>
                 </div>
             </div>
@@ -137,12 +155,11 @@ def index():
                 document.addEventListener('DOMContentLoaded', function() {
                     let userAgent = navigator.userAgent;
                     if (userAgent.match(/firefox|fxios/i)) {
-                        document.getElementById('image-parent').style.display = 'none';
+                        Array.from(document.getElementsByClassName('image-hider')).forEach(function(el) {
+                            el.style.display = 'none';
+                        });
                         document.getElementById('unsupported-message').style.display = 'block';
-                    } else {
-                        document.getElementById('image-parent').style.display = 'flex';
-                        document.getElementById('unsupported-message').style.display = 'none';
-                    }
+                    } 
                 });
 
                 // Set startTime to last stored value or the current time
@@ -157,6 +174,8 @@ def index():
                             document.getElementById('correct-count').innerText = data.correct_count !== undefined ? data.correct_count : '?';
                             document.getElementById('incorrect-count').innerText = data.incorrect_count !== undefined ? data.incorrect_count : '?';
                             document.getElementById('no-reply-count').innerText = data.no_reply_count !== undefined ? data.no_reply_count : '?';
+                            document.getElementById('image-dimensions').innerText = data.image_dimensions || "N/A";
+                            document.getElementById('raw-image-dimensions').innerText = data.raw_image_dimensions || "N/A";
                             const total = data.correct_count + data.incorrect_count + data.no_reply_count;
                             const percentCorrect = total === 0 ? 0 : data.correct_count ? (data.correct_count / total) * 100 : "?";
                             document.getElementById('fitness-percent').innerText = isFinite(percentCorrect) ? `${percentCorrect.toFixed(2)}%` : "N/A";
@@ -164,7 +183,7 @@ def index():
                 }
 
                 updateContent();  // Initial load
-                setInterval(updateContent, 1000);  // Refresh every 1 second
+                setInterval(updateContent, 10);  // Refetch frequency
 
                 function formatTime(seconds) {
                     const hours = Math.floor(seconds / 3600);
@@ -178,8 +197,8 @@ def index():
                     document.getElementById('runtime').innerText = formatTime(runtimeInSeconds);
                 }
 
-                setInterval(updateRuntime, 1000);  // Update runtime display every 1 second
-                updateRuntime();  // Initial runtime display
+                setInterval(updateRuntime, 1000); 
+                updateRuntime();
 
                 function resetTimerAndData() {
                     fetch('/reset_timer_and_data')
@@ -200,7 +219,15 @@ def index():
         </body>
         </html>
     '''
-    return render_template_string(html, runtime=f"{runtime:.2f}")
+    return render_template_string(html, 
+                              runtime=f"{runtime:.2f}",
+                              image_id=latest_static["image_id"],
+                              feagi_image_id=latest_static["feagi_image_id"],
+                              correct_count=latest_static["correct_count"],
+                              incorrect_count=latest_static["incorrect_count"],
+                              no_reply_count=latest_static["no_reply_count"],
+                              image_dimensions=latest_static["image_dimensions"],
+                              raw_image_dimensions=latest_static["raw_image_dimensions"])
 
 # Process latest image for HTML display
 def gen(use_raw=True):
@@ -208,8 +235,7 @@ def gen(use_raw=True):
         if use_raw:
             data = latest_raw_image
         else:
-            data = latest_data
-
+            data = latest_image
         if isinstance(data, np.ndarray):
             ret, buffer = cv2.imencode('.jpg', data)
             if ret:
@@ -249,6 +275,8 @@ def reset_timer_and_data():
         "correct_count": 0,
         "incorrect_count": 0,
         "no_reply_count": 0,
+        "image_dimensions": "",
+        "raw_image_dimensions": "",
         "last_image_time": None,
         "last_feagi_time": None
     }

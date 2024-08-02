@@ -44,7 +44,7 @@ def process_image(image, location_data=None):
     copied_frame = image.copy()
 
     # Resize the image while maintaining aspect ratio
-    target_width = 500
+    target_width = 400
     original_height, original_width = copied_frame.shape[:2]
     aspect_ratio = original_width / original_height
     target_height = int(target_width / aspect_ratio)
