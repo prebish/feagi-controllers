@@ -105,7 +105,6 @@ def index():
         </head>
         <body>
             <div style="display: flex; gap: 20px;">
-                <!-- Stats -->
                 <div class="stats-container">
                     <div class="header">
                         <div style="width: 55px;"></div>
@@ -119,19 +118,34 @@ def index():
                     </div>
                     <h3>Runtime: <span id="runtime">--:--:--</span></h3>
                 </div>
-                <!-- Image -->
+
                 <div class="image-container">
                     <h2>
                         Correct Image: <span id="image-id">{{ image_id }}</span> 
                         FEAGI Guess: <span id="feagi-image-id">{{ feagi_image_id }}</span>
                     </h2>
                     <h1>Image FEAGI Sees</h1>
-                    <div style="width: 100%; display: flex; justify-content: center;">  
-                        <img src="{{ url_for('video_feed') }}"/>
+                    <div id="unsupported-message" style="display: none; color: red;">
+                        Video display is not supported in Firefox.
+                    </div>
+                    <div id="image-parent" style="width: 100%; display: flex; justify-content: center;">  
+                       <img src="{{ url_for('video_feed') }}" alt="video feed"/> 
                     </div>
                 </div>
             </div>
             <script>
+                // Don't show video feed if Firefox
+                document.addEventListener('DOMContentLoaded', function() {
+                    let userAgent = navigator.userAgent;
+                    if (userAgent.match(/firefox|fxios/i)) {
+                        document.getElementById('image-parent').style.display = 'none';
+                        document.getElementById('unsupported-message').style.display = 'block';
+                    } else {
+                        document.getElementById('image-parent').style.display = 'flex';
+                        document.getElementById('unsupported-message').style.display = 'none';
+                    }
+                });
+
                 // Check if a localStorage key exists and use it, otherwise use current time
                 let startTime = localStorage.getItem('startTime') ? parseInt(localStorage.getItem('startTime')) : new Date().getTime();
 
@@ -146,7 +160,7 @@ def index():
                             document.getElementById('no-reply-count').innerText = data.no_reply_count !== undefined ? data.no_reply_count : '?';
                             const total = data.correct_count + data.incorrect_count + data.no_reply_count;
                             const percentCorrect = total === 0 ? 0 : data.correct_count ? (data.correct_count / total) * 100 : "?";
-                            document.getElementById('fitness-percent').innerText = percentCorrect ? `${percentCorrect.toFixed(2)}%` : "N/A";
+                            document.getElementById('fitness-percent').innerText = isFinite(percentCorrect) ? `${percentCorrect.toFixed(2)}%` : "N/A";
                         });
                 }
 
@@ -201,13 +215,11 @@ def gen():
                 yield (b'--frame\r\n'
                        b'Content-Type: image/jpeg\r\n\r\n' + frame + b'\r\n')
 
-    video_capture.release()
+    # video_capture.release()
 
 # Fetch latest image sent to FEAGI
 @app.route('/video_feed')
 def video_feed():
-    """Video streaming route. Put this in the src attribute of an img tag."""
-    print(latest_data)
     return Response(gen(),
                     mimetype='multipart/x-mixed-replace; boundary=frame')
 
