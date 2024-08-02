@@ -90,7 +90,7 @@ if __name__ == "__main__":
                      daemon=True).start()
 
     # Main loop for processing images
-    new_cam = cv2.VideoCapture(2)
+    new_cam = cv2.VideoCapture(0)
     while continue_loop:
         # Grabs all images in this directory
         # image_obj = feagi_trainer.scan_the_folder(
