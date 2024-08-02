@@ -98,6 +98,7 @@ if __name__ == "__main__":
         # Iterate through images
         for image in image_obj:
             raw_frame = image[0]
+            flask_server.latest_raw_image = raw_frame
             # check, raw_frame = new_cam.read() # webcam
             camera_data['vision'] = raw_frame
             name_id = image[1]

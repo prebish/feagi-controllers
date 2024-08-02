@@ -14,8 +14,8 @@ app = Flask(__name__)
 start_time = time.time()
 
 latest_static = {}
-latest_data = []
-
+latest_data = np.zeros((480, 640, 3), dtype=np.uint8)
+latest_raw_image = np.zeros((480, 640, 3), dtype=np.uint8)
 
 @app.route('/')
 def index():
@@ -51,25 +51,31 @@ def index():
                 }
                 img {
                     max-height: 90vh;
+                    max-width: 400px;
                     min-height: 64px;
                     min-width: 64px;
                     border: 1px solid white;
                 }
                 button {
-                    border: 0;
+                    align-self: center;
+                    display: inline-block;
+                    min-height: 28px;
+                    padding: 4px 8px;
                     outline: 0;
-                    cursor: pointer;
-                    color: white;
-                    background-color: rgb(25, 118, 210);
+                    border: 0;
                     border-radius: 4px;
                     font-size: 14px;
                     font-weight: 500;
-                    padding: 4px 8px;
-                    display: inline-block;
-                    min-height: 28px;
+                    color: white;
+                    background-color: rgb(25, 118, 210);
+                    cursor: pointer;
                 }
                 button:hover {
                     background-color: rgb(33, 150, 243);
+                }
+                #raw-image-parent {
+                    max-width: 400px;
+                    max-height: 400px;
                 }
                 .header {
                     width: 100%;
@@ -79,6 +85,7 @@ def index():
                     align-items: center;
                 }
                 .image-container {
+                    min-width: 175px;
                     padding: 10px;
                     display: flex; 
                     flex-direction: column; 
@@ -86,17 +93,12 @@ def index():
                     border: 1px solid #404040;
                     border-radius: 5px;
                 }
-                .stats {
-                    display: flex;
-                    gap: 5px;
-                    margin-bottom: 10px;
-                }
                 .stats-container {
+                    min-width: 175px;
                     padding: 10px;
                     display: flex;
                     flex-direction: column;
-                    justify-content: center;
-                    align-items: center;
+                    gap: 5px;
                     background-color: #262626;
                     border: 1px solid #404040;
                     border-radius: 5px;
@@ -106,30 +108,27 @@ def index():
         <body>
             <div style="display: flex; gap: 20px;">
                 <div class="stats-container">
-                    <div class="header">
-                        <div style="width: 55px;"></div>
-                        <h2 style="margin: 0;">Fitness <span id="fitness-percent" style="font-size: 1.2rem">0%</span></h2>
-                        <button id="reset-button" title="Reset all visible data and timer">Reset</button>
-                    </div>
-                    <div class="stats">
-                        <h3>Correct: <span id="correct-count">{{ correct_count }}</span></h3>
-                        <h3>Incorrect: <span id="incorrect-count">{{ incorrect_count }}</span></h3>
-                        <h3>No Reply: <span id="no-reply-count">{{ no_reply_count }}</span></h3>
-                    </div>
-                    <h3>Runtime: <span id="runtime">--:--:--</span></h3>
+                    <button id="reset-button" title="Reset all visible data and timer">Reset Counters</button>
+                    <h3 style="margin-top: 5px">Runtime: <span id="runtime">--:--:--</span></h3>
+                    <h2 style="margin: 0; margin-top: 10px" title="Correct vs no reply + incorrect counts">Fitness: <span id="fitness-percent" style="font-size: 1.2rem">0%</span></h2>
+                    <h3>Correct: <span id="correct-count">{{ correct_count }}</span></h3>
+                    <h3>Incorrect: <span id="incorrect-count">{{ incorrect_count }}</span></h3>
+                    <h3>No Reply: <span id="no-reply-count">{{ no_reply_count }}</span></h3>
                 </div>
 
                 <div class="image-container">
-                    <h2>
-                        Correct Image: <span id="image-id">{{ image_id }}</span> 
-                        FEAGI Guess: <span id="feagi-image-id">{{ feagi_image_id }}</span>
-                    </h2>
-                    <h1>Image FEAGI Sees</h1>
+                    <h3 style="align-self: margin-bottom: 5px">Correct Image: <span id="image-id">{{ image_id }}</span></h3>
+                    <h3>FEAGI Guess: <span id="feagi-image-id">{{ feagi_image_id }}</span></h3>
+                    <h3>Image FEAGI Sees</h3>
                     <div id="unsupported-message" style="display: none; color: red;">
                         Video display is not supported in Firefox.
                     </div>
                     <div id="image-parent" style="width: 100%; display: flex; justify-content: center;">  
                        <img src="{{ url_for('video_feed') }}" alt="video feed"/> 
+                    </div>
+                    <h3>Actual Image</h3>
+                    <div id="raw-image-parent" style="width: 100%; display: flex; justify-content: center;">  
+                        <img src="{{ url_for('raw_frame_feed') }}" alt="raw frame"/> 
                     </div>
                 </div>
             </div>
@@ -203,12 +202,16 @@ def index():
     '''
     return render_template_string(html, runtime=f"{runtime:.2f}")
 
-
-def gen():
-    global latest_data
+# Process latest image for HTML display
+def gen(use_raw=True):
     while True:
-        if isinstance(latest_data, np.ndarray):
-            ret, buffer = cv2.imencode('.jpg', latest_data)
+        if use_raw:
+            data = latest_raw_image
+        else:
+            data = latest_data
+
+        if isinstance(data, np.ndarray):
+            ret, buffer = cv2.imencode('.jpg', data)
             if ret:
                 frame = buffer.tobytes()
                 yield (b'--frame\r\n'
@@ -217,6 +220,12 @@ def gen():
 # Fetch latest image sent to FEAGI
 @app.route('/video_feed')
 def video_feed():
+    return Response(gen(False),
+                    mimetype='multipart/x-mixed-replace; boundary=frame')
+
+# Fetch latest raw image
+@app.route('/raw_frame_feed')
+def raw_frame_feed():
     return Response(gen(),
                     mimetype='multipart/x-mixed-replace; boundary=frame')
 
