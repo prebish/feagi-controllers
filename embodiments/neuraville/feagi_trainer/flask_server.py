@@ -146,7 +146,7 @@ def index():
                     }
                 });
 
-                // Check if a localStorage key exists and use it, otherwise use current time
+                // Set startTime to last stored value or the current time
                 let startTime = localStorage.getItem('startTime') ? parseInt(localStorage.getItem('startTime')) : new Date().getTime();
 
                 function updateContent() {
@@ -164,8 +164,8 @@ def index():
                         });
                 }
 
-                setInterval(updateContent, 1000);  // Refresh every 1 second
                 updateContent();  // Initial load
+                setInterval(updateContent, 1000);  // Refresh every 1 second
 
                 function formatTime(seconds) {
                     const hours = Math.floor(seconds / 3600);
@@ -186,9 +186,8 @@ def index():
                     fetch('/reset_timer_and_data')
                         .then(response => response.json())
                         .then(data => {
-                            startTime = new Date().getTime(); // Reset startTime
-                            localStorage.setItem('startTime', startTime); // Save new startTime in localStorage
-                            console.log('Timer and data reset on server:', data);
+                            startTime = new Date().getTime(); 
+                            localStorage.setItem('startTime', startTime); 
                         });
                 }
 
@@ -214,8 +213,6 @@ def gen():
                 frame = buffer.tobytes()
                 yield (b'--frame\r\n'
                        b'Content-Type: image/jpeg\r\n\r\n' + frame + b'\r\n')
-
-    # video_capture.release()
 
 # Fetch latest image sent to FEAGI
 @app.route('/video_feed')
