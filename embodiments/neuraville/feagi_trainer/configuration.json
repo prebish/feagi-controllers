@@ -41,7 +41,7 @@
       "image_reader": {
         "0": {
           "loop": true,
-          "image_display_duration": 0,
+          "image_display_duration": 0.01,
           "image_path": "./",
           "test_mode": false,
           "image_gap_duration": 0
