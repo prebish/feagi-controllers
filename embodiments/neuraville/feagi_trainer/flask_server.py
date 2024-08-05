@@ -3,12 +3,12 @@ import cv2
 import time
 import logging
 import numpy as np
-from flask import Flask, Response, render_template_string, jsonify
+from flask import Flask, request, Response, render_template_string, jsonify
 from typing import TypedDict, Optional
 from models import LatestStatic
 
 # logging.basicConfig(level=logging.DEBUG)
-log = logging.getLogger('werkzeug')
+log = logging.getLogger("werkzeug")
 log.setLevel(logging.CRITICAL)
 
 app = Flask(__name__)
@@ -30,15 +30,15 @@ initial_latest_static = LatestStatic(
     image_display_duration=None,
     image_path=None,
     test_mode=None,
-    image_gap_duration=None
+    image_gap_duration=None,
 )
 latest_static = initial_latest_static
 
-@app.route('/')
 
+@app.route("/")
 def index():
     runtime = time.time() - start_time
-    html = '''
+    html = """
         <!DOCTYPE html>
         <html>
         <head>
@@ -112,9 +112,7 @@ def index():
                     border: 1px solid #404040;
                     border-radius: 5px;
                 }
-                .stats-container {
-                    min-width: 175px;
-                    max-height: 250px;
+                .info-container {
                     padding: 10px;
                     display: flex;
                     flex-direction: column;
@@ -123,17 +121,57 @@ def index():
                     border: 1px solid #404040;
                     border-radius: 5px;
                 }
+                .stats-container {
+                    min-width: 175px;
+                    max-height: 200px;
+                    margin-bottom: 10px;
+                }
+                .form-group {
+                    display: flex;
+                    justify-content: space-between;
+                    gap: 5px;
+                }
             </style>
         </head>
         <body>
             <div style="display: flex; gap: 20px;">
-                <div class="stats-container">
-                    <button id="reset-button" title="Reset all visible data and timer">Reset Counters</button>
-                    <h3 style="margin-top: 5px">Runtime: <span id="runtime">--:--:--</span></h3>
-                    <h2 style="margin: 0; margin-top: 10px" title="Correct vs no reply + incorrect counts">Fitness: <span id="fitness-percent" style="font-size: 1.2rem">0%</span></h2>
-                    <h3>Correct: <span id="correct-count">{{ correct_count }}</span></h3>
-                    <h3>Incorrect: <span id="incorrect-count">{{ incorrect_count }}</span></h3>
-                    <h3>No Reply: <span id="no-reply-count">{{ no_reply_count }}</span></h3>
+                <div class="stats-inputs-parent">
+                    <div class="stats-container info-container">
+                        <button id="reset-button" title="Reset all visible data and timer">Reset Counters</button>
+                        <h3 style="margin-top: 5px">Runtime: <span id="runtime">--:--:--</span></h3>
+                        <h2 style="margin: 0; margin-top: 10px" title="Correct vs no reply + incorrect counts">Fitness: <span id="fitness-percent" style="font-size: 1.2rem">0%</span></h2>
+                        <h3>Correct: <span id="correct-count">{{ correct_count }}</span></h3>
+                        <h3>Incorrect: <span id="incorrect-count">{{ incorrect_count }}</span></h3>
+                        <h3>No Reply: <span id="no-reply-count">{{ no_reply_count }}</span></h3>
+                    </div>
+                   <form id="settings-form" class="info-container">
+                        <div class="form-group">
+                            <label for="loop">Loop:</label>
+                            <input type="checkbox" id="loop" name="loop" {{ loop_checked }}>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="image_display_duration">Image Display Duration:</label>
+                            <input type="number" id="image_display_duration" name="image_display_duration" step="0.1" min="0" value="{{ image_display_duration }}">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="image_path">Image Path:</label>
+                            <input type="text" id="image_path" name="image_path" value="{{ image_path }}">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="test_mode">Test Mode:</label>
+                            <input type="checkbox" id="test_mode" name="test_mode" {{ test_mode_checked }}>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="image_gap_duration">Image Gap Duration:</label>
+                            <input type="number" id="image_gap_duration" name="image_gap_duration" step="0.1" min="0" value="{{ image_gap_duration }}">
+                        </div>
+
+                        <button type="submit" id="settings-button" style="margin-top: 10px">Apply Changes</button>
+                    </form>
                 </div>
 
                 <div class="image-container">
@@ -208,16 +246,51 @@ def index():
                 setInterval(updateRuntime, 1000); 
                 updateRuntime();
 
-                function resetTimerAndData() {
-                    fetch('/reset_timer_and_data')
-                        .then(response => response.json())
-                        .then(data => {
-                            startTime = new Date().getTime(); 
-                            localStorage.setItem('startTime', startTime); 
-                        });
+                async function resetTimerAndData() {
+                    try {
+                        const response = await fetch('/reset_timer_and_data');
+                        const data = await response.json();
+                        startTime = new Date().getTime(); 
+                        localStorage.setItem('startTime', startTime); 
+                    } catch (error) {
+                        console.error('Error resetting timer and data:', error);
+                    }
                 }
 
                 document.getElementById('reset-button').addEventListener('click', resetTimerAndData);
+
+                document.getElementById('settings-form').addEventListener('submit', async function(event) {
+                    event.preventDefault();
+
+                    const formData = new FormData(this);
+                    const settings = {
+                        loop: formData.get('loop') === 'on',
+                        image_display_duration: parseFloat(formData.get('image_display_duration')),
+                        image_path: formData.get('image_path'),
+                        test_mode: formData.get('test_mode') === 'on', 
+                        image_gap_duration: parseFloat(formData.get('image_gap_duration'))
+                    };
+
+                    try {
+                        const response = await fetch('/apply_settings', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify(settings)
+                        });
+
+                        if (!response.ok) {
+                            throw new Error('Failed to apply settings');
+                        }
+
+                        const result = await response.json();
+                        console.log('Settings applied:', result);
+                    } catch (error) {
+                        console.error('Error applying settings:', error);
+                    }
+                });
+
 
                 // Clear localStorage when the server starts (this can be added to a separate page load check or server start logic)
                 window.addEventListener('load', () => {
@@ -226,16 +299,24 @@ def index():
             </script>
         </body>
         </html>
-    '''
-    return render_template_string( html,
-                                runtime=f"{runtime:.2f}",
-                                image_id=latest_static.image_id,
-                                feagi_image_id=latest_static.feagi_image_id,
-                                correct_count=latest_static.correct_count,
-                                incorrect_count=latest_static.incorrect_count,
-                                no_reply_count=latest_static.no_reply_count,
-                                image_dimensions=latest_static.image_dimensions,
-                                raw_image_dimensions=latest_static.raw_image_dimensions)
+    """
+    return render_template_string(
+        html,
+        runtime=f"{runtime:.2f}",
+        image_id=latest_static.image_id,
+        feagi_image_id=latest_static.feagi_image_id,
+        correct_count=latest_static.correct_count,
+        incorrect_count=latest_static.incorrect_count,
+        no_reply_count=latest_static.no_reply_count,
+        image_dimensions=latest_static.image_dimensions,
+        raw_image_dimensions=latest_static.raw_image_dimensions,
+        loop_checked="checked" if latest_static.loop else "",
+        image_display_duration=latest_static.image_display_duration,
+        image_path=latest_static.image_path or "",
+        test_mode_checked="checked" if latest_static.test_mode else "",
+        image_gap_duration=latest_static.image_gap_duration,
+    )
+
 
 # Process latest image for HTML display
 def gen(use_raw=True):
@@ -245,43 +326,92 @@ def gen(use_raw=True):
         else:
             data = latest_image
         if isinstance(data, np.ndarray):
-            ret, buffer = cv2.imencode('.jpg', data)
+            ret, buffer = cv2.imencode(".jpg", data)
             if ret:
                 frame = buffer.tobytes()
-                yield (b'--frame\r\n'
-                       b'Content-Type: image/jpeg\r\n\r\n' + frame + b'\r\n')
+                yield (
+                    b"--frame\r\n" b"Content-Type: image/jpeg\r\n\r\n" + frame + b"\r\n"
+                )
+
 
 # Fetch latest image sent to FEAGI
-@app.route('/video_feed')
+@app.route("/video_feed")
 def video_feed():
-    return Response(gen(False),
-                    mimetype='multipart/x-mixed-replace; boundary=frame')
+    return Response(gen(False), mimetype="multipart/x-mixed-replace; boundary=frame")
+
 
 # Fetch latest raw image
-@app.route('/raw_frame_feed')
+@app.route("/raw_frame_feed")
 def raw_frame_feed():
-    return Response(gen(),
-                    mimetype='multipart/x-mixed-replace; boundary=frame')
+    return Response(gen(), mimetype="multipart/x-mixed-replace; boundary=frame")
 
 
 # Fetch latest image ID and any FEAGI recognition ID
-@app.route('/latest_ids')
+@app.route("/latest_ids")
 def latest_ids():
     global latest_static
     return jsonify(latest_static.dict())
 
 
 # Reset timer and data
-@app.route('/reset_timer_and_data')
+@app.route("/reset_timer_and_data")
 def reset_timer_and_data():
     global start_time, latest_static
     start_time = time.time()
 
     latest_static = initial_latest_static
 
-    return jsonify({'status': 'success', 'start_time': start_time, 'reset_data': latest_static.dict()})
+    return jsonify(
+        {
+            "status": "success",
+            "start_time": start_time,
+            "reset_data": latest_static.dict(),
+        }
+    )
+
+
+# Apply new settings inputs from user
+@app.route("/apply_settings", methods=["POST"])
+def apply_settings():
+    global latest_static
+
+    try:
+        data = request.get_json()
+
+        if "loop" in data:
+            latest_static.loop = data["loop"]
+        if "image_display_duration" in data:
+            latest_static.image_display_duration = data["image_display_duration"]
+        if "image_path" in data:
+            latest_static.image_path = data["image_path"]
+        if "test_mode" in data:
+            latest_static.test_mode = data["test_mode"]
+        if "image_gap_duration" in data:
+            latest_static.image_gap_duration = data["image_gap_duration"]
+
+        return jsonify({"status": "success", "settings": latest_static.dict()})
+
+    except Exception as e:
+        return jsonify({"status": "error", "message": str(e)}), 400
+
+
+def apply_config_settings(image_reader_config):
+    try:
+        if "loop" in image_reader_config:
+            latest_static.loop = image_reader_config["loop"]
+        if "image_display_duration" in image_reader_config:
+            latest_static.image_display_duration = image_reader_config[
+                "image_display_duration"
+            ]
+        if "image_path" in image_reader_config:
+            latest_static.image_path = image_reader_config["image_path"]
+        if "test_mode" in image_reader_config:
+            latest_static.test_mode = image_reader_config["test_mode"]
+        if "image_gap_duration" in image_reader_config:
+            latest_static.image_gap_duration = image_reader_config["image_gap_duration"]
+    except Exception as e:
+        log.error(f"Error applying configuration settings: {e}")
 
 
 def start_app():
-    app.run(host='0.0.0.0', port=4001, debug=False, use_reloader=False)
-
+    app.run(host="0.0.0.0", port=4001, debug=False, use_reloader=False)
