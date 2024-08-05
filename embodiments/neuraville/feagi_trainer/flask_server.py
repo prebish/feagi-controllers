@@ -22,7 +22,7 @@ latest_static = {
         "image_dimensions": "",
         "raw_image_dimensions": "",
         "last_image_time": None,
-        "last_feagi_time": None
+        "last_feagi_time": None,
     }
 latest_image = []
 latest_raw_image = []

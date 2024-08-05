@@ -134,6 +134,8 @@ if __name__ == "__main__":
 
                 # Process current image sent to FEAGI with bounding box
                 location_data = pns.recognize_location_data(message_from_feagi)
+                if pns.full_list_dimension:
+                    size_of_cortical = pns.full_list_dimension['o__loc']['cortical_dimensions'] # Get cortical dimensions from FEAGI db
                 if previous_frame_data:
                     # Add image's dimensions to HTML display data
                     flask_server.latest_static['image_dimensions'] = f"{modified_data['00_C'].shape[1]} x {modified_data['00_C'].shape[0]}"
@@ -142,7 +144,7 @@ if __name__ == "__main__":
                     if location_data:
                         if '00_C' in modified_data:
                             flask_server.latest_image = process_image(modified_data['00_C'],
-                                                                   location_data)
+                                                                   location_data, size_of_cortical)
                     elif latest_image_id != new_image_id:
                         latest_image_id = new_image_id
                         if '00_C' in modified_data:
