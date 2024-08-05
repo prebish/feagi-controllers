@@ -99,7 +99,7 @@ if __name__ == "__main__":
         for image in image_obj:
             raw_frame = image[0]
             flask_server.latest_raw_image = raw_frame
-            flask_server.latest_static['raw_image_dimensions'] = f"{raw_frame.shape[1]} x {raw_frame.shape[0]}"
+            flask_server.latest_static.raw_image_dimensions = f"{raw_frame.shape[1]} x {raw_frame.shape[0]}"
             # check, raw_frame = new_cam.read() # webcam
             camera_data['vision'] = raw_frame
             name_id = image[1]
@@ -138,9 +138,9 @@ if __name__ == "__main__":
                     size_of_cortical = pns.full_list_dimension['o__loc']['cortical_dimensions'] # Get cortical dimensions from FEAGI db
                 if previous_frame_data:
                     # Add image's dimensions to HTML display data
-                    flask_server.latest_static['image_dimensions'] = f"{modified_data['00_C'].shape[1]} x {modified_data['00_C'].shape[0]}"
-                    new_image_id = flask_server.latest_static.get('image_id', '')
-                    feagi_image_id = flask_server.latest_static.get('feagi_image_id', '')
+                    flask_server.latest_static.image_dimensions = f"{modified_data['00_C'].shape[1]} x {modified_data['00_C'].shape[0]}"
+                    new_image_id = getattr(flask_server.latest_static, 'image_id', '')
+                    feagi_image_id = getattr(flask_server.latest_static, 'feagi_image_id', '')
                     if location_data:
                         if '00_C' in modified_data:
                             flask_server.latest_image = process_image(modified_data['00_C'],

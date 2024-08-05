@@ -4,6 +4,8 @@ import time
 import logging
 import numpy as np
 from flask import Flask, Response, render_template_string, jsonify
+from typing import TypedDict, Optional
+from models import LatestStatic
 
 # logging.basicConfig(level=logging.DEBUG)
 log = logging.getLogger('werkzeug')
@@ -12,22 +14,28 @@ log.setLevel(logging.CRITICAL)
 app = Flask(__name__)
 
 start_time = time.time()
-
-latest_static = {
-        "image_id": "",
-        "feagi_image_id": "",
-        "correct_count": 0,
-        "incorrect_count": 0,
-        "no_reply_count": 0,
-        "image_dimensions": "",
-        "raw_image_dimensions": "",
-        "last_image_time": None,
-        "last_feagi_time": None,
-    }
 latest_image = []
 latest_raw_image = []
+initial_latest_static = LatestStatic(
+    image_id="",
+    feagi_image_id="",
+    correct_count=0,
+    incorrect_count=0,
+    no_reply_count=0,
+    image_dimensions="",
+    raw_image_dimensions="",
+    last_image_time=None,
+    last_feagi_time=None,
+    loop=None,
+    image_display_duration=None,
+    image_path=None,
+    test_mode=None,
+    image_gap_duration=None
+)
+latest_static = initial_latest_static
 
 @app.route('/')
+
 def index():
     runtime = time.time() - start_time
     html = '''
@@ -219,15 +227,15 @@ def index():
         </body>
         </html>
     '''
-    return render_template_string(html, 
-                              runtime=f"{runtime:.2f}",
-                              image_id=latest_static["image_id"],
-                              feagi_image_id=latest_static["feagi_image_id"],
-                              correct_count=latest_static["correct_count"],
-                              incorrect_count=latest_static["incorrect_count"],
-                              no_reply_count=latest_static["no_reply_count"],
-                              image_dimensions=latest_static["image_dimensions"],
-                              raw_image_dimensions=latest_static["raw_image_dimensions"])
+    return render_template_string( html,
+                                runtime=f"{runtime:.2f}",
+                                image_id=latest_static.image_id,
+                                feagi_image_id=latest_static.feagi_image_id,
+                                correct_count=latest_static.correct_count,
+                                incorrect_count=latest_static.incorrect_count,
+                                no_reply_count=latest_static.no_reply_count,
+                                image_dimensions=latest_static.image_dimensions,
+                                raw_image_dimensions=latest_static.raw_image_dimensions)
 
 # Process latest image for HTML display
 def gen(use_raw=True):
@@ -260,7 +268,7 @@ def raw_frame_feed():
 @app.route('/latest_ids')
 def latest_ids():
     global latest_static
-    return jsonify(latest_static)
+    return jsonify(latest_static.dict())
 
 
 # Reset timer and data
@@ -269,19 +277,9 @@ def reset_timer_and_data():
     global start_time, latest_static
     start_time = time.time()
 
-    latest_static = {
-        "image_id": "",
-        "feagi_image_id": "",
-        "correct_count": 0,
-        "incorrect_count": 0,
-        "no_reply_count": 0,
-        "image_dimensions": "",
-        "raw_image_dimensions": "",
-        "last_image_time": None,
-        "last_feagi_time": None
-    }
+    latest_static = initial_latest_static
 
-    return jsonify({'status': 'success', 'start_time': start_time, 'reset_data': latest_static})
+    return jsonify({'status': 'success', 'start_time': start_time, 'reset_data': latest_static.dict()})
 
 
 def start_app():
