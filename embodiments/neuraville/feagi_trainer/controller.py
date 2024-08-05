@@ -29,21 +29,22 @@ from feagi_connector.version import __version__
 from feagi_connector import feagi_interface as feagi
 from feagi_connector import trainer as feagi_trainer
 
+config = feagi.build_up_from_configuration()
 
+
+# Start Flask server
 def run_app():
-    config = feagi.build_up_from_configuration()
     image_reader_config = config["capabilities"]["input"]["image_reader"]["0"]
     flask_server.apply_config_settings(image_reader_config)
     flask_server.start_app()
 
 
-# Needs to add configuration to toggle this. It should be default to false.
+# Need to add configuration to toggle this. It should default to false.
 app_thread = threading.Thread(target=run_app)
 app_thread.start()
 
-# This block of code will execute if this script is run as the main module
 if __name__ == "__main__":
-    # Initialize a runtime dictionary to store various runtime data
+    # Initialize a runtime dictionary
     runtime_data = {
         "vision": {},
         "current_burst_id": None,
@@ -53,21 +54,20 @@ if __name__ == "__main__":
     }
 
     # Load configurations and settings for FEAGI, agents, capabilities, and messages
-    config = feagi.build_up_from_configuration()
     feagi_settings = config["feagi_settings"].copy()
     agent_settings = config["agent_settings"].copy()
     default_capabilities = config["default_capabilities"].copy()
     message_to_feagi = config["message_to_feagi"].copy()
     capabilities = config["capabilities"].copy()
 
-    # # # FEAGI registration # # # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-    # - - - - - - - - - - - - - - - - - - #
+    # FEAGI registration - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
     feagi_settings, runtime_data, api_address, feagi_ipu_channel, feagi_opu_channel = (
         feagi.connect_to_feagi(
             feagi_settings, runtime_data, agent_settings, capabilities, __version__
         )
     )
-    # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+    # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
     # Initialize a message counter from the FEAGI state
     msg_counter = runtime_data["feagi_state"]["burst_counter"]
 
@@ -118,17 +118,17 @@ if __name__ == "__main__":
         # Iterate through images
         for image in image_obj:
             raw_frame = image[0]
-            flask_server.latest_raw_image = raw_frame
-            flask_server.latest_static.raw_image_dimensions = (
-                f"{raw_frame.shape[1]} x {raw_frame.shape[0]}"
-            )
             # check, raw_frame = new_cam.read() # webcam
             camera_data["vision"] = raw_frame
             name_id = image[1]
             # name_id = "0-0-0" # webcam
-            # Update image ID for Flask server to display
-            image_id = key = next(iter(name_id))
             # image_id = "0-0-0" # webcam
+            image_id = key = next(iter(name_id))
+            # Update the latest image data for Flask server to display
+            flask_server.latest_raw_image = raw_frame
+            flask_server.latest_static.raw_image_dimensions = (
+                f"{raw_frame.shape[1]} x {raw_frame.shape[0]}"
+            )
             flask_server.latest_static = img_coords.update_image_ids(
                 new_image_id=image_id,
                 new_feagi_image_id=None,
@@ -146,6 +146,21 @@ if __name__ == "__main__":
                 )
                 >= (datetime.now() - start_timer).total_seconds()
             ):
+                # Apply any browser UI user changes to config data
+                latest_vals = flask_server.latest_static
+                raw_capabilities = config["capabilities"]["input"]["image_reader"]["0"]
+                raw_capabilities["loop"] = flask_server.latest_static.loop
+                raw_capabilities["image_display_duration"] = (
+                    flask_server.latest_static.image_display_duration
+                )
+                raw_capabilities["image_path"] = flask_server.latest_static.image_path
+                raw_capabilities["test_mode"] = flask_server.latest_static.test_mode
+                raw_capabilities["image_gap_duration"] = (
+                    flask_server.latest_static.image_gap_duration
+                )
+                raw_capabilities["image_id"] = flask_server.latest_static.image_id
+
+                # Set variables & process image
                 size_list = pns.resize_list
                 message_from_feagi = pns.message_from_feagi
                 temporary_previous, rgb, default_capabilities, modified_data = (
@@ -157,15 +172,13 @@ if __name__ == "__main__":
                         capabilities,
                         False,
                     )
-                )  # processes visual data into FEAGI-comprehensible form
+                )
 
-                # When FEAGI sends a recognition ID, update it for Flask server to display
+                # When FEAGI sends a recognition ID (like {'0-5-0': 100}), update it for Flask server to display
                 if "opu_data" in message_from_feagi:
                     recognition_id = pns.detect_ID_data(message_from_feagi)
                     if recognition_id:
-                        feagi_image_id = key = next(
-                            iter(recognition_id)
-                        )  # example recognition_id: {'0-5-0': 100}
+                        feagi_image_id = key = next(iter(recognition_id))
                         flask_server.latest_static = img_coords.update_image_ids(
                             new_image_id=None,
                             new_feagi_image_id=feagi_image_id,
@@ -175,11 +188,11 @@ if __name__ == "__main__":
                 # Process current image sent to FEAGI with bounding box
                 location_data = pns.recognize_location_data(message_from_feagi)
                 if pns.full_list_dimension:
-                    size_of_cortical = pns.full_list_dimension["o__loc"][
-                        "cortical_dimensions"
-                    ]  # Get cortical dimensions from FEAGI db
+                    o_loc = pns.full_list_dimension.get("o__loc")
+                    if o_loc:
+                        size_of_cortical = o_loc["cortical_dimensions"]
+                # Add image's dimensions to HTML display data
                 if previous_frame_data:
-                    # Add image's dimensions to HTML display data
                     flask_server.latest_static.image_dimensions = f"{modified_data['00_C'].shape[1]} x {modified_data['00_C'].shape[0]}"
                     new_image_id = getattr(flask_server.latest_static, "image_id", "")
                     feagi_image_id = getattr(
@@ -206,8 +219,7 @@ if __name__ == "__main__":
                         )
                 message_from_feagi = (
                     pns.message_from_feagi
-                )  # Needs to re-structure this code to be
-                # more consistent
+                )  # Needs to re-structure this code to be more consistent
 
                 # location section
                 location_data = pns.recognize_location_data(message_from_feagi)

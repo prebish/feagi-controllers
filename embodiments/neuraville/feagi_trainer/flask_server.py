@@ -4,8 +4,7 @@ import time
 import logging
 import numpy as np
 from flask import Flask, request, Response, render_template_string, jsonify
-from typing import TypedDict, Optional
-from models import LatestStatic
+from models import empty_latest_static
 
 # logging.basicConfig(level=logging.DEBUG)
 log = logging.getLogger("werkzeug")
@@ -16,23 +15,7 @@ app = Flask(__name__)
 start_time = time.time()
 latest_image = []
 latest_raw_image = []
-initial_latest_static = LatestStatic(
-    image_id="",
-    feagi_image_id="",
-    correct_count=0,
-    incorrect_count=0,
-    no_reply_count=0,
-    image_dimensions="",
-    raw_image_dimensions="",
-    last_image_time=None,
-    last_feagi_time=None,
-    loop=None,
-    image_display_duration=None,
-    image_path=None,
-    test_mode=None,
-    image_gap_duration=None,
-)
-latest_static = initial_latest_static
+latest_static = empty_latest_static
 
 
 @app.route("/")
@@ -310,11 +293,12 @@ def index():
         no_reply_count=latest_static.no_reply_count,
         image_dimensions=latest_static.image_dimensions,
         raw_image_dimensions=latest_static.raw_image_dimensions,
-        loop_checked="checked" if latest_static.loop else "",
+        feagi_controlled="checked" if latest_static.feagi_controlled else "",
         image_display_duration=latest_static.image_display_duration,
+        image_gap_duration=latest_static.image_gap_duration,
+        loop_checked="checked" if latest_static.loop else "",
         image_path=latest_static.image_path or "",
         test_mode_checked="checked" if latest_static.test_mode else "",
-        image_gap_duration=latest_static.image_gap_duration,
     )
 
 
@@ -334,6 +318,32 @@ def gen(use_raw=True):
                 )
 
 
+# Update static config data
+def update_latest_static(data):
+    for key, value in data.items():
+        if hasattr(latest_static, key):
+            setattr(latest_static, key, value)
+
+
+# Apply initial config settings from controller
+def apply_config_settings(image_reader_config):
+    try:
+        update_latest_static(image_reader_config)
+    except Exception as e:
+        log.error(f"Error applying configuration settings: {e}")
+
+
+# Apply new settings inputs from user
+@app.route("/apply_settings", methods=["POST"])
+def apply_settings():
+    try:
+        data = request.get_json()
+        update_latest_static(data)
+        return jsonify({"status": "success", "settings": latest_static.dict()})
+    except Exception as e:
+        return jsonify({"status": "error", "message": str(e)}), 400
+
+
 # Fetch latest image sent to FEAGI
 @app.route("/video_feed")
 def video_feed():
@@ -349,18 +359,14 @@ def raw_frame_feed():
 # Fetch latest image ID and any FEAGI recognition ID
 @app.route("/latest_ids")
 def latest_ids():
-    global latest_static
     return jsonify(latest_static.dict())
 
 
 # Reset timer and data
 @app.route("/reset_timer_and_data")
 def reset_timer_and_data():
-    global start_time, latest_static
+    latest_static = empty_latest_static
     start_time = time.time()
-
-    latest_static = initial_latest_static
-
     return jsonify(
         {
             "status": "success",
@@ -370,48 +376,6 @@ def reset_timer_and_data():
     )
 
 
-# Apply new settings inputs from user
-@app.route("/apply_settings", methods=["POST"])
-def apply_settings():
-    global latest_static
-
-    try:
-        data = request.get_json()
-
-        if "loop" in data:
-            latest_static.loop = data["loop"]
-        if "image_display_duration" in data:
-            latest_static.image_display_duration = data["image_display_duration"]
-        if "image_path" in data:
-            latest_static.image_path = data["image_path"]
-        if "test_mode" in data:
-            latest_static.test_mode = data["test_mode"]
-        if "image_gap_duration" in data:
-            latest_static.image_gap_duration = data["image_gap_duration"]
-
-        return jsonify({"status": "success", "settings": latest_static.dict()})
-
-    except Exception as e:
-        return jsonify({"status": "error", "message": str(e)}), 400
-
-
-def apply_config_settings(image_reader_config):
-    try:
-        if "loop" in image_reader_config:
-            latest_static.loop = image_reader_config["loop"]
-        if "image_display_duration" in image_reader_config:
-            latest_static.image_display_duration = image_reader_config[
-                "image_display_duration"
-            ]
-        if "image_path" in image_reader_config:
-            latest_static.image_path = image_reader_config["image_path"]
-        if "test_mode" in image_reader_config:
-            latest_static.test_mode = image_reader_config["test_mode"]
-        if "image_gap_duration" in image_reader_config:
-            latest_static.image_gap_duration = image_reader_config["image_gap_duration"]
-    except Exception as e:
-        log.error(f"Error applying configuration settings: {e}")
-
-
+# Initalize Flask server
 def start_app():
     app.run(host="0.0.0.0", port=4001, debug=False, use_reloader=False)
