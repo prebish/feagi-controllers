@@ -117,6 +117,7 @@ def index():
             </style>
         </head>
         <body>
+            <h1 style="text-align: center; color: lightgrey;">FEAGI Trainer</h1>
             <div style="display: flex; gap: 20px;">
                 <div class="stats-inputs-parent">
                     <div class="stats-container info-container">
@@ -128,6 +129,8 @@ def index():
                         <h3>No Reply: <span id="no-reply-count">{{ no_reply_count }}</span></h3>
                     </div>
                    <form id="settings-form" class="info-container">
+                        <h3 style="text-align: center;">Settings</h3>
+
                         <div class="form-group">
                             <label for="feagi_controlled">FEAGI Controlled:</label>
                             <input type="checkbox" id="feagi_controlled" name="feagi_controlled" {{ feagi_controlled }}>
