@@ -40,7 +40,7 @@
       },
       "image_reader": {
         "0": {
-          "feagi_controlled": false,
+          "feagi_controlled": true,
           "image_display_duration": 0.5,
           "image_gap_duration": 0,
           "loop": true,

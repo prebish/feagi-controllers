@@ -129,13 +129,18 @@ def index():
                     </div>
                    <form id="settings-form" class="info-container">
                         <div class="form-group">
-                            <label for="loop">Loop:</label>
-                            <input type="checkbox" id="loop" name="loop" {{ loop_checked }}>
+                            <label for="feagi_controlled">FEAGI Controlled:</label>
+                            <input type="checkbox" id="feagi_controlled" name="feagi_controlled" {{ feagi_controlled }}>
                         </div>
 
                         <div class="form-group">
                             <label for="image_display_duration">Image Display Duration:</label>
-                            <input type="number" id="image_display_duration" name="image_display_duration" step="0.1" min="0" value="{{ image_display_duration }}">
+                            <input type="{{'text' if feagi_controlled else 'number'}}" id="image_display_duration" name="image_display_duration" step="0.1" min="0" value="{{ 'FEAGI Controlled' if feagi_controlled else image_display_duration }}" {% if feagi_controlled %}disabled{% endif %}>
+                        </div>
+
+                         <div class="form-group">
+                            <label for="image_gap_duration">Image Gap Duration:</label>
+                            <input type="{{'text' if feagi_controlled else 'number'}}" id="image_gap_duration" name="image_gap_duration" step="0.1" min="0" value="{{ 'FEAGI Controlled' if feagi_controlled else image_gap_duration }}" {% if feagi_controlled %}disabled{% endif %}>
                         </div>
 
                         <div class="form-group">
@@ -143,14 +148,14 @@ def index():
                             <input type="text" id="image_path" name="image_path" value="{{ image_path }}">
                         </div>
 
-                         <div class="form-group">
-                            <label for="image_gap_duration">Image Gap Duration:</label>
-                            <input type="number" id="image_gap_duration" name="image_gap_duration" step="0.1" min="0" value="{{ image_gap_duration }}">
+                        <div class="form-group">
+                            <label for="loop">Loop:</label>
+                            <input type="checkbox" id="loop" name="loop" {{ loop }}>
                         </div>
 
                         <div class="form-group">
                             <label for="test_mode">Test Mode:</label>
-                            <input type="checkbox" id="test_mode" name="test_mode" {{ test_mode_checked }}>
+                            <input type="checkbox" id="test_mode" name="test_mode" {{ test_mode }}>
                         </div>
 
                         <button type="submit" id="settings-button" style="margin-top: 10px">Apply Changes</button>
@@ -246,13 +251,29 @@ def index():
                     event.preventDefault();
 
                     const formData = new FormData(this);
+
+                    const feagiControlled = formData.get('feagi_controlled') === 'on';
+                    const imageDisplayDuration = formData.get('image_display_duration');
+                    const imageGapDuration = formData.get('image_gap_duration');
+
                     const settings = {
-                        loop: formData.get('loop') === 'on',
-                        image_display_duration: parseFloat(formData.get('image_display_duration')),
+                        feagi_controlled: feagiControlled,
                         image_path: formData.get('image_path'),
+                        loop: formData.get('loop') === 'on',
                         test_mode: formData.get('test_mode') === 'on', 
-                        image_gap_duration: parseFloat(formData.get('image_gap_duration'))
                     };
+
+                    if (!feagiControlled) {
+                        const parsedImageDisplayDuration = parseFloat(imageDisplayDuration);
+                        if (!isNaN(parsedImageDisplayDuration)) {
+                            settings.image_display_duration = parsedImageDisplayDuration;
+                        }
+
+                        const parsedImageGapDuration = parseFloat(imageGapDuration);
+                        if (!isNaN(parsedImageGapDuration)) {
+                            settings.image_gap_duration = parsedImageGapDuration;
+                        }
+                    }
 
                     try {
                         const response = await fetch('/apply_settings', {
@@ -269,11 +290,33 @@ def index():
 
                         const result = await response.json();
                         console.log('Settings applied:', result);
+
+                        updateFormElements(feagiControlled, result.settings);
                     } catch (error) {
                         console.error('Error applying settings:', error);
                     }
                 });
 
+                function updateFormElements(feagiControlled, result) {
+                    const imageDisplayDurationInput = document.getElementById('image_display_duration');
+                    const imageGapDurationInput = document.getElementById('image_gap_duration');
+
+                    if (feagiControlled) {
+                        imageDisplayDurationInput.disabled = true;
+                        imageDisplayDurationInput.type = 'text';
+                        imageDisplayDurationInput.value = 'FEAGI Controlled';
+                        imageGapDurationInput.disabled = true;
+                        imageGapDurationInput.type = 'text';
+                        imageGapDurationInput.value = 'FEAGI Controlled';
+                    } else {
+                        imageDisplayDurationInput.disabled = false;
+                        imageDisplayDurationInput.type = 'number';
+                        imageDisplayDurationInput.value = result.image_display_duration !== undefined ? result.image_display_duration : '';
+                        imageGapDurationInput.disabled = false;
+                        imageGapDurationInput.type = 'number';
+                        imageGapDurationInput.value = result.image_gap_duration !== undefined ? result.image_gap_duration : '';
+                    }
+                }
 
                 // Clear localStorage when the server starts (this can be added to a separate page load check or server start logic)
                 window.addEventListener('load', () => {
@@ -296,9 +339,9 @@ def index():
         feagi_controlled="checked" if latest_static.feagi_controlled else "",
         image_display_duration=latest_static.image_display_duration,
         image_gap_duration=latest_static.image_gap_duration,
-        loop_checked="checked" if latest_static.loop else "",
         image_path=latest_static.image_path or "",
-        test_mode_checked="checked" if latest_static.test_mode else "",
+        loop="checked" if latest_static.loop else "",
+        test_mode="checked" if latest_static.test_mode else "",
     )
 
 

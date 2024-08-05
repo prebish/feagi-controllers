@@ -45,7 +45,6 @@ app_thread = threading.Thread(target=run_app)
 app_thread.start()
 
 if __name__ == "__main__":
-    # Initialize a runtime dictionary
     runtime_data = {
         "vision": {},
         "current_burst_id": None,
@@ -54,7 +53,7 @@ if __name__ == "__main__":
         "feagi_network": None,
     }
 
-    # Load configurations and settings for FEAGI, agents, capabilities, and messages
+    # Load configurations and settings
     feagi_settings = config["feagi_settings"].copy()
     agent_settings = config["agent_settings"].copy()
     default_capabilities = config["default_capabilities"].copy()
@@ -113,7 +112,6 @@ if __name__ == "__main__":
         latest_vals = flask_server.latest_static
         image_reader_config["image_path"] = flask_server.latest_static.image_path
         image_reader_config["loop"] = flask_server.latest_static.loop
-        print("path", image_reader_config["image_path"])
         image_obj = feagi_trainer.scan_the_folder(image_reader_config["image_path"])
         latest_image_id = None
         # Iterate through images
@@ -146,17 +144,15 @@ if __name__ == "__main__":
                 >= (datetime.now() - start_timer).total_seconds()
             ):
                 # Apply any browser UI user changes to config data
-                very_latest_vals = flask_server.latest_static
+                latest_vals = flask_server.latest_static
                 image_reader_config["image_display_duration"] = (
-                    very_latest_vals.image_display_duration
+                    latest_vals.image_display_duration
                 )
-                image_reader_config["test_mode"] = very_latest_vals.test_mode
+                image_reader_config["test_mode"] = latest_vals.test_mode
                 image_reader_config["image_gap_duration"] = (
-                    very_latest_vals.image_gap_duration
+                    latest_vals.image_gap_duration
                 )
-                image_reader_config["feagi_controlled"] = (
-                    very_latest_vals.feagi_controlled
-                )
+                image_reader_config["feagi_controlled"] = latest_vals.feagi_controlled
 
                 # Set variables & process image
                 size_list = pns.resize_list
@@ -189,6 +185,7 @@ if __name__ == "__main__":
                     o_loc = pns.full_list_dimension.get("o__loc")
                     if o_loc:
                         size_of_cortical = o_loc["cortical_dimensions"]
+
                 # Add image's dimensions to HTML display data
                 if previous_frame_data:
                     flask_server.latest_static.image_dimensions = f"{modified_data['00_C'].shape[1]} x {modified_data['00_C'].shape[0]}"
@@ -207,6 +204,7 @@ if __name__ == "__main__":
                             flask_server.latest_image = process_image(
                                 modified_data["00_C"]
                             )
+
                 # If camera data is available, generate data for FEAGI
                 if "camera" in rgb:  # This is the data wrapped for feagi data to read
                     if rgb["camera"] == {}:
@@ -217,27 +215,29 @@ if __name__ == "__main__":
                         )
                 message_from_feagi = (
                     pns.message_from_feagi
-                )  # Needs to re-structure this code to be more consistent
+                )  # Need to re-structure this code to be more consistent
 
                 # location section
                 location_data = pns.recognize_location_data(message_from_feagi)
-                if capabilities["input"]["image_reader"]["0"]["test_mode"]:
+                if image_reader_config["test_mode"]:
                     success_rate, success, total = testing_mode.mode_testing(
                         name_id, message_from_feagi, total, success, success_rate
                     )
                 else:
                     success_rate, success, total = 0, 0, 0
+
                 # Send signals to FEAGI
                 pns.signals_to_feagi(
                     message_to_feagi, feagi_ipu_channel, agent_settings, feagi_settings
                 )
+
                 # Sleep for the burst duration specified in the settings
                 sleep(feagi_settings["burst_duration"])
             blank_image()  # reset the image or during gap
-            sleep(capabilities["input"]["image_reader"]["0"]["image_gap_duration"])
+            sleep(image_reader_config["image_gap_duration"])
             previous_frame_data = temporary_previous.copy()
             start_timer = 0.0
             message_to_feagi.clear()
         # Sleep for the burst duration before the next iteration
         sleep(feagi_settings["burst_duration"])
-        continue_loop = capabilities["input"]["image_reader"]["0"]["loop"]
+        continue_loop = image_reader_config["loop"]
