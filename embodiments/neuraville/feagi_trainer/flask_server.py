@@ -143,14 +143,14 @@ def index():
                             <input type="text" id="image_path" name="image_path" value="{{ image_path }}">
                         </div>
 
-                        <div class="form-group">
-                            <label for="test_mode">Test Mode:</label>
-                            <input type="checkbox" id="test_mode" name="test_mode" {{ test_mode_checked }}>
+                         <div class="form-group">
+                            <label for="image_gap_duration">Image Gap Duration:</label>
+                            <input type="number" id="image_gap_duration" name="image_gap_duration" step="0.1" min="0" value="{{ image_gap_duration }}">
                         </div>
 
                         <div class="form-group">
-                            <label for="image_gap_duration">Image Gap Duration:</label>
-                            <input type="number" id="image_gap_duration" name="image_gap_duration" step="0.1" min="0" value="{{ image_gap_duration }}">
+                            <label for="test_mode">Test Mode:</label>
+                            <input type="checkbox" id="test_mode" name="test_mode" {{ test_mode_checked }}>
                         </div>
 
                         <button type="submit" id="settings-button" style="margin-top: 10px">Apply Changes</button>

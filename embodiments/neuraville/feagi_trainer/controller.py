@@ -30,11 +30,12 @@ from feagi_connector import feagi_interface as feagi
 from feagi_connector import trainer as feagi_trainer
 
 config = feagi.build_up_from_configuration()
+capabilities = config["capabilities"].copy()
+image_reader_config = capabilities["input"]["image_reader"]["0"]
 
 
 # Start Flask server
 def run_app():
-    image_reader_config = config["capabilities"]["input"]["image_reader"]["0"]
     flask_server.apply_config_settings(image_reader_config)
     flask_server.start_app()
 
@@ -58,7 +59,6 @@ if __name__ == "__main__":
     agent_settings = config["agent_settings"].copy()
     default_capabilities = config["default_capabilities"].copy()
     message_to_feagi = config["message_to_feagi"].copy()
-    capabilities = config["capabilities"].copy()
 
     # FEAGI registration - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
     feagi_settings, runtime_data, api_address, feagi_ipu_channel, feagi_opu_channel = (
@@ -110,10 +110,11 @@ if __name__ == "__main__":
     # Main loop for processing images
     # new_cam = cv2.VideoCapture(2) # webcam
     while continue_loop:
-        # Grabs all images in this directory
-        image_obj = feagi_trainer.scan_the_folder(
-            capabilities["input"]["image_reader"]["0"]["image_path"]
-        )
+        latest_vals = flask_server.latest_static
+        image_reader_config["image_path"] = flask_server.latest_static.image_path
+        image_reader_config["loop"] = flask_server.latest_static.loop
+        print("path", image_reader_config["image_path"])
+        image_obj = feagi_trainer.scan_the_folder(image_reader_config["image_path"])
         latest_image_id = None
         # Iterate through images
         for image in image_obj:
@@ -141,24 +142,21 @@ if __name__ == "__main__":
             if start_timer == 0.0:
                 start_timer = datetime.now()
             while (
-                float(
-                    capabilities["input"]["image_reader"]["0"]["image_display_duration"]
-                )
+                float(image_reader_config["image_display_duration"])
                 >= (datetime.now() - start_timer).total_seconds()
             ):
                 # Apply any browser UI user changes to config data
-                latest_vals = flask_server.latest_static
-                raw_capabilities = config["capabilities"]["input"]["image_reader"]["0"]
-                raw_capabilities["loop"] = flask_server.latest_static.loop
-                raw_capabilities["image_display_duration"] = (
-                    flask_server.latest_static.image_display_duration
+                very_latest_vals = flask_server.latest_static
+                image_reader_config["image_display_duration"] = (
+                    very_latest_vals.image_display_duration
                 )
-                raw_capabilities["image_path"] = flask_server.latest_static.image_path
-                raw_capabilities["test_mode"] = flask_server.latest_static.test_mode
-                raw_capabilities["image_gap_duration"] = (
-                    flask_server.latest_static.image_gap_duration
+                image_reader_config["test_mode"] = very_latest_vals.test_mode
+                image_reader_config["image_gap_duration"] = (
+                    very_latest_vals.image_gap_duration
                 )
-                raw_capabilities["image_id"] = flask_server.latest_static.image_id
+                image_reader_config["feagi_controlled"] = (
+                    very_latest_vals.feagi_controlled
+                )
 
                 # Set variables & process image
                 size_list = pns.resize_list
