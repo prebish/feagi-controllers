@@ -149,7 +149,6 @@ def main(feagi_auth_url, feagi_settings, agent_settings, capabilities, message_t
     threading.Thread(target=retina.vision_progress, args=(default_capabilities, feagi_settings, camera_data['vision'],), daemon=True).start()
     while True:
         try:
-            print(camera_data['vision'])
             if len(camera_data['vision']) > 0:
                 previous_frame_data, rgb, default_capabilities = retina.process_visual_stimuli(
                     camera_data['vision'],
