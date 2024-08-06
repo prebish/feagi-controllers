@@ -23,7 +23,6 @@
         "0": {
           "type": "ipu",
           "disabled": false,
-          "index": "00",
           "video_device_index": 0,
           "image": "",
           "video_loop": false,
