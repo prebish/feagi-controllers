@@ -42,9 +42,6 @@ def process_video(video_path, capabilities):
         for device in video_path:
             new_cam = cv2.VideoCapture(device)
             webcam_list.append(new_cam)
-        print("video path: ", video_path)
-        print("webcam list: ", webcam_list)
-        print("capabilities: ", capabilities)
     # cam.set(3, 320)
     # cam.set(4, 240)
     if capabilities['input']['camera']['0']['video_device_index'] == "monitor":
@@ -152,16 +149,16 @@ def main(feagi_auth_url, feagi_settings, agent_settings, capabilities, message_t
     threading.Thread(target=retina.vision_progress, args=(default_capabilities, feagi_settings, camera_data['vision'],), daemon=True).start()
     while True:
         try:
-            # print(camera_data['vision'])
-            # if len(camera_data['vision']) > 0:
-            #     previous_frame_data, rgb, default_capabilities = retina.process_visual_stimuli(
-            #         camera_data['vision'],
-            #         default_capabilities,
-            #         previous_frame_data,
-            #         rgb, capabilities)
-            #     default_capabilities['input']['camera']['0']['blink'] = []
-            # if rgb:
-            #     message_to_feagi = pns.generate_feagi_data(rgb, message_to_feagi)
+            print(camera_data['vision'])
+            if len(camera_data['vision']) > 0:
+                previous_frame_data, rgb, default_capabilities = retina.process_visual_stimuli(
+                    camera_data['vision'],
+                    default_capabilities,
+                    previous_frame_data,
+                    rgb, capabilities)
+                default_capabilities['input']['camera']['0']['blink'] = []
+            if rgb:
+                message_to_feagi = pns.generate_feagi_data(rgb, message_to_feagi)
             sleep(feagi_settings['feagi_burst_speed'])  # bottleneck
             pns.signals_to_feagi(message_to_feagi, feagi_ipu_channel, agent_settings, feagi_settings)
             message_to_feagi.clear()
