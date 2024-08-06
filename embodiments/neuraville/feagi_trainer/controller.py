@@ -84,7 +84,6 @@ if __name__ == "__main__":
     # Create runtime default capabilities list
     default_capabilities = {}  # It will be generated in process_visual_stimuli. See the
     default_capabilities = pns.create_runtime_default_list(default_capabilities, capabilities)
-    default_capabilities = retina.convert_new_json_to_old_json(default_capabilities)
     threading.Thread(target=retina.vision_progress,
                      args=(default_capabilities, feagi_settings, camera_data['vision'],),
                      daemon=True).start()
@@ -109,7 +108,8 @@ if __name__ == "__main__":
         if counter == 5:
             print(name_id, " is not in folder.")
             counter = 0
-
+        if len(rgb) == 0:
+            rgb['camera'] = {}
         if (previous_name != name_id) or (previous_capabilities != default_capabilities) or (not rgb['camera']):
             rgb['camera'].clear()
             previous_name = name_id  # Update name so it wont need to recaluate the vision
@@ -157,7 +157,8 @@ if __name__ == "__main__":
             elif latest_image_id != new_image_id:
                 latest_image_id = new_image_id
                 if '00_C' in modified_data:
-                    process_image(modified_data['00_C'])
+                    if len(modified_data['00_C']) > 0:
+                        process_image(modified_data['00_C'])
 
         # If camera data is available, generate data for FEAGI
         if 'camera' in rgb:  # This is the data wrapped for feagi data to read
