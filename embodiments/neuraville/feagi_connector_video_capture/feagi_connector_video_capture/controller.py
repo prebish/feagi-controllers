@@ -42,6 +42,9 @@ def process_video(video_path, capabilities):
         for device in video_path:
             new_cam = cv2.VideoCapture(device)
             webcam_list.append(new_cam)
+        print("video path: ", video_path)
+        print("webcam list: ", webcam_list)
+        print("capabilities: ", capabilities)
     # cam.set(3, 320)
     # cam.set(4, 240)
     if capabilities['input']['camera']['0']['video_device_index'] == "monitor":
@@ -88,10 +91,11 @@ def process_video(video_path, capabilities):
                 pixels = cv2.flip(pixels, 1)
             camera_data["vision"] = pixels
         else:
-            if capabilities['input']['camera']['0']["mirror"]:
-                if webcam_data_each:
-                    for device in webcam_data_each:
-                        webcam_data_each[device] = cv2.flip(webcam_data_each[device], 1)
+            for index in capabilities['input']['camera']:
+                if capabilities['input']['camera'][index]["mirror"]:
+                    if webcam_data_each:
+                        for device in webcam_data_each:
+                            webcam_data_each[device] = cv2.flip(webcam_data_each[device], 1)
             if webcam_data_each:
                 camera_data["vision"] = webcam_data_each.copy()
             # print(camera_data)
@@ -109,8 +113,10 @@ def adjust_gamma(image, gamma=5.0):
 
 def main(feagi_auth_url, feagi_settings, agent_settings, capabilities, message_to_feagi):
     print("full list: ", capabilities)
-    threading.Thread(target=process_video, args=(capabilities['input']['camera']['0']['video_device_index'],
-                                                 capabilities), daemon=True).start()
+    webcam_list = []
+    for index in capabilities['input']['camera']:
+        webcam_list.append(capabilities['input']['camera'][index]['video_device_index'])
+    threading.Thread(target=process_video, args=(webcam_list, capabilities), daemon=True).start()
     # Generate runtime dictionary
     runtime_data = {"vision": {}, "current_burst_id": None, "stimulation_period": None,
                     "feagi_state": None,
@@ -141,21 +147,21 @@ def main(feagi_auth_url, feagi_settings, agent_settings, capabilities, message_t
     default_capabilities = {}  # It will be generated in process_visual_stimuli. See the
     # overwrite manual
     default_capabilities = pns.create_runtime_default_list(default_capabilities, capabilities)
-    default_capabilities = retina.convert_new_json_to_old_json(default_capabilities)  # temporary
+    # default_capabilities = retina.convert_new_json_to_old_json(default_capabilities)  # temporary
     threading.Thread(target=pns.feagi_listener, args=(feagi_opu_channel,), daemon=True).start()
     threading.Thread(target=retina.vision_progress, args=(default_capabilities, feagi_settings, camera_data['vision'],), daemon=True).start()
     while True:
         try:
-            if len(camera_data['vision']) > 0:
-                previous_frame_data, rgb, default_capabilities = retina.process_visual_stimuli(
-                    camera_data['vision'],
-                    default_capabilities,
-                    previous_frame_data,
-                    rgb, capabilities)
-                default_capabilities['camera']['blink'] = []
-            if rgb:
-                message_to_feagi = pns.generate_feagi_data(rgb, message_to_feagi)
-            # print(default_capabilities['camera']['gaze_control'][0])
+            # print(camera_data['vision'])
+            # if len(camera_data['vision']) > 0:
+            #     previous_frame_data, rgb, default_capabilities = retina.process_visual_stimuli(
+            #         camera_data['vision'],
+            #         default_capabilities,
+            #         previous_frame_data,
+            #         rgb, capabilities)
+            #     default_capabilities['input']['camera']['0']['blink'] = []
+            # if rgb:
+            #     message_to_feagi = pns.generate_feagi_data(rgb, message_to_feagi)
             sleep(feagi_settings['feagi_burst_speed'])  # bottleneck
             pns.signals_to_feagi(message_to_feagi, feagi_ipu_channel, agent_settings, feagi_settings)
             message_to_feagi.clear()
