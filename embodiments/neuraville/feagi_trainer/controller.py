@@ -110,8 +110,8 @@ if __name__ == "__main__":
     # new_cam = cv2.VideoCapture(2) # webcam
     while continue_loop:
         latest_vals = flask_server.latest_static
-        image_reader_config["image_path"] = flask_server.latest_static.image_path
-        image_reader_config["loop"] = flask_server.latest_static.loop
+        image_reader_config["image_path"] = latest_vals.image_path
+        image_reader_config["loop"] = latest_vals.loop
         image_obj = feagi_trainer.scan_the_folder(image_reader_config["image_path"])
         latest_image_id = None
         # Iterate through images
