@@ -345,10 +345,11 @@ if __name__ == '__main__':
                 #                 motor_functions.display_lines(cli)
 
             raw_frame = camera_data['vision']
-            default_capabilities['camera']['blink'] = []
-            if 'camera' in default_capabilities:
-                if default_capabilities['camera']['blink'] != []:
-                    raw_frame = default_capabilities['camera']['blink']
+            print(camera_data['vision'])
+            # default_capabilities['input']['camera']['0']['blink'] = []
+            if 'camera' in default_capabilities['input']:
+                if default_capabilities['input']['camera']['0']['blink'] != []:
+                    raw_frame = default_capabilities['input']['camera']['0']['blink']
             previous_frame_data, rgb, default_capabilities = retina.process_visual_stimuli(
                 raw_frame,
                 default_capabilities,
