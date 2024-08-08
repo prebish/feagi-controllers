@@ -347,8 +347,6 @@ if __name__ == '__main__':
             raw_frame = camera_data['vision']
             # print(camera_data['vision'])
             # default_capabilities['input']['camera']['0']['blink'] = []
-            if raw_frame.any():
-                print(raw_frame.shape())
             previous_frame_data, rgb, default_capabilities = retina.process_visual_stimuli(
                 raw_frame,
                 default_capabilities,
