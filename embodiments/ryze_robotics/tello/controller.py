@@ -238,7 +238,7 @@ if __name__ == '__main__':
     start_camera(tello)
 
     # overwrite manual
-    threading.Thread(target=retina.vision_progress, args=(default_capabilities, feagi_settings, camera_data['vision'],), daemon=True).start()
+    threading.Thread(target=retina.vision_progress, args=(default_capabilities, feagi_settings, camera_data,), daemon=True).start()
 
     while True:
         try:
@@ -255,9 +255,6 @@ if __name__ == '__main__':
             battery = get_battery(data)
             raw_frame = full_frame(tello)
             camera_data['vision'] = raw_frame
-            default_capabilities['camera']['blink'] = []
-            if len(default_capabilities['camera']['blink']) > 0:
-                raw_frame = default_capabilities['camera']['blink']
             # Post image into vision
             previous_frame_data, rgb, default_capabilities = retina.process_visual_stimuli(
                 raw_frame,
@@ -294,16 +291,6 @@ if __name__ == '__main__':
                                 message_to_feagi = sensors.add_generic_input_to_feagi_data(create_data_list, message_to_feagi)
                         except:
                             pass
-                # message_to_feagi, capabilities['gyro']['gyro_max_value_list'], \
-                #     capabilities['gyro']['gyro_min_value_list'] = sensors.create_data_for_feagi(
-                #     cortical_id='i__gyr',
-                #     robot_data=gyro,
-                #     maximum_range=capabilities['gyro']['gyro_max_value_list'],
-                #     minimum_range=capabilities['gyro']['gyro_min_value_list'],
-                #     enable_symmetric=True,
-                #     index=capabilities['gyro']['dev_index'],
-                #     count=capabilities['gyro']['sub_channel_count'],
-                #     message_to_feagi=message_to_feagi)
             # Add battery data into feagi data
             if battery:
                 for device_id in capabilities['input']['battery']:

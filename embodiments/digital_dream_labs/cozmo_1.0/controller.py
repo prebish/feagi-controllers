@@ -300,7 +300,7 @@ if __name__ == '__main__':
     threading.Thread(target=vision_initalization, args=(cli,), daemon=True).start()
     threading.Thread(target=retina.vision_progress,
                      args=(default_capabilities,feagi_settings,
-                           camera_data['vision'],), daemon=True).start()
+                           camera_data,), daemon=True).start()
     time.sleep(2)
     # vision ends
 
@@ -345,10 +345,8 @@ if __name__ == '__main__':
                 #                 motor_functions.display_lines(cli)
 
             raw_frame = camera_data['vision']
-            default_capabilities['camera']['blink'] = []
-            if 'camera' in default_capabilities:
-                if default_capabilities['camera']['blink'] != []:
-                    raw_frame = default_capabilities['camera']['blink']
+            # print(camera_data['vision'])
+            # default_capabilities['input']['camera']['0']['blink'] = []
             previous_frame_data, rgb, default_capabilities = retina.process_visual_stimuli(
                 raw_frame,
                 default_capabilities,
