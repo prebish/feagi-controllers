@@ -171,8 +171,6 @@ if __name__ == "__main__":
             # Show user image currently sent to FEAGI, with a bounding box showing FEAGI's location data if it exists
             location_data = pns.recognize_location_data(message_from_feagi)
             if previous_frame_data:
-                if modified_data == {}:
-                    print(modified_data)
                 flask_server.latest_static.image_dimensions = f"{modified_data['00_C'].shape[1]} x {modified_data['00_C'].shape[0]}"
                 new_image_id = getattr(flask_server.latest_static, "image_id", "")
                 feagi_image_id = getattr(flask_server.latest_static, "feagi_image_id", "")
