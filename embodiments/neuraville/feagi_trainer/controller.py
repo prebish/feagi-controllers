@@ -147,8 +147,7 @@ if __name__ == "__main__":
                         failed_to_find_file = False
 
                 if failed_to_find_file:
-                    image_obj = feagi_trainer.scan_the_folder(
-                        capabilities['input']['image_reader']['0']['image_path'])
+                    image_obj = feagi_trainer.scan_the_folder(capabilities['input']['image_reader']['0']['image_path'])
                     information_files = list(image_obj)
                     counter += 1
                 else:
@@ -172,6 +171,8 @@ if __name__ == "__main__":
             # Show user image currently sent to FEAGI, with a bounding box showing FEAGI's location data if it exists
             location_data = pns.recognize_location_data(message_from_feagi)
             if previous_frame_data:
+                if modified_data == {}:
+                    print(modified_data)
                 flask_server.latest_static.image_dimensions = f"{modified_data['00_C'].shape[1]} x {modified_data['00_C'].shape[0]}"
                 new_image_id = getattr(flask_server.latest_static, "image_id", "")
                 feagi_image_id = getattr(flask_server.latest_static, "feagi_image_id", "")
@@ -272,22 +273,23 @@ if __name__ == "__main__":
 
                     # Add image's dimensions to HTML display data
                     if previous_frame_data:
-                        flask_server.latest_static.image_dimensions = f"{modified_data['00_C'].shape[1]} x {modified_data['00_C'].shape[0]}"
-                        new_image_id = getattr(flask_server.latest_static, "image_id", "")
-                        feagi_image_id = getattr(
-                            flask_server.latest_static, "feagi_image_id", ""
-                        )
-                        if location_data:
-                            if "00_C" in modified_data:
-                                flask_server.latest_image = process_image(
-                                    modified_data["00_C"], location_data, size_of_cortical
-                                )
-                        elif latest_image_id != new_image_id:
-                            latest_image_id = new_image_id
-                            if "00_C" in modified_data:
-                                flask_server.latest_image = process_image(
-                                    modified_data["00_C"]
-                                )
+                        if len(modified_data['00_C']) > 0:
+                            flask_server.latest_static.image_dimensions = f"{modified_data['00_C'].shape[1]} x {modified_data['00_C'].shape[0]}"
+                            new_image_id = getattr(flask_server.latest_static, "image_id", "")
+                            feagi_image_id = getattr(
+                                flask_server.latest_static, "feagi_image_id", ""
+                            )
+                            if location_data:
+                                if "00_C" in modified_data:
+                                    flask_server.latest_image = process_image(
+                                        modified_data["00_C"], location_data, size_of_cortical
+                                    )
+                            elif latest_image_id != new_image_id:
+                                latest_image_id = new_image_id
+                                if "00_C" in modified_data:
+                                    flask_server.latest_image = process_image(
+                                        modified_data["00_C"]
+                                    )
 
                     # If camera data is available, generate data for FEAGI
                     if "camera" in rgb:  # This is the data wrapped for feagi data to read
