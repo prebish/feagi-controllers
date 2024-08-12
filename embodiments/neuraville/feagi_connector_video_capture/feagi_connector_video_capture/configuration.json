@@ -19,7 +19,7 @@
                 "0": {
                     "disabled": false,
                     "index": "00",
-                    "video_device_index": [2,4],
+                    "video_device_index": 0,
                     "video_loop": false,
                     "mirror": false,
                     "monitor": 0,
