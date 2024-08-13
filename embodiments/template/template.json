@@ -1,0 +1,164 @@
+{
+  "description": "FEAGI Connector IO Object Definition Template",
+  "version": "0.0.0",
+  "output": {
+    "motor": {},
+    "servo": {},
+    "gpio": {
+
+    },
+    "led": {},
+    "location": {}
+  },
+  "input": {
+    "infrared_sensor": {
+      "label": "Infrared Sensor",
+      "description": "",
+      "parameters": [
+        {
+          "label": "custom_name",
+          "description": "User defined name for the device.",
+          "type": "string"
+        },
+        {
+          "label": "disabled",
+          "description": "Disables the device when true.",
+          "type": "boolean",
+          "default": false
+        }
+      ]
+    },
+    "ultrasonic": {
+      "label": "Ultrasonic Sensor",
+      "description": "",
+      "parameters": [
+        {
+          "label": "custom_name",
+          "description": "User defined name for the device.",
+          "type": "string"
+        },
+        {
+          "label": "disabled",
+          "description": "Disables the device when true.",
+          "type": "boolean",
+          "default": false
+        },
+        {
+          "label": "front_distance_minimum",
+          "description": "Minimum range detectable by the sensor.",
+          "type": "float",
+          "default": 0
+        },
+        {
+          "label": "front_distance_maximum",
+          "description": "Maximum range detectable by the sensor",
+          "type": "float",
+          "default": 300
+        }
+      ]
+    },
+    "gyroscope": {
+      "label": "Gyroscope Sensor",
+      "description": "",
+      "parameters": [
+        {
+          "label": "custom_name",
+          "description": "User defined name for the device.",
+          "type": "string"
+        },
+        {
+          "label": "disabled",
+          "description": "Disables the device when true.",
+          "type": "boolean",
+          "default": false
+        },
+        {
+          "label": "min_value",
+          "description": "Minimum range detectable by the sensor.",
+          "type": "list",
+          "element_type": "float",
+          "default": [0, 0, 0],
+          "min_length": 3,
+          "max_length": 3
+        },
+        {
+          "label": "max_value",
+          "description": "Maximum range detectable by the sensor",
+          "type": "list",
+          "element_type": "float",
+          "default": [180, 180, 180],
+          "min_length": 3,
+          "max_length": 3
+        }
+      ]
+    },
+    "gpio_input": {
+      "label": "GPIO Input",
+      "description": "",
+      "parameters": [
+        {
+          "label": "custom_name",
+          "description": "User defined name for the device.",
+          "type": "string"
+        },
+        {
+          "label": "disabled",
+          "description": "Disables the device when true.",
+          "type": "boolean",
+          "default": false
+        },
+        {
+          "label": "digital",
+          "description": "If true designates the GPIO input as a digital type",
+          "type": "boolean",
+          "default": false
+        },
+        {
+          "label": "digital_pin_configuration",
+          "description": "Captures Digital input GPIO port configuration settings",
+          "type": "object",
+          "keys_type": "integer",
+          "properties": {
+            "custom_name": {
+              "label": "GPIO Pin number",
+              "type": "string",
+              "default": ""
+            },
+            "disable": {
+              "type": "boolean",
+              "default": false
+            }
+          }
+        },
+        {
+          "label": "Analog pin Configuration",
+          "description": "Captures analog input GPIO port configuration settings",
+          "type": "object",
+          "keys_type": "integer",
+          "properties": {
+            "max_value": {
+              "type": "float",
+              "default": 1,
+              "min": 0,
+              "max": 1
+            },
+            "min_value": {
+              "type": "float",
+              "default": 0,
+              "min": 0,
+              "max": 1
+            },
+            "disable": {
+              "type": "boolean",
+              "default": false
+            },
+            "custom_name": {
+              "type": "string",
+              "default": ""
+            }
+          }
+        }
+      ]
+    }
+  }
+}
