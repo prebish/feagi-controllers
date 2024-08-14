@@ -438,6 +438,59 @@
                 }
             ]
         },
-        
+        "camera": {
+            "label": "Vision",
+            "description": "",
+            "parameters": [
+                {
+                    "label": "custom_name",
+                    "description": "User defined name for the device.",
+                    "type": "string"
+                },
+                {
+                    "label": "disabled",
+                    "description": "Disables the device when true.",
+                    "type": "boolean",
+                    "default": false
+                },
+                {
+                    "label": "index",
+                    "description": "An index to create cortical vision name such as iv00_C, iv01_C, etc.",
+                    "type": "string"
+                },
+                {
+                    "label": "mirror",
+                    "description": "horizontal flip",
+                    "type": "boolean",
+                    "default": false
+                },
+                {
+                    "label": "eccentricity_control",
+                    "description": "Controls the eccentricity amount of the signal",
+                    "type": "dictionary",
+                    "default": {
+                        "0": 1,
+                        "1": 1
+                    },
+                    "require": false
+                },
+                {
+                    "label": "modulation_control",
+                    "description": "Controls the modulation amount of the signal",
+                    "type": "dictionary",
+                    "default": {
+                        "0": 99,
+                        "1": 99
+                    },
+                    "require": false
+                },
+                {
+                    "label": "feagi_index",
+                    "description": "An index to place",
+                    "type": "Intger",
+                    "default": 0
+                }
+            ]
+        }
     }
 }
