@@ -126,7 +126,7 @@
                 {
                     "label": "feagi_index",
                     "description": "An index to place",
-                    "type": "Intger",
+                    "type": "integer",
                     "default": 0
                 },
                 {
@@ -180,7 +180,7 @@
                 {
                     "label": "feagi_index",
                     "description": "An index to place",
-                    "type": "Intger",
+                    "type": "integer",
                     "default": 0
                 },
                 {
@@ -216,6 +216,7 @@
                     "description": "Captures Digital input GPIO port configuration settings",
                     "type": "object",
                     "keys_type": "integer",
+                    "depends_on": "digital",
                     "properties": {
                         "custom_name": {
                             "label": "GPIO Pin number",
@@ -233,6 +234,7 @@
                     "description": "Captures analog input GPIO port configuration settings",
                     "type": "object",
                     "keys_type": "integer",
+                    "depends_on": "!digital",
                     "properties": {
                         "max_value": {
                             "type": "float",
@@ -259,7 +261,7 @@
                 {
                     "label": "feagi_index",
                     "description": "An index to place",
-                    "type": "Intger",
+                    "type": "integer",
                     "default": 0
                 }
             ]
@@ -287,19 +289,19 @@
                 {
                     "label": "max_value",
                     "description": "A maximum number to read the value",
-                    "type": "Intger",
+                    "type": "integer",
                     "default": null
                 },
                 {
                     "label": "min_value",
                     "description": "A minimum number to read the value",
-                    "type": "Intger",
+                    "type": "integer",
                     "default": null
                 },
                 {
                     "label": "feagi_index",
                     "description": "An index to place",
-                    "type": "Intger",
+                    "type": "integer",
                     "default": 0
                 }
             ]
@@ -339,7 +341,7 @@
                 {
                     "label": "feagi_index",
                     "description": "An index to place",
-                    "type": "Intger",
+                    "type": "integer",
                     "default": 0
                 }
             ]
@@ -388,7 +390,7 @@
                 {
                     "label": "feagi_index",
                     "description": "An index to place",
-                    "type": "Intger",
+                    "type": "integer",
                     "default": 0
                 },
                 {
@@ -433,7 +435,7 @@
                 {
                     "label": "feagi_index",
                     "description": "An index to place",
-                    "type": "Intger",
+                    "type": "integer",
                     "default": 0
                 }
             ]
@@ -487,7 +489,7 @@
                 {
                     "label": "feagi_index",
                     "description": "An index to place",
-                    "type": "Intger",
+                    "type": "integer",
                     "default": 0
                 }
             ]
