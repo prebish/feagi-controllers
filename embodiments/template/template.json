@@ -469,22 +469,48 @@
                 {
                     "label": "eccentricity_control",
                     "description": "Controls the eccentricity amount of the signal",
-                    "type": "dictionary",
-                    "default": {
-                        "0": 1,
-                        "1": 1
-                    },
-                    "require": false
+                    "type": "object",
+                    "keys_type": "string",
+                    "properties": {
+                        "x_offset": {
+                            "label": "X offset percentage",
+                            "type": "float",
+                            "default": 1,
+                            "min": 1,
+                            "max": 99
+                        },
+                        "y_offset": {
+                            "label": "Y offset percentage",
+                            "type": "float",
+                            "default": 1,
+                            "min": 1,
+                            "max": 99
+                        },
+                        "require": false
+                    }
                 },
                 {
                     "label": "modulation_control",
                     "description": "Controls the modulation amount of the signal",
-                    "type": "dictionary",
-                    "default": {
-                        "0": 99,
-                        "1": 99
-                    },
-                    "require": false
+                    "type": "object",
+                    "keys_type": "string",
+                    "properties": {
+                        "x_offset": {
+                            "label": "X offset percentage",
+                            "type": "float",
+                            "default": 99,
+                            "min": 1,
+                            "max": 99
+                        },
+                        "y_offset": {
+                            "label": "Y offset percentage",
+                            "type": "float",
+                            "default": 99,
+                            "min": 1,
+                            "max": 99
+                        },
+                        "require": false
+                    }
                 },
                 {
                     "label": "feagi_index",
