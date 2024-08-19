@@ -474,7 +474,7 @@
                     "properties": {
                         "x_offset": {
                             "label": "X offset percentage",
-                            "type": "float",
+                            "type": "int",
                             "default": 1,
                             "min": 1,
                             "max": 99
@@ -497,14 +497,14 @@
                     "properties": {
                         "x_offset": {
                             "label": "X offset percentage",
-                            "type": "float",
+                            "type": "integer",
                             "default": 99,
                             "min": 1,
                             "max": 99
                         },
                         "y_offset": {
                             "label": "Y offset percentage",
-                            "type": "float",
+                            "type": "integer",
                             "default": 99,
                             "min": 1,
                             "max": 99
