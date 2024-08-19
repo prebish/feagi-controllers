@@ -474,14 +474,14 @@
                     "properties": {
                         "x_offset": {
                             "label": "X offset percentage",
-                            "type": "integer",
+                            "type": "percentage",
                             "default": 1,
                             "min": 1,
                             "max": 99
                         },
                         "y_offset": {
                             "label": "Y offset percentage",
-                            "type": "integer",
+                            "type": "percentage",
                             "default": 1,
                             "min": 1,
                             "max": 99
