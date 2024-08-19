@@ -474,14 +474,14 @@
                     "properties": {
                         "x_offset": {
                             "label": "X offset percentage",
-                            "type": "int",
+                            "type": "integer",
                             "default": 1,
                             "min": 1,
                             "max": 99
                         },
                         "y_offset": {
                             "label": "Y offset percentage",
-                            "type": "float",
+                            "type": "integer",
                             "default": 1,
                             "min": 1,
                             "max": 99
@@ -497,20 +497,28 @@
                     "properties": {
                         "x_offset": {
                             "label": "X offset percentage",
-                            "type": "integer",
+                            "type": "percentage",
                             "default": 99,
                             "min": 1,
                             "max": 99
                         },
                         "y_offset": {
                             "label": "Y offset percentage",
-                            "type": "integer",
+                            "type": "percentage",
                             "default": 99,
                             "min": 1,
                             "max": 99
                         },
                         "require": false
                     }
+                },
+                {
+                    "label": "threshold_default",
+                    "description": "A value that will pick the pixel up otherwise ignore it",
+                    "type": "integer",
+                    "default": 50,
+                    "min": 1,
+                    "max": 255
                 },
                 {
                     "label": "feagi_index",
