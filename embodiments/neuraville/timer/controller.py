@@ -105,7 +105,7 @@ if __name__ == '__main__':
                 obtained_signals = pns.obtain_opu_data(message_from_feagi)
                 pns.check_genome_status_no_vision(message_from_feagi)
                 if 'misc' in obtained_signals:
-                    previous_total_time = 0
+                    previous_total_time = time.time()
                     for x in obtained_signals['misc']:
                         iteration = int(x) + 1
                         total_numbers = iteration * 100
@@ -113,7 +113,7 @@ if __name__ == '__main__':
                         time_delta = time.time() - previous_total_time
                         time_per_neuron = time_delta/ (100 * iteration)
                         print(f"iteration = {iteration}, total_numbers = {total_numbers}, total_time = {total_time}, time_delta = {time_delta}, time_per_neuron = {time_per_neuron}")
-                        previous_total_time = total_time
+                        # previous_total_time = total_time
 
 
 
