@@ -16,6 +16,7 @@ limitations under the License.
 ==============================================================================
 """
 import time
+import psutil
 import argparse
 import requests
 import traceback
@@ -122,7 +123,9 @@ if __name__ == '__main__':
                             total_time = current_milli_time() - start_time  # unix time - unix time
                             time_delta = current_milli_time() - previous_total_time  # unix - (seconds)
                             time_per_neuron = time_delta / (100 * iteration)
-                            print(f"iteration = {iteration}, total_numbers = {total_numbers}, total_time = {total_time}, time_delta = {time_delta}, time_per_neuron = {time_per_neuron}")
+                            cpu = psutil.cpu_percent(interval=1)
+                            memory = psutil.virtual_memory().percent
+                            print(f"iteration = {iteration}, total_numbers = {total_numbers}, total_time = {total_time}, time_delta = {time_delta}, time_per_neuron = {time_per_neuron}, cpu utilization = {cpu}, memory_usuage={memory}" )
                             # previous_total_time = total_time
                             iteration_list.append(iteration)
                             previous_total_time = current_milli_time()
