@@ -28,6 +28,11 @@ from feagi_connector import feagi_interface as FEAGI
 runtime_data = {}
 previous_frame_data = {}
 
+
+def current_milli_time():
+    return time.time() * 1000
+
+
 if __name__ == '__main__':
     feagi_settings, agent_settings, capabilities, message_to_feagi, configuration = FEAGI.configuration_load(
         './')
@@ -95,9 +100,13 @@ if __name__ == '__main__':
                   " and status: ", response.status_code)
             response = requests.put(url, json=json_data)
             sleep(3)
-    message_to_feagi = sensors.add_generic_input_to_feagi_data({'i_misc': {"0-0-0":100}}, message_to_feagi)
-    pns.signals_to_feagi(message_to_feagi, feagi_ipu_channel, agent_settings, feagi_settings)
-    start_time = time.time()
+    message_to_feagi = sensors.add_generic_input_to_feagi_data(
+        {'i_misc': {"0-0-0": 100}}, message_to_feagi)
+    pns.signals_to_feagi(message_to_feagi, feagi_ipu_channel, agent_settings,
+                         feagi_settings)
+    start_time = current_milli_time()
+    previous_total_time = start_time
+    iteration_list = []
     while True:
         try:
             message_from_feagi = pns.message_from_feagi
@@ -105,17 +114,26 @@ if __name__ == '__main__':
                 obtained_signals = pns.obtain_opu_data(message_from_feagi)
                 pns.check_genome_status_no_vision(message_from_feagi)
                 if 'misc' in obtained_signals:
-                    previous_total_time = time.time()
+                    # print(obtained_signals['misc'])
                     for x in obtained_signals['misc']:
                         iteration = int(x) + 1
-                        total_numbers = iteration * 100
-                        total_time = time.time() - start_time # unix time - unix time
-                        time_delta = time.time() - previous_total_time # unix - (seconds)
-                        time_per_neuron = time_delta/ (100 * iteration)
-                        print(f"iteration = {iteration}, total_numbers = {total_numbers}, total_time = {total_time}, time_delta = {time_delta}, time_per_neuron = {time_per_neuron}")
-                        # previous_total_time = total_time
-
-
+                        if iteration not in iteration_list:
+                            total_numbers = iteration * 100
+                            total_time = current_milli_time() - start_time  # unix time - unix time
+                            time_delta = current_milli_time() - previous_total_time  # unix - (seconds)
+                            time_per_neuron = time_delta / (100 * iteration)
+                            print(f"iteration = {iteration}, total_numbers = {total_numbers}, total_time = {total_time}, time_delta = {time_delta}, time_per_neuron = {time_per_neuron}")
+                            # previous_total_time = total_time
+                            iteration_list.append(iteration)
+                            previous_total_time = current_milli_time()
+                if len(iteration_list) == int(args['number']):
+                    print("number reached!")
+                    break
+            if current_milli_time() - start_time >= 2000.0 and not iteration_list:
+                print("missed, trying again...")
+                message_to_feagi = sensors.add_generic_input_to_feagi_data(
+                    {'i_misc': {"0-0-0": 100}}, message_to_feagi)
+                previous_total_time = current_milli_time()
 
 
             sleep(feagi_settings['feagi_burst_speed'])  # bottleneck
