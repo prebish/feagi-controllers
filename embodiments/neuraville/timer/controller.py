@@ -108,6 +108,7 @@ if __name__ == '__main__':
     start_time = current_milli_time()
     previous_total_time = start_time
     iteration_list = []
+    flag = False
     while True:
         try:
             message_from_feagi = pns.message_from_feagi
@@ -131,7 +132,16 @@ if __name__ == '__main__':
                             previous_total_time = current_milli_time()
                 if len(iteration_list) == int(args['number']):
                     print("number reached!")
-                    break
+                    start_time = current_milli_time()
+                    previous_total_time = start_time
+                    iteration_list = []
+                    if flag:
+                        break
+                    json_data = {"global_visualization": False}
+                    url = api_address + '/v1/system/global_activity_visualization'
+                    response = requests.put(url, json=json_data)
+                    print("! ! " * 10, "VISUALIZATION TOGGLED TO FALSE", " ! !" * 10)
+                    flag = True
             if current_milli_time() - start_time >= 2000.0 and not iteration_list:
                 print("missed, trying again...")
                 message_to_feagi = sensors.add_generic_input_to_feagi_data(
@@ -143,8 +153,6 @@ if __name__ == '__main__':
             pns.signals_to_feagi(message_to_feagi, feagi_ipu_channel,
                                  agent_settings, feagi_settings)
             message_to_feagi.clear()
-
-
         except Exception as e:
             print("ERROR IN COZMO MAIN CODE: ", e)
             traceback.print_exc()
