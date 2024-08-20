@@ -109,8 +109,8 @@ if __name__ == '__main__':
                     for x in obtained_signals['misc']:
                         iteration = int(x) + 1
                         total_numbers = iteration * 100
-                        total_time = time.time() - start_time
-                        time_delta = time.time() - previous_total_time
+                        total_time = time.time() - start_time # unix time - unix time
+                        time_delta = time.time() - previous_total_time # unix - (seconds)
                         time_per_neuron = time_delta/ (100 * iteration)
                         print(f"iteration = {iteration}, total_numbers = {total_numbers}, total_time = {total_time}, time_delta = {time_delta}, time_per_neuron = {time_per_neuron}")
                         # previous_total_time = total_time
