@@ -1,2 +1,2 @@
-pycozmo
 feagi_connector
+psutil==5.8.0
