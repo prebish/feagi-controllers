@@ -44,7 +44,7 @@ def prepare_the_genome_of_timer(args):
         response = requests.post(url, files=files)
 
     flag = True
-    print(response.status_code)
+    # print(response.status_code)
     while flag:
         # Print the response
         if response.status_code == 200:
@@ -103,7 +103,7 @@ if __name__ == '__main__':
     # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
     # - - - - - - - - - - -
     args = vars(parser.parse_args())
-    prepare_the_genome_of_timer()
+    prepare_the_genome_of_timer(args)
     message_to_feagi = sensors.add_generic_input_to_feagi_data(
         {'i_misc': {"0-0-0": 100}}, message_to_feagi)
     pns.signals_to_feagi(message_to_feagi, feagi_ipu_channel, agent_settings,
@@ -141,14 +141,14 @@ if __name__ == '__main__':
                     iteration_list = []
                     if flag:
                         break
-                    prepare_the_genome_of_timer()
+                    prepare_the_genome_of_timer(args)
                     json_data = {"global_visualization": False}
                     url = api_address + '/v1/system/global_activity_visualization'
                     response = requests.put(url, json=json_data)
                     print("! ! " * 10, "VISUALIZATION TOGGLED TO FALSE", " ! !" * 10)
                     flag = True
             if current_milli_time() - start_time >= 2000.0 and not iteration_list:
-                print("missed, trying again...")
+                # print("missed, trying again...")
                 message_to_feagi = sensors.add_generic_input_to_feagi_data({'i_misc': {"0-0-0": 100}}, message_to_feagi)
                 previous_total_time = current_milli_time()
 
