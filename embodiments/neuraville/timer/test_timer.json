@@ -1174,14 +1174,12 @@
             ]
          },
          "type": "vectors",
-         "class": "core",
-         "morphology_name": "block_to_block"
+         "class": "core"
       },
       "projector": {
          "parameters": {},
          "type": "functions",
-         "class": "core",
-         "morphology_name": "projector"
+         "class": "core"
       },
       "memory": {
          "parameters": {},
@@ -1285,8 +1283,7 @@
             ]
          },
          "type": "vectors",
-         "class": "core",
-         "morphology_name": "lateral_+y"
+         "class": "core"
       },
       "lateral_-y": {
          "parameters": {
@@ -1572,7 +1569,7 @@
    },
    "hosts": {},
    "physiology": {
-      "burst_delay": 0.025,
+      "burst_delay": 0.01,
       "max_age": 10000000,
       "evolution_burst_count": 50,
       "ipu_idle_threshold": 1000,
@@ -1580,16 +1577,16 @@
       "lifespan_mgmt_interval": 10
    },
    "stats": {
-      "innate_cortical_area_count": 2,
-      "innate_neuron_count": 2,
-      "innate_synapse_count": 0
+      "innate_cortical_area_count": 5,
+      "innate_neuron_count": 104,
+      "innate_synapse_count": 102
    },
    "signatures": {
-      "genome": "b5932f814afeed3d",
-      "blueprint": "5f2e6a8b9f1afc6e",
-      "physiology": "5f1e7f587e1af2c8"
+      "genome": "b18c143294a02f56",
+      "blueprint": "aa42bf9057dc9219",
+      "physiology": "205db8ae103573bd"
    },
-   "timestamp": 1723828501.2433736,
+   "timestamp": 1724162241.382782,
    "brain_regions": {
       "root": {
          "title": "Genome's root brain region",
@@ -1693,7 +1690,7 @@
       "_____10c-i_misc-cx-_n_cnt-i": 1,
       "_____10c-i_misc-cx-synatt-f": 100,
       "_____10c-i_misc-cx-de_gen-f": 0,
-      "_____10c-i_misc-cx-pspuni-b": false,
+      "_____10c-i_misc-cx-pspuni-b": true,
       "_____10c-i_misc-nx-pstcrm-f": 99999,
       "_____10c-i_misc-cx-dstmap-d": {
          "CM0Tim": [
@@ -1710,8 +1707,31 @@
                1,
                1
             ]
+         ],
+         "i_misc": [
+            [
+               "block_to_block",
+               [
+                  1,
+                  1,
+                  1
+               ],
+               1,
+               false,
+               1,
+               1,
+               1
+            ]
          ]
       },
+      "_____10c-i_misc-cx-___bbx-i": 1,
+      "_____10c-i_misc-cx-___bby-i": 1,
+      "_____10c-i_misc-cx-___bbz-i": 1,
+      "_____10c-i_misc-cx-rcordx-i": 40,
+      "_____10c-i_misc-cx-rcordy-i": 0,
+      "_____10c-i_misc-cx-rcordz-i": 0,
+      "_____10c-i_misc-cx-2dcorx-i": 486,
+      "_____10c-i_misc-cx-2dcory-i": -160,
       "_____10c-i_misc-cx-gd_vis-b": true,
       "_____10c-i_misc-nx-pstcr_-f": 1,
       "_____10c-i_misc-nx-fire_t-f": 1,
@@ -1724,7 +1744,7 @@
       "_____10c-i_misc-nx-ftincy-f": 0,
       "_____10c-i_misc-nx-ftincz-f": 0,
       "_____10c-i_misc-nx-fthlim-f": 0,
-      "_____10c-i_misc-nx-mp_acc-b": true,
+      "_____10c-i_misc-nx-mp_acc-b": false,
       "_____10c-i_misc-nx-mp_psp-b": false,
       "_____10c-i_misc-cx-memory-b": false,
       "_____10c-i_misc-cx-mem__t-i": 100,
@@ -1732,14 +1752,6 @@
       "_____10c-i_misc-cx-mem_ls-i": 9,
       "_____10c-i_misc-nx-excite-f": 100,
       "_____10c-i_misc-cx-__name-t": "Miscellaneous Input",
-      "_____10c-i_misc-cx-___bbx-i": 1,
-      "_____10c-i_misc-cx-___bby-i": 1,
-      "_____10c-i_misc-cx-___bbz-i": 1,
-      "_____10c-i_misc-cx-rcordx-i": 40,
-      "_____10c-i_misc-cx-rcordy-i": 0,
-      "_____10c-i_misc-cx-rcordz-i": 0,
-      "_____10c-i_misc-cx-2dcorx-i": 488,
-      "_____10c-i_misc-cx-2dcory-i": -159,
       "_____10c-i_misc-cx-_group-t": "IPU",
       "_____10c-i_misc-cx-devcnt-i": 1,
       "_____10c-o_misc-cx-subgrp-t": "",
@@ -1749,6 +1761,14 @@
       "_____10c-o_misc-cx-pspuni-b": false,
       "_____10c-o_misc-nx-pstcrm-f": 99999,
       "_____10c-o_misc-cx-dstmap-d": {},
+      "_____10c-o_misc-cx-___bbx-i": 1,
+      "_____10c-o_misc-cx-___bby-i": 1,
+      "_____10c-o_misc-cx-___bbz-i": 1,
+      "_____10c-o_misc-cx-rcordx-i": 65,
+      "_____10c-o_misc-cx-rcordy-i": 0,
+      "_____10c-o_misc-cx-rcordz-i": -26,
+      "_____10c-o_misc-cx-2dcorx-i": 1428,
+      "_____10c-o_misc-cx-2dcory-i": -122,
       "_____10c-o_misc-cx-gd_vis-b": true,
       "_____10c-o_misc-nx-pstcr_-f": 1,
       "_____10c-o_misc-nx-fire_t-f": 1,
@@ -1769,14 +1789,6 @@
       "_____10c-o_misc-cx-mem_ls-i": 9,
       "_____10c-o_misc-nx-excite-f": 100,
       "_____10c-o_misc-cx-__name-t": "Miscellaneous",
-      "_____10c-o_misc-cx-___bbx-i": 1,
-      "_____10c-o_misc-cx-___bby-i": 1,
-      "_____10c-o_misc-cx-___bbz-i": 1,
-      "_____10c-o_misc-cx-rcordx-i": 65,
-      "_____10c-o_misc-cx-rcordy-i": 0,
-      "_____10c-o_misc-cx-rcordz-i": -26,
-      "_____10c-o_misc-cx-2dcorx-i": 1428,
-      "_____10c-o_misc-cx-2dcory-i": -122,
       "_____10c-o_misc-cx-_group-t": "OPU",
       "_____10c-o_misc-cx-devcnt-i": 1,
       "_____10c-CM0Tim-cx-subgrp-t": "",
@@ -1830,6 +1842,14 @@
             ]
          ]
       },
+      "_____10c-CM0Tim-cx-___bbx-i": 1,
+      "_____10c-CM0Tim-cx-___bby-i": 100,
+      "_____10c-CM0Tim-cx-___bbz-i": 1,
+      "_____10c-CM0Tim-cx-rcordx-i": 116,
+      "_____10c-CM0Tim-cx-rcordy-i": 0,
+      "_____10c-CM0Tim-cx-rcordz-i": 0,
+      "_____10c-CM0Tim-cx-2dcorx-i": 1012,
+      "_____10c-CM0Tim-cx-2dcory-i": -152,
       "_____10c-CM0Tim-cx-gd_vis-b": true,
       "_____10c-CM0Tim-nx-pstcr_-f": 1,
       "_____10c-CM0Tim-nx-fire_t-f": 1,
@@ -1850,14 +1870,6 @@
       "_____10c-CM0Tim-cx-mem_ls-i": 9,
       "_____10c-CM0Tim-nx-excite-f": 100,
       "_____10c-CM0Tim-cx-__name-t": "Timer",
-      "_____10c-CM0Tim-cx-___bbx-i": 1,
-      "_____10c-CM0Tim-cx-___bby-i": 10,
-      "_____10c-CM0Tim-cx-___bbz-i": 1,
-      "_____10c-CM0Tim-cx-rcordx-i": 116,
-      "_____10c-CM0Tim-cx-rcordy-i": 0,
-      "_____10c-CM0Tim-cx-rcordz-i": 0,
-      "_____10c-CM0Tim-cx-2dcorx-i": 1012,
-      "_____10c-CM0Tim-cx-2dcory-i": -152,
       "_____10c-CM0Tim-cx-_group-t": "CUSTOM"
    }
 }
