@@ -93,8 +93,8 @@ if __name__ == '__main__':
         './')
     message_to_feagi = {}
     parser = argparse.ArgumentParser(description='Number to update width')
-    parser.add_argument('-magic_link', '--number', help='for the number',
-                        required=True)
+    parser.add_argument('-number', '--number', help='for the number', default=10, required=False)
+
     # # # FEAGI registration # # # - - - - - - - - - - - - - - - - - - - - -
     # - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
     feagi_settings, runtime_data, api_address, feagi_ipu_channel, feagi_opu_channel = \
@@ -150,7 +150,8 @@ if __name__ == '__main__':
             if current_milli_time() - start_time >= 2000.0 and not iteration_list:
                 # print("missed, trying again...")
                 message_to_feagi = sensors.add_generic_input_to_feagi_data({'i_misc': {"0-0-0": 100}}, message_to_feagi)
-                previous_total_time = current_milli_time()
+                start_time = current_milli_time()
+                previous_total_time = start_time
 
 
             sleep(feagi_settings['feagi_burst_speed'])  # bottleneck
