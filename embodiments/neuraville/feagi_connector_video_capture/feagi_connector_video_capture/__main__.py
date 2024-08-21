@@ -7,6 +7,8 @@ from feagi_connector import retina
 from feagi_connector import feagi_interface as feagi
 
 if __name__ == '__main__':
+    current_path = feagi_connector_video_capture.__path__
+    feagi.validate_requirements(str(current_path[0]) + '/requirements.txt')  # you should get it from the boilerplate generator
     parser = argparse.ArgumentParser(description='configuration for any webcam')
     parser.add_argument('-loop', '--loop', help='Enable loop for the video', required=False)
     parser.add_argument('-ip', '--ip', help='Description for ip address argument', required=False)
@@ -21,7 +23,6 @@ if __name__ == '__main__':
     args = vars(parser.parse_args())
 
     # # Check if feagi_connector has arg
-    current_path = feagi_connector_video_capture.__path__
     feagi_settings, agent_settings, capabilities, message_to_feagi, configuration = feagi.configuration_load((str(current_path[0]) + '/'))
     # capabilities = retina.convert_new_json_to_old_json(capabilities)  # temporary
     # feagi_settings = config['feagi_settings'].copy()
