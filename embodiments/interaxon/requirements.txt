@@ -1,3 +1,2 @@
 brainflow
-feagi-connector
-opencv-python
+feagi-connector>=0.0.17
