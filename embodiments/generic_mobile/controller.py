@@ -26,6 +26,8 @@ from feagi_connector import feagi_interface as feagi
 
 connected_agents = dict() # Initalize
 connected_agents['0'] = False  # By default, it is not connected by client's websocket
+feagi.validate_requirements('requirements.txt')  # you should get it from the boilerplate generator
+
 
 if __name__ == "__main__":
     # NEW JSON UPDATE

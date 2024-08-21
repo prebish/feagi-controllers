@@ -28,6 +28,7 @@ from feagi_connector import feagi_interface as FEAGI
 
 runtime_data = {}
 previous_frame_data = {}
+FEAGI.validate_requirements('requirements.txt')  # you should get it from the boilerplate generator
 
 
 def current_milli_time():
