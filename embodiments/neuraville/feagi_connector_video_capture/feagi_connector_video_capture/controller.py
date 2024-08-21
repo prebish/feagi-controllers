@@ -155,7 +155,8 @@ def main(feagi_auth_url, feagi_settings, agent_settings, capabilities, message_t
                     default_capabilities,
                     previous_frame_data,
                     rgb, capabilities)
-                default_capabilities['input']['camera']['0']['blink'] = []
+            for index in default_capabilities['input']['camera']:
+                default_capabilities['input']['camera'][index]['blink'].clear()
             if rgb:
                 message_to_feagi = pns.generate_feagi_data(rgb, message_to_feagi)
             sleep(feagi_settings['feagi_burst_speed'])  # bottleneck
