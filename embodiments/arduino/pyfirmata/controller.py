@@ -32,6 +32,7 @@ pin_mode = dict()
 rolling_window = {}
 output_track = list()
 input_track = list()
+feagi.validate_requirements('requirements.txt')  # you should get it from the boilerplate generator
 
 
 def list_all_pins(board):

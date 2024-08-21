@@ -3,7 +3,6 @@ import argparse
 import requests
 from time import sleep
 import feagi_connector_video_capture
-from feagi_connector import retina
 from feagi_connector import feagi_interface as feagi
 
 if __name__ == '__main__':

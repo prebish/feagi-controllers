@@ -51,6 +51,7 @@ rgb = {'camera': {}}
 robot = {'accelerator': {}, "proximity": [], "gyro": [], 'servo_head': [], "battery": [],
          'lift_height': []}
 camera_data = {"vision": []}
+feagi.validate_requirements('requirements.txt')  # you should get it from the boilerplate generator
 
 
 def window_average(sequence):

@@ -11,6 +11,7 @@ from feagi_connector import feagi_interface as FEAGI
 
 
 previous_data_frame = dict()
+FEAGI.validate_requirements('requirements.txt')  # you should get it from the boilerplate generator
 
 
 class Arm:

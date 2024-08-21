@@ -30,6 +30,8 @@ import json
 
 camera_data = {"vision": []}
 servo_status = {}
+feagi.validate_requirements('requirements.txt')  # you should get it from the boilerplate generator
+
 
 
 # def getting_websocket_data():

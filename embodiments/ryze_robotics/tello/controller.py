@@ -12,6 +12,8 @@ previous_frame_data = dict()
 flag = False
 camera_data = {"vision": []}
 speed = {'0': 50}
+FEAGI.validate_requirements('requirements.txt')  # you should get it from the boilerplate generator
+
 
 
 def get_battery(full_data):

@@ -9,6 +9,8 @@ from feagi_connector import pns_gateway as pns
 from feagi_connector import feagi_interface as FEAGI
 
 from xArm.xarm.wrapper import XArmAPI
+FEAGI.validate_requirements('requirements.txt')  # you should get it from the boilerplate generator
+
 
 
 def pose_to_default(arm, count):

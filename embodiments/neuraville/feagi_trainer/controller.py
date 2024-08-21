@@ -33,6 +33,8 @@ from feagi_connector import trainer as feagi_trainer
 config = feagi.build_up_from_configuration()
 capabilities = config["capabilities"].copy()
 image_reader_config = capabilities["input"]["image_reader"]["0"]
+feagi.validate_requirements('requirements.txt')  # you should get it from the boilerplate generator
+
 
 
 # Start Flask server
