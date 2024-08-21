@@ -14,45 +14,103 @@
         "compression": true
     },
     "capabilities": {
-        "servo": {
-            "type": "opu",
-            "disabled": "False",
-            "count": 2,
-            "topic_identifier": "/S",
-            "power_amount": "0.5"
-
+        "input": {
+            "battery": {
+                "0": {
+                    "cortical_id": "i__bat",
+                    "custom_name": "battery_0",
+                    "disabled": false,
+                    "feagi_index": 0,
+                    "maximum_value": 100,
+                    "minimum_value": 0
+                }
+            },
+            "camera": {
+                "0": {
+                    "custom_name": "front webcam",
+                    "disabled": false,
+                    "eccentricity_control": {
+                        "0": 1,
+                        "1": 1
+                    },
+                    "feagi_index": 0,
+                    "index": "00",
+                    "mirror": false,
+                    "modulation_control": {
+                        "0": 99,
+                        "1": 99
+                    },
+                    "threshold_default": [100]
+                }
+            },
+            "infrared_sensor": {
+                "0": {
+                    "cortical_id": "i__inf",
+                    "custom_name": "IR_0",
+                    "disabled": false,
+                    "feagi_index": 0
+                },
+                "1": {
+                    "cortical_id": "i__inf",
+                    "custom_name": "IR_1",
+                    "disabled": false,
+                    "feagi_index": 1
+                },
+                "2": {
+                    "cortical_id": "i__inf",
+                    "custom_name": "IR_2",
+                    "disabled": false,
+                    "feagi_index": 2
+                }
+            },
+            "proximity": {
+                "0": {
+                    "cortical_id": "i__pro",
+                    "custom_name": "ultrasonic_0",
+                    "disabled": false,
+                    "feagi_index": 0,
+                    "proximity_max_distance": 300,
+                    "proximity_min_distance": 0
+                }
+            }
         },
-        "motor": {
-            "type": "opu",
-            "disabled": "False",
-            "count": 4,
-            "rolling_window_len": 2,
-            "diameter_of_wheel": "0.065",
-            "power_amount": 4094
-        },
-        "infrared": {
-            "type": "ipu",
-            "disabled": "False",
-            "count": 3,
-            "cortical_mapping": "i__inf",
-            "topic_identifier": "IR"
-        },
-        "battery": {
-            "type": "ipu",
-            "disabled": "False",
-            "count": 4,
-            "cortical_mapping": "i__bat",
-            "capacity": 100,
-            "depletion_per_burst": "0.01",
-            "charge_increment": "0.1"
-        },
-        "camera": {
-            "type": "ipu",
-            "disabled": "False",
-            "index": "00",
-            "video_device_index": 0,
-            "mirror": "False",
-            "threshold_default": [100, 255, 130, 51]
+        "output": {
+            "motor": {
+                "0": {
+                    "custom_name": "Motor_0",
+                    "disabled": false,
+                    "max_power": 4094,
+                    "rolling_window_len": 2
+                },
+                "1": {
+                    "custom_name": "Motor_1",
+                    "disabled": false,
+                    "max_power": 4094,
+                    "rolling_window_len": 2
+                },
+                "2": {
+                    "custom_name": "Motor_2",
+                    "disabled": false,
+                    "max_power": 4094,
+                    "rolling_window_len": 2
+                },
+                "3": {
+                    "custom_name": "Motor_3",
+                    "disabled": false,
+                    "max_power": 4094,
+                    "rolling_window_len": 2
+                }
+            },
+            "servo": {
+                "0": {
+                    "custom_name": "Servo_0",
+                    "disabled": false,
+                    "max_power": 1,
+                    "max_value": 90,
+                    "min_value": 0,
+                    "rolling_window_len": 1
+                }
+            }
         }
     }
 }

@@ -399,7 +399,7 @@ class Battery:
 
 def process_video(default_capabilities, cam):
     while True:
-        if default_capabilities['camera']['disabled'] is not True:
+        if default_capabilities['input']['camera']['0']['disabled'] is not True:
             ret, raw_frame = cam.read()
             raw_frame_internal['0'] = raw_frame
         sleep(0.001)
@@ -409,14 +409,14 @@ def vision_calculation(default_capabilities, previous_frame_data, rgb, capabilit
     while True:
         if raw_frame_internal['0'] != []:
             raw_frame = raw_frame_internal['0']
-            if len(default_capabilities['camera']['blink']) > 0:
-                raw_frame = default_capabilities['camera']['blink']
+            if len(default_capabilities['input']['camera']['0']['blink']) > 0:
+                raw_frame = default_capabilities['input']['camera']['0']['blink']
             # Post image into vision
             previous_frame_data, rgb, default_capabilities = \
                 retina.process_visual_stimuli(raw_frame, default_capabilities,
                                               previous_frame_data,
                                               rgb, capabilities)
-            default_capabilities['camera']['blink'] = []
+            default_capabilities['input']['camera']['0']['blink'] = []
             # Wrapping camera data into a frame for FEAGI
         sleep(0.001)
 
@@ -523,7 +523,15 @@ def main(feagi_auth_url, feagi_settings, agent_settings, capabilities):
     battery = Battery()  # Commented out, not currently in use
 
     # --- Variables ---
-    rolling_window_len = capabilities['motor']['rolling_window_len']
+    motor_data = dict()
+    for motor_id in capabilities['output']['motor']:
+        if 'rolling_window_len' in capabilities['output']['motor'][motor_id]:
+            length_rolling_window = capabilities['output']['motor'][motor_id]['rolling_window_len']
+        else:
+            length_rolling_window = 0  # Default to 0 which will be extremely sensitive and stiff
+        motor_data = actuators.create_motor_rolling_window_len(length_window=length_rolling_window,
+                                                               current_rolling_window_dict=motor_data,
+                                                               motor_id=motor_id)
     led_flag = False
     rgb = dict()
     rgb['camera'] = dict()
@@ -538,11 +546,6 @@ def main(feagi_auth_url, feagi_settings, agent_settings, capabilities):
     rolling_window = {}
 
     threading.Thread(target=start_IR, args=(feagi_settings,), daemon=True).start()
-    motor_count = capabilities['motor']['count']
-
-    # Initialize rolling window for each motor
-    for motor_id in range(motor_count):
-        rolling_window[motor_id] = deque([0] * rolling_window_len)
     threading.Thread(target=start_ultrasonic, args=(feagi_settings,), daemon=True).start()
     # ultrasonic = Ultrasonic()
     motor.stop()
@@ -560,8 +563,7 @@ def main(feagi_auth_url, feagi_settings, agent_settings, capabilities):
 
     # router.websocket_client_initalize('192.168.50.218', '9053')
     threading.Thread(target=retina.vision_progress,
-                     args=(default_capabilities, feagi_opu_channel, api_address, feagi_settings,
-                           camera_data['vision'],), daemon=True).start()
+                     args=(default_capabilities, feagi_settings, camera_data,), daemon=True).start()
     # threading.Thread(target=router.websocket_recieve, daemon=True).start()
     msg_counter = 0
     while True:
@@ -570,41 +572,80 @@ def main(feagi_auth_url, feagi_settings, agent_settings, capabilities):
             if message_from_feagi and message_from_feagi != None:
                 # Fetch data such as motor, servo, etc and pass to a function (you make ur own action.
                 obtained_signals = pns.obtain_opu_data(message_from_feagi)
-                action(obtained_signals, led_tracking_list, feagi_settings, capabilities,
-                       rolling_window, motor, servo, led, runtime_data)
+                # action(obtained_signals, led_tracking_list, feagi_settings, capabilities,
+                       # rolling_window, motor, servo, led, runtime_data)
 
             if raw_frame_internal['0'] is not []:
                 raw_frame = raw_frame_internal['0']
-                if len(default_capabilities['camera']['blink']) > 0:
-                    raw_frame = default_capabilities['camera']['blink']
+                if len(default_capabilities['input']['camera']['0']['blink']) > 0:
+                    raw_frame = default_capabilities['input']['camera']['0']['blink']
                 # Post image into vision
                 previous_frame_data, rgb, default_capabilities = \
                     retina.process_visual_stimuli(raw_frame, default_capabilities,
                                                   previous_frame_data,
                                                   rgb, capabilities)
-                default_capabilities['camera']['blink'] = []
+                default_capabilities['input']['camera']['0']['blink'] = []
                 # Wrapping camera data into a frame for FEAGI
                 if rgb:
                     message_to_feagi = pns.generate_feagi_data(rgb, message_to_feagi)
             # add IR data into feagi data
             ir_list = ir_data[0] if ir_data else []
-            message_to_feagi = sensors.add_infrared_to_feagi_data(ir_list, message_to_feagi,
-                                                                  capabilities)
+            message_to_feagi = sensors.convert_ir_to_ipu_data(ir_list, len(capabilities['input']['infrared_sensor']), message_to_feagi)
             # add ultrasonic data into feagi data
             # ultrasonic_list = ultrasonic.get_distance()
             if ultrasonic_data:
                 ultrasonic_list = ultrasonic_data[0]
             else:
                 ultrasonic_list = 0
-            message_to_feagi = sensors.add_ultrasonic_to_feagi_data(ultrasonic_list,
-                                                                    message_to_feagi)
+            for device_id in capabilities['input']['proximity']:
+                if not capabilities['input']['proximity'][device_id]['disabled']:
+                    cortical_id = capabilities['input']['proximity'][device_id]["cortical_id"]
+                    create_data_list = dict()
+                    create_data_list[cortical_id] = dict()
+                    start_point = capabilities['input']['proximity'][device_id]["feagi_index"] * len(capabilities['input']['proximity'])
+                    feagi_data_position = start_point
+                    capabilities['input']['proximity']['0']['proximity_max_distance'], capabilities['input']['proximity']['0']['proximity_min_distance'] = sensors.measuring_max_and_min_range(ultrasonic_list,
+                                                        capabilities['input']['proximity']['0']['proximity_max_distance'],
+                                                        capabilities['input']['proximity']['0']['proximity_min_distance'])
+
+                    position_in_feagi_location = sensors.convert_sensor_to_ipu_data(
+                                                        capabilities['input']['proximity']['0']['proximity_min_distance'],
+                                                       capabilities['input']['proximity']['0']['proximity_max_distance'],
+                                                       ultrasonic_list,
+                                                       capabilities['input']['proximity']['0']['feagi_index'],
+                                                       cortical_id=cortical_id)
+                    create_data_list[cortical_id][position_in_feagi_location] = 100
+                    if create_data_list[cortical_id]:
+                        message_to_feagi = sensors.add_generic_input_to_feagi_data(create_data_list, message_to_feagi)
             # add battery data into feagi data
-            message_to_feagi = sensors.add_battery_to_feagi_data(battery.battery_total(),
-                                                                 message_to_feagi)
-            sleep(feagi_settings['feagi_burst_speed'])
-            # Send the data contains IR, Ultrasonic, and camera
+            current_battery = battery.battery_total()
+            for device_id in capabilities['input']['battery']:
+                if not capabilities['input']['battery'][device_id]['disabled']:
+                    cortical_id = capabilities['input']['battery'][device_id]["cortical_id"]
+                    create_data_list = dict()
+                    create_data_list[cortical_id] = dict()
+                    start_point = capabilities['input']['battery'][device_id]["feagi_index"] * len(capabilities['input']['battery'])
+                    feagi_data_position = start_point
+                    capabilities['input']['battery']['0']['maximum_value'], capabilities['input']['battery']['0']['minimum_value'] = sensors.measuring_max_and_min_range(current_battery,
+                                                        capabilities['input']['battery']['0']['maximum_value'],
+                                                        capabilities['input']['battery']['0']['minimum_value'])
+
+                    position_in_feagi_location = sensors.convert_sensor_to_ipu_data(
+                                                        capabilities['input']['battery']['0']['minimum_value'],
+                                                       capabilities['input']['battery']['0']['maximum_value'],
+                                                       current_battery,
+                                                       capabilities['input']['battery']['0']['feagi_index'],
+                                                       cortical_id=cortical_id)
+                    create_data_list[cortical_id][position_in_feagi_location] = 100
+                    if create_data_list[cortical_id]:
+                        message_to_feagi = sensors.add_generic_input_to_feagi_data(create_data_list, message_to_feagi)
+            sleep(feagi_settings['feagi_burst_speed'])  # bottleneck
             pns.signals_to_feagi(message_to_feagi, feagi_ipu_channel, agent_settings, feagi_settings)
             message_to_feagi.clear()
+
+            if rgb:
+                for i in rgb['camera']:
+                    rgb['camera'][i].clear()
         except KeyboardInterrupt as ke:  # Keyboard error
             motor.stop()
             cam.release()
