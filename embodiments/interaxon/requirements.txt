@@ -1,0 +1,3 @@
+brainflow
+feagi-connector
+opencv-python
