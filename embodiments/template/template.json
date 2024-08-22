@@ -128,11 +128,6 @@
                     "description": "An index to place",
                     "type": "integer",
                     "default": 0
-                },
-                {
-                    "label": "cortical_id",
-                    "description": "A cortical ID to read the sensor on robot.",
-                    "type": "string"
                 }
             ]
         },
@@ -182,11 +177,6 @@
                     "description": "An index to place",
                     "type": "integer",
                     "default": 0
-                },
-                {
-                    "label": "cortical_id",
-                    "description": "A cortical ID to read the sensor on robot.",
-                    "type": "string"
                 }
             ]
         },
@@ -282,11 +272,6 @@
                     "default": false
                 },
                 {
-                    "label": "cortical_id",
-                    "description": "A cortical ID to read the sensor on robot.",
-                    "type": "string"
-                },
-                {
                     "label": "max_value",
                     "description": "A maximum number to read the value",
                     "type": "integer",
@@ -320,11 +305,6 @@
                     "description": "Disables the device when true.",
                     "type": "boolean",
                     "default": false
-                },
-                {
-                    "label": "cortical_id",
-                    "description": "A cortical ID to read the sensor on robot.",
-                    "type": "string"
                 },
                 {
                     "label": "proximity_max_distance",
@@ -392,11 +372,6 @@
                     "description": "An index to place",
                     "type": "integer",
                     "default": 0
-                },
-                {
-                    "label": "cortical_id",
-                    "description": "A cortical ID to read the sensor on robot.",
-                    "type": "string"
                 }
             ]
         },
@@ -414,11 +389,6 @@
                     "description": "Disables the device when true.",
                     "type": "boolean",
                     "default": false
-                },
-                {
-                    "label": "cortical_id",
-                    "description": "A cortical ID to read the sensor on robot.",
-                    "type": "string"
                 },
                 {
                     "label": "maximum_value",
