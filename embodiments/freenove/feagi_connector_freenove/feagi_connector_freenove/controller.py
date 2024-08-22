@@ -421,7 +421,7 @@ def vision_calculation(default_capabilities, previous_frame_data, rgb, capabilit
         sleep(0.001)
 
 
-def action(obtained_data, led_tracking_list, led, motor_data,capabilities, motor, servo):
+def action(obtained_data, led_tracking_list, led, motor_data,capabilities, motor, servo, motor_mapped):
     recieve_motor_data = actuators.get_motor_data(obtained_data, motor_data)
     if recieve_motor_data:
         for motor_id in recieve_motor_data:
@@ -433,11 +433,14 @@ def action(obtained_data, led_tracking_list, led, motor_data,capabilities, motor
                                                       motor_data)
     else:
         motor_data = actuators.rolling_window_update(motor_data)
-    for motor_id in motor_data:
-        data_power = motor_data[motor_id][0] * -1 # negative is forward on freenove. So that way, FEAGI dont get confused
-        converted_id = motor.motor_converter(motor_id)
-        motor.move(converted_id, data_power)
-
+    for motor_id in motor_mapped:
+        for x in motor_mapped[motor_id]:
+            print("motor mapped: ", motor_mapped)
+            print("motor data: ", motor_data)
+            print("x: ", x, " and dict: ", motor_mapped)
+            if motor_id in motor_data:
+                data_power = motor_data[motor_id][0] * -1  # negative is forward on freenove. So that way, FEAGI dont get confused
+                motor.move(x, data_power)
 
 
     recieved_led_data = actuators.get_led_data(obtained_data)
@@ -537,7 +540,7 @@ def main(feagi_auth_url, feagi_settings, agent_settings, capabilities):
     led_tracking_list = {}
     previous_frame_data = {}
     message_to_feagi = {}
-
+    motor_mapped = actuators.motor_to_feagi_map(capabilities)
 
     threading.Thread(target=start_IR, args=(feagi_settings,), daemon=True).start()
     threading.Thread(target=start_ultrasonic, args=(feagi_settings,), daemon=True).start()
@@ -546,7 +549,6 @@ def main(feagi_auth_url, feagi_settings, agent_settings, capabilities):
     cam = cv2.VideoCapture(0)  # you need to do sudo rpi-update to be able to use this
     servo.set_default_position(runtime_data)
 
-    raw_frame = []
     default_capabilities = {}  # It will be generated in process_visual_stimuli. See the
     # overwrite manual
     camera_data = {"vision": {}}
@@ -565,7 +567,7 @@ def main(feagi_auth_url, feagi_settings, agent_settings, capabilities):
             if message_from_feagi and message_from_feagi != None:
                 # Fetch data such as motor, servo, etc and pass to a function (you make ur own action.
                 obtained_signals = pns.obtain_opu_data(message_from_feagi)
-                action(obtained_signals, led_tracking_list, led, motor_data,capabilities, motor, servo)
+                action(obtained_signals, led_tracking_list, led, motor_data,capabilities, motor, servo, motor_mapped)
 
             if raw_frame_internal['0'] is not []:
                 raw_frame = raw_frame_internal['0']
