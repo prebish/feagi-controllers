@@ -421,29 +421,25 @@ def vision_calculation(default_capabilities, previous_frame_data, rgb, capabilit
         sleep(0.001)
 
 
-def action(obtained_data, led_tracking_list, feagi_settings, capabilities, rolling_window, motor,
-           servo, led, runtime_data):
-    motor_count = capabilities['motor']['count']
-    recieve_motor_data = actuators.get_motor_data(obtained_data,
-                                                  capabilities['motor']['power_amount'],
-                                                  motor_count, rolling_window,
-                                                  id_converter=True, power_inverse=True)
-    recieve_servo_data = actuators.get_servo_data(obtained_data)
-    # Do some custom work with motor data
-    for id in range(motor_count):
-        if id in recieve_motor_data:
-            converted_id = motor.motor_converter(id)
-            motor.move(converted_id, recieve_motor_data[id])
-        else:
-            motor.move(id, 0)
-    # print(rolling_window)
-    # Do some custom work with servo data as well
-    if capabilities['servo']['disabled'] is not True:
-        for id in recieve_servo_data:
-            servo_power = actuators.servo_generate_power(180, recieve_servo_data[id], id)
-            servo.move(feagi_device_id=id, power=servo_power,
-                       capabilities=capabilities, feagi_settings=feagi_settings,
-                       runtime_data=runtime_data)
+def action(obtained_data, led_tracking_list, led, motor_data,capabilities, motor, servo):
+    recieve_motor_data = actuators.get_motor_data(obtained_data, motor_data)
+    if recieve_motor_data:
+        for motor_id in recieve_motor_data:
+            if str(motor_id) in capabilities['output']['motor']:
+                if not capabilities['output']['motor'][str(motor_id)]['disabled']:
+                    actuators.pass_the_power_to_motor(capabilities['output']['motor'][str(motor_id)]['max_power'],
+                                                      recieve_motor_data[motor_id],
+                                                      motor_id,
+                                                      motor_data)
+    else:
+        motor_data = actuators.rolling_window_update(motor_data)
+    for motor_id in motor_data:
+        data_power = motor_data[motor_id][0] * -1 # negative is forward on freenove. So that way, FEAGI dont get confused
+        converted_id = motor.motor_converter(motor_id)
+        motor.move(converted_id, data_power)
+
+
+
     recieved_led_data = actuators.get_led_data(obtained_data)
     if recieved_led_data:
         for data_point in recieved_led_data:
@@ -537,13 +533,11 @@ def main(feagi_auth_url, feagi_settings, agent_settings, capabilities):
     rgb['camera'] = dict()
 
     # --- Data Containers ---
-    previous_genome_timestamp = dict()
     # Status for data points
     led_tracking_list = {}
     previous_frame_data = {}
     message_to_feagi = {}
-    # Rolling windows for each motor
-    rolling_window = {}
+
 
     threading.Thread(target=start_IR, args=(feagi_settings,), daemon=True).start()
     threading.Thread(target=start_ultrasonic, args=(feagi_settings,), daemon=True).start()
@@ -565,15 +559,13 @@ def main(feagi_auth_url, feagi_settings, agent_settings, capabilities):
     threading.Thread(target=retina.vision_progress,
                      args=(default_capabilities, feagi_settings, camera_data,), daemon=True).start()
     # threading.Thread(target=router.websocket_recieve, daemon=True).start()
-    msg_counter = 0
     while True:
         try:
             message_from_feagi = pns.message_from_feagi
             if message_from_feagi and message_from_feagi != None:
                 # Fetch data such as motor, servo, etc and pass to a function (you make ur own action.
                 obtained_signals = pns.obtain_opu_data(message_from_feagi)
-                # action(obtained_signals, led_tracking_list, feagi_settings, capabilities,
-                       # rolling_window, motor, servo, led, runtime_data)
+                action(obtained_signals, led_tracking_list, led, motor_data,capabilities, motor, servo)
 
             if raw_frame_internal['0'] is not []:
                 raw_frame = raw_frame_internal['0']
