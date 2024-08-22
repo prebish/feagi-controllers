@@ -590,7 +590,7 @@ def main(feagi_auth_url, feagi_settings, agent_settings, capabilities):
                     message_to_feagi = pns.generate_feagi_data(rgb, message_to_feagi)
             # add IR data into feagi data
             ir_list = ir_data[0] if ir_data else []
-            message_to_feagi = sensors.convert_ir_to_ipu_data(ir_list, len(capabilities['input']['infrared_sensor']), message_to_feagi)
+            message_to_feagi = sensors.convert_ir_to_ipu_data(ir_list, len(capabilities['input']['infrared']), message_to_feagi)
             # add ultrasonic data into feagi data
             # ultrasonic_list = ultrasonic.get_distance()
             if ultrasonic_data:

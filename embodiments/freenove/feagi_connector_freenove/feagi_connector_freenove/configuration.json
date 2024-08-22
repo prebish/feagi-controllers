@@ -43,7 +43,7 @@
                     "threshold_default": [100]
                 }
             },
-            "infrared_sensor": {
+            "infrared": {
                 "0": {
                     "cortical_id": "i__inf",
                     "custom_name": "IR_0",
