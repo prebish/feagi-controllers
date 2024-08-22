@@ -40,7 +40,9 @@
                         "0": 99,
                         "1": 99
                     },
-                    "threshold_default": [100]
+                    "threshold_default": [
+                        100
+                    ]
                 }
             },
             "infrared": {
@@ -109,10 +111,18 @@
                 "0": {
                     "custom_name": "Servo_0",
                     "disabled": false,
-                    "max_power": 1,
-                    "max_value": 90,
+                    "max_power": 2,
+                    "max_value": 180,
                     "min_value": 0,
-                    "rolling_window_len": 1
+                    "rolling_window_len": 1,
+                    "feagi_index": 0
+                }
+            },
+            "led": {
+                "0": {
+                    "custom_name": "led_0",
+                    "disabled": false,
+                    "feagi_index": 0
                 }
             }
         }
