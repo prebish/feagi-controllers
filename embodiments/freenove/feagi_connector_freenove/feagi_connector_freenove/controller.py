@@ -117,31 +117,31 @@ class Servo:
         except Exception as e:
             print("Error while setting initial position for the servo:", e)
 
-    def move(self, feagi_device_id, power, capabilities, feagi_settings, runtime_data):
+    def move(self, device_index, power):
         try:
-            if feagi_device_id > 2 * capabilities['servo']['count']:
-                print("Warning! Number of servo channels from FEAGI exceed available Motor count!")
-            # Translate feagi_motor_id to motor backward and forward motion to individual motors
-            device_index = feagi_device_id // 2
-            if feagi_device_id % 2 == 1:
-                power *= 1
-            else:
-                power *= -1
-            if device_index not in runtime_data['servo_status']:
-                runtime_data['servo_status'][device_index] = device_index
+            # if feagi_device_id > 2 * capabilities['servo']['count']:
+            #     print("Warning! Number of servo channels from FEAGI exceed available Motor count!")
+            # # Translate feagi_motor_id to motor backward and forward motion to individual motors
+            # device_index = feagi_device_id // 2
+            # if feagi_device_id % 2 == 1:
+            #     power *= 1
+            # else:
+            #     power *= -1
+            # if device_index not in runtime_data['servo_status']:
+            #     runtime_data['servo_status'][device_index] = device_index
+            #
+            # device_current_position = runtime_data['servo_status'][device_index]
+            # self.device_position = float((power * feagi_settings['feagi_burst_speed'] /
+            #                               capabilities["servo"][
+            #                                   "power_amount"]) + device_current_position)
+            #
+            # self.device_position = self.keep_boundaries(device_id=device_index,
+            #                                             current_position=self.device_position)
 
-            device_current_position = runtime_data['servo_status'][device_index]
-            self.device_position = float((power * feagi_settings['feagi_burst_speed'] /
-                                          capabilities["servo"][
-                                              "power_amount"]) + device_current_position)
-
-            self.device_position = self.keep_boundaries(device_id=device_index,
-                                                        current_position=self.device_position)
-
-            runtime_data['servo_status'][device_index] = self.device_position
+            # runtime_data['servo_status'][device_index] = self.device_position
             # print("device index, position, power = ", device_index, self.device_position, power)
             # self.servo_node[device_index].publish(self.device_position)
-            self.setServoPwm(str(device_index), self.device_position)
+            self.setServoPwm(str(device_index), power)
         except Exception:
             exc_info = sys.exc_info()
             traceback.print_exception(*exc_info)
@@ -421,8 +421,9 @@ def vision_calculation(default_capabilities, previous_frame_data, rgb, capabilit
         sleep(0.001)
 
 
-def action(obtained_data, led_tracking_list, led, motor_data,capabilities, motor, servo, motor_mapped):
+def action(obtained_data, led_tracking_list, led, motor_data,capabilities, motor, servo, motor_mapped, runtime_data):
     recieve_motor_data = actuators.get_motor_data(obtained_data, motor_data)
+    recieve_servo_data = actuators.get_servo_data(obtained_data)
     if recieve_motor_data:
         for motor_id in recieve_motor_data:
             if str(motor_id) in capabilities['output']['motor']:
@@ -435,12 +436,21 @@ def action(obtained_data, led_tracking_list, led, motor_data,capabilities, motor
         motor_data = actuators.rolling_window_update(motor_data)
     for motor_id in motor_mapped:
         for x in motor_mapped[motor_id]:
-            print("motor mapped: ", motor_mapped)
-            print("motor data: ", motor_data)
-            print("x: ", x, " and dict: ", motor_mapped)
             if motor_id in motor_data:
                 data_power = motor_data[motor_id][0] * -1  # negative is forward on freenove. So that way, FEAGI dont get confused
                 motor.move(x, data_power)
+
+    if recieve_servo_data:
+        for real_id in recieve_servo_data:  # example output: {0: 100, 2: 100}
+            device_id = actuators.feagi_id_converter(real_id) + 1 # Since mycobot runs 1 to 6 instead of 0 to 5
+            converted_id = actuators.feagi_id_converter(real_id)
+            if not capabilities['output']['servo'][str(converted_id)]['disabled']:
+                servo_power = actuators.servo_generate_power(capabilities['output']["servo"][str(converted_id)]["max_power"], recieve_servo_data[real_id], real_id)
+                pre_power = runtime_data['servo_status'][converted_id] + servo_power
+                new_power = actuators.servo_keep_boundaries(pre_power, capabilities['output']['servo'][str(converted_id)][ 'max_value'], capabilities['output']['servo'][str(converted_id)][ 'min_value'])
+                servo.move(converted_id, new_power)
+                runtime_data['servo_status'][converted_id] = new_power
+    print(runtime_data['servo_status'])
 
 
     recieved_led_data = actuators.get_led_data(obtained_data)
@@ -540,7 +550,7 @@ def main(feagi_auth_url, feagi_settings, agent_settings, capabilities):
     led_tracking_list = {}
     previous_frame_data = {}
     message_to_feagi = {}
-    motor_mapped = actuators.motor_to_feagi_map(capabilities)
+    motor_mapped = actuators.actuator_to_feagi_map(capabilities)
 
     threading.Thread(target=start_IR, args=(feagi_settings,), daemon=True).start()
     threading.Thread(target=start_ultrasonic, args=(feagi_settings,), daemon=True).start()
@@ -567,7 +577,7 @@ def main(feagi_auth_url, feagi_settings, agent_settings, capabilities):
             if message_from_feagi and message_from_feagi != None:
                 # Fetch data such as motor, servo, etc and pass to a function (you make ur own action.
                 obtained_signals = pns.obtain_opu_data(message_from_feagi)
-                action(obtained_signals, led_tracking_list, led, motor_data,capabilities, motor, servo, motor_mapped)
+                action(obtained_signals, led_tracking_list, led, motor_data,capabilities, motor, servo, motor_mapped, runtime_data)
 
             if raw_frame_internal['0'] is not []:
                 raw_frame = raw_frame_internal['0']
