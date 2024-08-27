@@ -205,6 +205,22 @@ def lift_arms(cli, angle, max, min):
 def action(obtained_data, arms_angle, head_angle, motor_data, motor_mapped):
     recieve_motor_data = actuators.get_motor_data(obtained_data, motor_data)
     recieve_servo_data = actuators.get_servo_data(obtained_data)
+    recieve_servo_position_data = actuators.get_servo_position_data(obtained_data)
+
+    if recieve_servo_position_data:
+        for feagi_id in recieve_servo_position_data:
+            device_id_list = actuators.feagi_mapped_to_dev_index(dev_id='servo', feagi_index=feagi_id, mapped_dict=motor_mapped)
+            for device_id in device_id_list:
+                if not capabilities['output']['servo'][str(device_id)]['disabled']:
+                    new_power = actuators.get_position_data(recieve_servo_position_data[device_id], capabilities['output']['servo'][str(device_id)][ 'min_value'], capabilities['output']['servo'][str(device_id)][ 'max_value'])
+                    if device_id == 0:
+                        if move_head(cli, new_power, max, min):
+                            head_angle = new_power
+                    if device_id == 1:
+                        if lift_arms(cli, new_power, max_lift, min_lift):
+                            arms_angle = new_power
+
+
     if recieve_motor_data:
         for motor_id in recieve_motor_data:
             if str(motor_id) in capabilities['output']['motor']:
@@ -231,9 +247,7 @@ def action(obtained_data, arms_angle, head_angle, motor_data, motor_mapped):
                                  duration=feagi_settings['feagi_burst_speed'] / 2)
 
     for feagi_id in recieve_servo_data:  # example output: {0: 100, 2: 100}
-        print(motor_mapped)
         device_id_list = actuators.feagi_mapped_to_dev_index(dev_id='servo', feagi_index=feagi_id, mapped_dict=motor_mapped)
-        print("device list: ", device_id_list, " and feagi id: ", feagi_id, " and dict: ", motor_mapped)
         for device_id in device_id_list:
             if not capabilities['output']['servo'][str(device_id)]['disabled']:
                 servo_power = actuators.servo_generate_power(capabilities['output']["servo"][str(device_id)]["max_power"], recieve_servo_data[feagi_id], feagi_id)
@@ -247,6 +261,8 @@ def action(obtained_data, arms_angle, head_angle, motor_data, motor_mapped):
                     test_arm_angle += servo_power
                     if lift_arms(cli, test_arm_angle, max_lift, min_lift):
                         arms_angle = test_arm_angle
+
+
 
 
     # recieve_motor_data = actuators.get_motor_data(obtained_data, motor_data)
@@ -495,16 +511,16 @@ if __name__ == '__main__':
                         if not capabilities['input']['proximity'][device_id]['disabled']:
                             create_data_list = dict()
                             create_data_list[cortical_id] = dict()
-                            capabilities['input']['proximity'][device_id]['proximity_max_distance'], \
+                            capabilities['input']['proximity'][device_id]['max_value'], \
                             capabilities['input']['proximity'][device_id][
-                                'proximity_min_distance'] = sensors.measuring_max_and_min_range(
+                                'min_value'] = sensors.measuring_max_and_min_range(
                                 robot['proximity'][int(device_id)],
-                                capabilities['input']['proximity'][device_id]['proximity_max_distance'],
-                                capabilities['input']['proximity'][device_id]['proximity_min_distance'])
+                                capabilities['input']['proximity'][device_id]['max_value'],
+                                capabilities['input']['proximity'][device_id]['min_value'])
 
                             position_in_feagi_location = sensors.convert_sensor_to_ipu_data(
-                                capabilities['input']['proximity'][device_id]['proximity_min_distance'],
-                                capabilities['input']['proximity'][device_id]['proximity_max_distance'],
+                                capabilities['input']['proximity'][device_id]['min_value'],
+                                capabilities['input']['proximity'][device_id]['max_value'],
                                 robot['proximity'][int(device_id)],
                                 capabilities['input']['proximity'][device_id]['feagi_index'],
                                 sensor_name='proximity',
@@ -513,6 +529,29 @@ if __name__ == '__main__':
                             if create_data_list[cortical_id]:
                                 message_to_feagi = sensors.add_generic_input_to_feagi_data(create_data_list,
                                                                                            message_to_feagi)
+
+            if pns.full_template_information_corticals:
+                cortical_id = pns.name_to_feagi_id(sensor_name='servo')
+                for device_id in capabilities['input']['servo']:
+                    raw_data = 0
+                    if device_id == '0':
+                        raw_data = angle_of_head
+                    if device_id == '1':
+                        raw_data = angle_of_arms
+                    if not capabilities['input']['servo'][device_id]['disabled']:
+                        create_data_list = dict()
+                        create_data_list[cortical_id] = dict()
+                        position_in_feagi_location = sensors.convert_sensor_to_ipu_data(
+                            capabilities['input']['servo'][device_id]['min_value'],
+                            capabilities['input']['servo'][device_id]['max_value'],
+                            raw_data,
+                            capabilities['input']['servo'][device_id]['feagi_index'],
+                            sensor_name='servo',
+                            symmetric=True)
+                        create_data_list[cortical_id][position_in_feagi_location] = 100
+                        if create_data_list[cortical_id]:
+                            message_to_feagi = sensors.add_generic_input_to_feagi_data(create_data_list,
+                                                                                       message_to_feagi)
             sleep(feagi_settings['feagi_burst_speed'])  # bottleneck
             pns.signals_to_feagi(message_to_feagi, feagi_ipu_channel, agent_settings, feagi_settings)
             message_to_feagi.clear()
