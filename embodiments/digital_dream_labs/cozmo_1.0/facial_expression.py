@@ -8,8 +8,15 @@ https://git.brl.ac.uk/ca2-chambers/expressive-eyes
 """
 
 from typing import Optional, List
-
+import time
+from collections import deque
+import pycozmo
+import numpy as np
+from PIL import Image
 from pycozmo.procedural_face import ProceduralFace, DEFAULT_WIDTH, DEFAULT_HEIGHT
+face_selected = deque()
+eye_one_location = deque()
+eye_two_location = deque()
 
 __all__ = [
     "Neutral",
@@ -40,6 +47,76 @@ __all__ = [
     "Excitement2"
 ]
 
+
+async def expressions(cli):
+    expressions_array = [
+        Neutral(),
+        Excitement2(),
+        Anger(),
+        Sadness(),
+        Happiness(),
+        Surprise(),
+        Disgust(),
+        Fear(),
+        Pleading(),
+        Vulnerability(),
+        Despair(),
+        Guilt(),
+        Disappointment(),
+        Embarrassment(),
+        Horror(),
+        Skepticism(),
+        Annoyance(),
+        Fury(),
+        Suspicion(),
+        Rejection(),
+        Boredom(),
+        Tiredness(),
+        Asleep(),
+        Confusion(),
+        Amazement(),
+        Excitement()
+    ]
+    face_ignor_threshold = 1
+    last_face_expression_time = time.time()
+    while True:
+        if face_selected:
+            if time.time() - last_face_expression_time > face_ignor_threshold:
+                last_face_expression_time = time.time()
+                face_generator = pycozmo.procedural_face.interpolate(
+                    Neutral(), expressions_array[face_selected[0]],
+                    pycozmo.robot.FRAME_RATE * 2)
+                for face in face_generator:
+                    # expressions_array[0].eyes[0].lids[1].y -= 0.1
+                    # expressions_array[0].eyes[0].lids[1].bend -= 0.1
+                    # expressions_array[0].eyes[0].lids[0].angle += 25.0
+                    # expressions_array[0].eyes[1].upper_inner_radius_x += 1.0
+                    # expressions_array[0].eyes[0].upper_inner_radius_x += 1.0
+                    # expressions_array[0].eyes[0].scale_x += 1.25
+                    # expressions_array[0].eyes[1].upper_outer_radius_x = 1.0
+                    if eye_one_location:
+                        expressions_array[0].eyes[0].center_x = eye_one_location[0][0]
+                        expressions_array[0].eyes[0].center_y = eye_one_location[0][1]
+                        eye_one_location.pop()
+                    if eye_two_location:
+                        expressions_array[0].eyes[1].center_x = eye_two_location[0][0]
+                        expressions_array[0].eyes[1].center_y = eye_two_location[0][1]
+                        eye_two_location.pop()
+                    # Render face image.
+                    im = face.render()
+                    # The Cozmo protocol expects a 128x32 image, so take only the even lines.
+                    np_im = np.array(im)
+                    np_im2 = np_im[::2]
+                    im2 = Image.fromarray(np_im2)
+                    # Display face image.
+                    cli.display_image(im2)
+            face_selected.pop()
+            if len(face_selected) > 2:
+                temp = face_selected.pop()
+                face_selected.clear()
+                face_selected.append(temp)
+        else:
+            time.sleep(0.05)
 
 class Neutral(ProceduralFace):
     def __init__(self, params: Optional[List[float]] = None, width: int = DEFAULT_WIDTH,

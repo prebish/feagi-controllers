@@ -21,13 +21,9 @@ import pycozmo
 import asyncio
 import traceback
 import threading
-import numpy as np
-from PIL import Image
 from time import sleep
 import motor_functions
 import facial_expression
-from collections import deque
-from datetime import datetime
 from version import __version__
 from feagi_connector import sensors
 from feagi_connector import actuators
@@ -52,11 +48,6 @@ robot = {'accelerator': {}, "proximity": [], "gyro": [], 'servo_head': [], "batt
          'lift_height': []}
 camera_data = {"vision": []}
 FEAGI.validate_requirements('requirements.txt')  # you should get it from the boilerplate generator
-
-
-def window_average(sequence):
-    return sum(sequence) // len(sequence)
-
 
 def on_robot_state(cli, pkt: pycozmo.protocol_encoder.RobotState):
     """
@@ -86,79 +77,8 @@ def on_robot_state(cli, pkt: pycozmo.protocol_encoder.RobotState):
     robot['lift_height'] = pkt.lift_height_mm
 
 
-async def expressions():
-    expressions_array = [
-        facial_expression.Neutral(),
-        facial_expression.Excitement2(),
-        facial_expression.Anger(),
-        facial_expression.Sadness(),
-        facial_expression.Happiness(),
-        facial_expression.Surprise(),
-        facial_expression.Disgust(),
-        facial_expression.Fear(),
-        facial_expression.Pleading(),
-        facial_expression.Vulnerability(),
-        facial_expression.Despair(),
-        facial_expression.Guilt(),
-        facial_expression.Disappointment(),
-        facial_expression.Embarrassment(),
-        facial_expression.Horror(),
-        facial_expression.Skepticism(),
-        facial_expression.Annoyance(),
-        facial_expression.Fury(),
-        facial_expression.Suspicion(),
-        facial_expression.Rejection(),
-        facial_expression.Boredom(),
-        facial_expression.Tiredness(),
-        facial_expression.Asleep(),
-        facial_expression.Confusion(),
-        facial_expression.Amazement(),
-        facial_expression.Excitement()
-    ]
-    face_ignor_threshold = 1
-    last_face_expression_time = time.time()
-    while True:
-        if face_selected:
-            if time.time() - last_face_expression_time > face_ignor_threshold:
-                last_face_expression_time = time.time()
-                face_generator = pycozmo.procedural_face.interpolate(
-                    facial_expression.Neutral(), expressions_array[face_selected[0]],
-                    pycozmo.robot.FRAME_RATE * 2)
-                for face in face_generator:
-                    # expressions_array[0].eyes[0].lids[1].y -= 0.1
-                    # expressions_array[0].eyes[0].lids[1].bend -= 0.1
-                    # expressions_array[0].eyes[0].lids[0].angle += 25.0
-                    # expressions_array[0].eyes[1].upper_inner_radius_x += 1.0
-                    # expressions_array[0].eyes[0].upper_inner_radius_x += 1.0
-                    # expressions_array[0].eyes[0].scale_x += 1.25
-                    # expressions_array[0].eyes[1].upper_outer_radius_x = 1.0
-                    if eye_one_location:
-                        expressions_array[0].eyes[0].center_x = eye_one_location[0][0]
-                        expressions_array[0].eyes[0].center_y = eye_one_location[0][1]
-                        eye_one_location.pop()
-                    if eye_two_location:
-                        expressions_array[0].eyes[1].center_x = eye_two_location[0][0]
-                        expressions_array[0].eyes[1].center_y = eye_two_location[0][1]
-                        eye_two_location.pop()
-                    # Render face image.
-                    im = face.render()
-                    # The Cozmo protocol expects a 128x32 image, so take only the even lines.
-                    np_im = np.array(im)
-                    np_im2 = np_im[::2]
-                    im2 = Image.fromarray(np_im2)
-                    # Display face image.
-                    cli.display_image(im2)
-            face_selected.pop()
-            if len(face_selected) > 2:
-                temp = face_selected.pop()
-                face_selected.clear()
-                face_selected.append(temp)
-        else:
-            time.sleep(0.05)
-
-
-def face_starter():
-    asyncio.run(expressions())
+def face_starter(cli):
+    asyncio.run(facial_expression.expressions(cli))
 
 
 def on_body_info(cli, pkt: pycozmo.protocol_encoder.BodyInfo):
@@ -198,7 +118,7 @@ def lift_arms(cli, angle, max, min):
         cli.set_lift_height(angle)  # move head
         return True
     else:
-        face_selected.append(4)
+        facial_expression.face_selected.append(4)
         return False
 
 
@@ -263,49 +183,11 @@ def action(obtained_data, arms_angle, head_angle, motor_data, motor_mapped):
                         arms_angle = test_arm_angle
 
 
-
-
-    # recieve_motor_data = actuators.get_motor_data(obtained_data, motor_data)
-    # if recieve_motor_data:
-    #     for motor_id in recieve_motor_data:
-    #         if str(motor_id) in capabilities['output']['motor']:
-    #             if not capabilities['output']['motor'][str(motor_id)]['disabled']:
-    #                 actuators.pass_the_power_to_motor(capabilities['output']['motor'][str(motor_id)]['max_power'],
-    #                                                   recieve_motor_data[motor_id],
-    #                                                   motor_id,
-    #                                                   motor_data)
-    # else:
-    #     motor_data = actuators.rolling_window_update(motor_data)
-    #
-    #
-    # recieve_servo_data = actuators.get_servo_data(obtained_data)
-    # rwheel_speed = motor_data[0][0]
-    # lwheel_speed = motor_data[1][0]
-    # motor_functions.drive_wheels(cli,
-    #                              lwheel_speed=lwheel_speed,
-    #                              rwheel_speed=rwheel_speed,
-    #                              duration=feagi_settings['feagi_burst_speed'] / 2)
-    #
-    # for id in recieve_servo_data:  # example output: {0: 100, 2: 100}
-    #     device_id = actuators.feagi_id_converter(id)
-    #     if not capabilities['output']['servo'][str(device_id)]['disabled']:
-    #         servo_power = actuators.servo_generate_power(capabilities['output']["servo"][str(device_id)]["max_power"], recieve_servo_data[id], id)
-    #         if device_id == 0:
-    #             test_head_angle = head_angle
-    #             test_head_angle += servo_power
-    #             if move_head(cli, test_head_angle, max, min):
-    #                 head_angle = test_head_angle
-    #         if device_id == 1:
-    #             test_arm_angle = arms_angle
-    #             test_arm_angle += servo_power
-    #             if lift_arms(cli, test_arm_angle, max_lift, min_lift):
-    #                 arms_angle = test_arm_angle
-
     if "misc" in obtained_data:
         if obtained_data["misc"]:
-            print("face: ", face_selected, " misc: ", obtained_data["misc"])
+            print("face: ", facial_expression.face_selected, " misc: ", obtained_data["misc"])
             for i in obtained_data["misc"]:
-                face_selected.append(i)
+                facial_expression.face_selected.append(i)
         obtained_data['misc'].clear()
     return arms_angle, head_angle
 
@@ -324,9 +206,6 @@ if __name__ == '__main__':
         FEAGI.connect_to_feagi(feagi_settings, runtime_data, agent_settings, capabilities,
                                __version__)
     # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-    face_selected = deque()
-    eye_one_location = deque()
-    eye_two_location = deque()
     motor_data = dict()
     for motor_id in capabilities['output']['motor']:
         if 'rolling_window_len' in capabilities['output']['motor'][motor_id]:
@@ -337,10 +216,6 @@ if __name__ == '__main__':
                                                                current_rolling_window_dict=motor_data,
                                                                motor_id=motor_id)
 
-
-    threading.Thread(target=face_starter, daemon=True).start()
-    msg_counter = 0
-    genome_tracker = 0
     # # Raise head.
     cli = pycozmo.Client()
     cli.start()
@@ -360,6 +235,7 @@ if __name__ == '__main__':
 
     # # vision capture
     cli.enable_camera(enable=True, color=True)
+    threading.Thread(target=face_starter, args=(cli,), daemon=True).start()
     threading.Thread(target=robot_status, args=(cli,), daemon=True).start()
     threading.Thread(target=vision_initalization, args=(cli,), daemon=True).start()
     threading.Thread(target=retina.vision_progress,
@@ -376,31 +252,31 @@ if __name__ == '__main__':
                 # action(obtained_signals, angle_of_arms, angle_of_head, motor_data)
                 angle_of_arms, angle_of_head = action(obtained_signals, angle_of_arms, angle_of_head, motor_data, motor_mapped)
                 # OPU section ENDS
-                if "o_eye1" in message_from_feagi["opu_data"]:
-                    if message_from_feagi["opu_data"]["o_eye1"]:
-                        for i in message_from_feagi["opu_data"]["o_eye1"]:
-                            split_data = i.split("-")
-                            y_array = [70, 40, -60]
-                            if split_data[0] == '2':
-                                eye_one_location.append([80, y_array[int(split_data[1])]])
-                            if split_data[0] == '1':
-                                eye_one_location.append([0, y_array[int(split_data[1])]])
-                            if split_data[0] == '0':
-                                eye_one_location.append([-30, y_array[int(split_data[1])]])
-                        face_selected.append(0)
-                if "o_eye2" in message_from_feagi["opu_data"]:
-                    if message_from_feagi["opu_data"]["o_eye2"]:
-                        for i in message_from_feagi["opu_data"]["o_eye2"]:
-                            split_data = i.split("-")
-                            y_array = [65, 40, -50]
-                            if split_data[0] == '2':
-                                eye_two_location.append([40, y_array[int(split_data[1])]])
-                            if split_data[0] == '1':
-                                eye_two_location.append([-10, y_array[int(split_data[1])]])
-                            if split_data[0] == '0':
-                                eye_two_location.append([-30, y_array[int(split_data[1])]])
-                        if len(face_selected) == 0:
-                            face_selected.append(0)
+                # if "o_eye1" in message_from_feagi["opu_data"]:
+                #     if message_from_feagi["opu_data"]["o_eye1"]:
+                #         for i in message_from_feagi["opu_data"]["o_eye1"]:
+                #             split_data = i.split("-")
+                #             y_array = [70, 40, -60]
+                #             if split_data[0] == '2':
+                #                 eye_one_location.append([80, y_array[int(split_data[1])]])
+                #             if split_data[0] == '1':
+                #                 eye_one_location.append([0, y_array[int(split_data[1])]])
+                #             if split_data[0] == '0':
+                #                 eye_one_location.append([-30, y_array[int(split_data[1])]])
+                #         facial_expression.face_selected.append(0)
+                # if "o_eye2" in message_from_feagi["opu_data"]:
+                #     if message_from_feagi["opu_data"]["o_eye2"]:
+                #         for i in message_from_feagi["opu_data"]["o_eye2"]:
+                #             split_data = i.split("-")
+                #             y_array = [65, 40, -50]
+                #             if split_data[0] == '2':
+                #                 eye_two_location.append([40, y_array[int(split_data[1])]])
+                #             if split_data[0] == '1':
+                #                 eye_two_location.append([-10, y_array[int(split_data[1])]])
+                #             if split_data[0] == '0':
+                #                 eye_two_location.append([-30, y_array[int(split_data[1])]])
+                #         if len(facial_expression.face_selected) == 0:
+                #             facial_expression.face_selected.append(0)
                 # if "o_init" in message_from_feagi["opu_data"]:
                 #     if message_from_feagi["opu_data"]["o_init"]:
                 #         for i in message_from_feagi["opu_data"]["o_init"]:
@@ -408,18 +284,17 @@ if __name__ == '__main__':
                 #             if split_data[0] == '0':
                 #                 motor_functions.display_lines(cli)
 
+            # Vision section START
             raw_frame = camera_data['vision']
-            # print(camera_data['vision'])
-            # default_capabilities['input']['camera']['0']['blink'] = []
             previous_frame_data, rgb, default_capabilities = retina.process_visual_stimuli(
                 raw_frame,
                 default_capabilities,
                 previous_frame_data,
                 rgb, capabilities)
-            # cv2.imshow("test",   raw_frame)
-            # cv2.waitKey(30)
             if rgb:
                 message_to_feagi = pns.generate_feagi_data(rgb, message_to_feagi)
+            # Vision section END
+
             if robot['battery']:
                 cortical_id = pns.name_to_feagi_id(sensor_name='battery')
                 current_battery = robot['battery']
