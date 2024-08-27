@@ -17,19 +17,18 @@ limitations under the License.
 """
 
 import time
-import pycozmo
 import asyncio
-import traceback
+import pycozmo
 import threading
+import traceback
+import cozmo_functions
 from time import sleep
-import motor_functions
 import facial_expression
 from version import __version__
+from feagi_connector import retina
 from feagi_connector import sensors
 from feagi_connector import actuators
-from feagi_connector import retina as retina
 from feagi_connector import pns_gateway as pns
-from feagi_connector import PIL_retina as pitina
 from feagi_connector import feagi_interface as FEAGI
 
 runtime_data = {
@@ -44,82 +43,11 @@ runtime_data = {
 
 previous_frame_data = {}
 rgb = {'camera': {}}
-robot = {'accelerator': {}, "proximity": [], "gyro": [], 'servo_head': [], "battery": [],
-         'lift_height': []}
-camera_data = {"vision": []}
 FEAGI.validate_requirements('requirements.txt')  # you should get it from the boilerplate generator
-
-def on_robot_state(cli, pkt: pycozmo.protocol_encoder.RobotState):
-    """
-    timestamp: The timestamp associated with the robot state.
-    pose_frame_id: The ID of the frame of reference for the robot's pose.
-    pose_origin_id: The ID of the origin for the robot's pose.
-    pose_x, pose_y, pose_z: The x, y, and z coordinates of the robot's pose.
-    pose_angle_rad: The angle of the robot's pose in radians.
-    pose_pitch_rad: The pitch angle of the robot's pose in radians.
-    lwheel_speed_mmps: Speed of the left wheel in millimeters per second.
-    rwheel_speed_mmps: Speed of the right wheel in millimeters per second.
-    head_angle_rad: The angle of the robot's head in radians.
-    lift_height_mm: The height of the lift in millimeters.
-    accel_x, accel_y, accel_z: Acceleration values along the x, y, and z axes.
-    gyro_x, gyro_y, gyro_z: Gyroscopic values along the x, y, and z axes.
-    battery_voltage: The voltage of the robot's battery.
-    status: A status code associated with the robot.
-    cliff_data_raw: Raw data related to cliff sensors.
-    backpack_touch_sensor_raw: Raw data from the robot's backpack touch sensor.
-    curr_path_segment: The ID of the current path segment.
-    """
-    robot['accelerator'] = {0: pkt.accel_x, 1: pkt.accel_y, 2: pkt.accel_z}
-    robot['proximity'] = pkt.cliff_data_raw
-    robot["gyro"] = [pkt.gyro_x, pkt.gyro_y, pkt.gyro_z]
-    robot['servo_head'] = pkt.head_angle_rad
-    robot['battery'] = pkt.battery_voltage
-    robot['lift_height'] = pkt.lift_height_mm
 
 
 def face_starter(cli):
     asyncio.run(facial_expression.expressions(cli))
-
-
-def on_body_info(cli, pkt: pycozmo.protocol_encoder.BodyInfo):
-    print("pkt: ", pkt)
-
-
-def on_camera_image(cli, image):
-    global default_capabilities, previous_frame_data, rgb
-    # Obtain the size automatically which will be needed in next line after the next line
-    size = pitina.obtain_size(image)
-    # Convert into ndarray based on the size it gets
-    new_rgb = retina.RGB_list_to_ndarray(image.getdata(), size)
-    # update astype to work well with retina and cv2
-    raw_frame = retina.update_astype(new_rgb)
-    camera_data['vision'] = raw_frame
-    time.sleep(0.01)
-
-def vision_initalization(cli):
-    cli.add_handler(pycozmo.event.EvtNewRawCameraImage, on_camera_image)
-
-
-def robot_status(cli):
-    cli.add_handler(pycozmo.protocol_encoder.RobotState, on_robot_state)
-
-
-def move_head(cli, angle, max, min):
-    if min <= angle <= max:
-        cli.set_head_angle(angle)  # move head
-        return True
-    else:
-        print("reached to limit")
-        return False
-
-
-def lift_arms(cli, angle, max, min):
-    if min <= angle <= max:
-        cli.set_lift_height(angle)  # move head
-        return True
-    else:
-        facial_expression.face_selected.append(4)
-        return False
 
 
 def action(obtained_data, arms_angle, head_angle, motor_data, motor_mapped):
@@ -134,10 +62,10 @@ def action(obtained_data, arms_angle, head_angle, motor_data, motor_mapped):
                 if not capabilities['output']['servo'][str(device_id)]['disabled']:
                     new_power = actuators.get_position_data(recieve_servo_position_data[device_id], capabilities['output']['servo'][str(device_id)][ 'min_value'], capabilities['output']['servo'][str(device_id)][ 'max_value'])
                     if device_id == 0:
-                        if move_head(cli, new_power, max, min):
+                        if cozmo_functions.move_head(cli, new_power, max, min):
                             head_angle = new_power
                     if device_id == 1:
-                        if lift_arms(cli, new_power, max_lift, min_lift):
+                        if cozmo_functions.lift_arms(cli, new_power, max_lift, min_lift):
                             arms_angle = new_power
 
 
@@ -161,7 +89,7 @@ def action(obtained_data, arms_angle, head_angle, motor_data, motor_mapped):
                     rwheel_speed = data_power
                 if motor_id == 1:
                  lwheel_speed = data_power
-    motor_functions.drive_wheels(cli,
+    cozmo_functions.drive_wheels(cli,
                                  lwheel_speed=lwheel_speed,
                                  rwheel_speed=rwheel_speed,
                                  duration=feagi_settings['feagi_burst_speed'] / 2)
@@ -174,12 +102,12 @@ def action(obtained_data, arms_angle, head_angle, motor_data, motor_mapped):
                 if device_id == 0:
                     test_head_angle = head_angle
                     test_head_angle += servo_power
-                    if move_head(cli, test_head_angle, max, min):
+                    if cozmo_functions.move_head(cli, test_head_angle, max, min):
                         head_angle = test_head_angle
                 if device_id == 1:
                     test_arm_angle = arms_angle
                     test_arm_angle += servo_power
-                    if lift_arms(cli, test_arm_angle, max_lift, min_lift):
+                    if cozmo_functions.lift_arms(cli, test_arm_angle, max_lift, min_lift, facial_expression.face_selected):
                         arms_angle = test_arm_angle
 
 
@@ -236,11 +164,11 @@ if __name__ == '__main__':
     # # vision capture
     cli.enable_camera(enable=True, color=True)
     threading.Thread(target=face_starter, args=(cli,), daemon=True).start()
-    threading.Thread(target=robot_status, args=(cli,), daemon=True).start()
-    threading.Thread(target=vision_initalization, args=(cli,), daemon=True).start()
+    threading.Thread(target=cozmo_functions.robot_status, args=(cli,), daemon=True).start()
+    threading.Thread(target=cozmo_functions.vision_initalization, args=(cli,), daemon=True).start()
     threading.Thread(target=retina.vision_progress,
                      args=(default_capabilities,feagi_settings,
-                           camera_data,), daemon=True).start()
+                           cozmo_functions.camera_data,), daemon=True).start()
     time.sleep(2)
     # vision ends
 
@@ -282,10 +210,10 @@ if __name__ == '__main__':
                 #         for i in message_from_feagi["opu_data"]["o_init"]:
                 #             split_data = i.split("-")
                 #             if split_data[0] == '0':
-                #                 motor_functions.display_lines(cli)
+                #                 cozmo_functions.display_lines(cli)
 
             # Vision section START
-            raw_frame = camera_data['vision']
+            raw_frame = cozmo_functions.camera_data['vision']
             previous_frame_data, rgb, default_capabilities = retina.process_visual_stimuli(
                 raw_frame,
                 default_capabilities,
@@ -295,9 +223,9 @@ if __name__ == '__main__':
                 message_to_feagi = pns.generate_feagi_data(rgb, message_to_feagi)
             # Vision section END
 
-            if robot['battery']:
+            if cozmo_functions.robot['battery']:
                 cortical_id = pns.name_to_feagi_id(sensor_name='battery')
-                current_battery = robot['battery']
+                current_battery = cozmo_functions.robot['battery']
                 for device_id in capabilities['input']['battery']:
                     if not capabilities['input']['battery'][device_id]['disabled']:
                         create_data_list = dict()
@@ -313,7 +241,7 @@ if __name__ == '__main__':
                             message_to_feagi = sensors.add_generic_input_to_feagi_data(create_data_list,
                                                                                        message_to_feagi)
 
-            if robot['gyro']:
+            if cozmo_functions.robot['gyro']:
                 for device_id in capabilities['input']['gyro']:
                     if not capabilities['input']['gyro'][device_id]['disabled']:
                         cortical_id = pns.name_to_feagi_id(sensor_name='gyro')
@@ -324,13 +252,13 @@ if __name__ == '__main__':
                                 capabilities['input']['gyro'][device_id]['max_value'][inner_device_id], \
                                 capabilities['input']['gyro'][device_id]['min_value'][
                                     inner_device_id] = sensors.measuring_max_and_min_range(
-                                    robot['gyro'][inner_device_id],
+                                    cozmo_functions.robot['gyro'][inner_device_id],
                                     capabilities['input']['gyro'][device_id]['max_value'][inner_device_id],
                                     capabilities['input']['gyro'][device_id]['min_value'][inner_device_id])
                                 position_in_feagi_location = sensors.convert_sensor_to_ipu_data(
                                     capabilities['input']['gyro'][device_id]['min_value'][inner_device_id],
                                     capabilities['input']['gyro'][device_id]['max_value'][inner_device_id],
-                                    robot['gyro'][inner_device_id],
+                                    cozmo_functions.robot['gyro'][inner_device_id],
                                     capabilities['input']['gyro'][device_id]['feagi_index'] + inner_device_id,
                                     sensor_name='gyro',
                                     symmetric=True)
@@ -343,9 +271,9 @@ if __name__ == '__main__':
                             traceback.print_exc()
 
             # # Add accelerator section
-            if robot['accelerator']:
+            if cozmo_functions.robot['accelerator']:
                 if pns.full_template_information_corticals:
-                    if robot['accelerator']:
+                    if cozmo_functions.robot['accelerator']:
                         for device_id in capabilities['input']['accelerometer']:
                             if not capabilities['input']['accelerometer'][device_id]['disabled']:
                                 cortical_id = pns.name_to_feagi_id(sensor_name='accelerometer')
@@ -357,7 +285,7 @@ if __name__ == '__main__':
                                         capabilities['input']['accelerometer'][device_id]['max_value'][inner_device_id], \
                                             capabilities['input']['accelerometer'][device_id]['min_value'][
                                                 inner_device_id] = sensors.measuring_max_and_min_range(
-                                            robot['accelerator'][inner_device_id],
+                                            cozmo_functions.robot['accelerator'][inner_device_id],
                                             capabilities['input']['accelerometer'][device_id]['max_value'][
                                                 inner_device_id],
                                             capabilities['input']['accelerometer'][device_id]['min_value'][
@@ -367,7 +295,7 @@ if __name__ == '__main__':
                                                 inner_device_id],
                                             capabilities['input']['accelerometer'][device_id]['max_value'][
                                                 inner_device_id],
-                                            robot['accelerator'][inner_device_id],
+                                            cozmo_functions.robot['accelerator'][inner_device_id],
                                             capabilities['input']['accelerometer'][device_id][
                                                 'feagi_index'] + inner_device_id,
                                             sensor_name='accelerometer',
@@ -379,7 +307,7 @@ if __name__ == '__main__':
                                 except Exception as e:
                                     pass
 
-            if robot['proximity']:
+            if cozmo_functions.robot['proximity']:
                 if pns.full_template_information_corticals:
                     cortical_id = pns.name_to_feagi_id(sensor_name='proximity')
                     for device_id in capabilities['input']['proximity']:
@@ -389,14 +317,14 @@ if __name__ == '__main__':
                             capabilities['input']['proximity'][device_id]['max_value'], \
                             capabilities['input']['proximity'][device_id][
                                 'min_value'] = sensors.measuring_max_and_min_range(
-                                robot['proximity'][int(device_id)],
+                                cozmo_functions.robot['proximity'][int(device_id)],
                                 capabilities['input']['proximity'][device_id]['max_value'],
                                 capabilities['input']['proximity'][device_id]['min_value'])
 
                             position_in_feagi_location = sensors.convert_sensor_to_ipu_data(
                                 capabilities['input']['proximity'][device_id]['min_value'],
                                 capabilities['input']['proximity'][device_id]['max_value'],
-                                robot['proximity'][int(device_id)],
+                                cozmo_functions.robot['proximity'][int(device_id)],
                                 capabilities['input']['proximity'][device_id]['feagi_index'],
                                 sensor_name='proximity',
                                 symmetric=True)
