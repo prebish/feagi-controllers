@@ -7,14 +7,14 @@
 					"disabled": false,
 					"feagi_index": 0,
 					"max_value": [
-						null,
-						null,
-						null
+						0,
+						0,
+						0
 					],
 					"min_value": [
-						null,
-						null,
-						null
+						0,
+						0,
+						0
 					]
 				}
 			},
@@ -51,14 +51,14 @@
 					"disabled": false,
 					"feagi_index": 0,
 					"max_value": [
-						3.0,
-						3.0,
-						3.0
+						3,
+						3,
+						3
 					],
 					"min_value": [
-						-3.0,
-						-3.0,
-						-3.0
+						-3,
+						-3,
+						-3
 					]
 				}
 			},
@@ -67,8 +67,24 @@
 					"custom_name": "proximity_0",
 					"disabled": false,
 					"feagi_index": 0,
-					"proximity_max_distance": 0,
-					"proximity_min_distance": 0
+					"max_value": 0,
+					"min_value": 0
+				}
+			},
+			"servo": {
+				"0": {
+					"custom_name": "servo_0",
+					"disabled": false,
+					"feagi_index": 0,
+					"max_value": 0.676671517137477,
+					"min_value": -0.33633231299858
+				},
+				"1": {
+					"custom_name": "servo_1",
+					"disabled": false,
+					"feagi_index": 1,
+					"max_value": 87,
+					"min_value": 37
 				}
 			}
 		},
@@ -102,7 +118,7 @@
 				"1": {
 					"custom_name": "servo_1",
 					"disabled": false,
-					"feagi_index": 0,
+					"feagi_index": 1,
 					"max_power": 3,
 					"max_value": 87,
 					"min_value": 37,
