@@ -5,116 +5,20 @@ import traceback
 
 def cozmo_ipu(robot, capabilities, angle_of_head, angle_of_arms, message_to_feagi):
     if robot['battery']:
-        cortical_id = pns.name_to_feagi_id(sensor_name='battery')
-        current_battery = robot['battery']
-        for device_id in capabilities['input']['battery']:
-            if not capabilities['input']['battery'][device_id]['disabled']:
-                create_data_list = dict()
-                create_data_list[cortical_id] = dict()
-                position_in_feagi_location = sensors.convert_sensor_to_ipu_data(
-                    capabilities['input']['battery']['0']['minimum_value'],
-                    capabilities['input']['battery']['0']['maximum_value'],
-                    current_battery,
-                    capabilities['input']['battery']['0']['feagi_index'],
-                    sensor_name='battery')
-                create_data_list[cortical_id][position_in_feagi_location] = 100
-                if create_data_list[cortical_id]:
-                    message_to_feagi = sensors.add_generic_input_to_feagi_data(create_data_list,
-                                                                               message_to_feagi)
+        message_to_feagi = sensors.create_data_for_feagi('battery', capabilities, message_to_feagi, robot['battery'],symmetric=False)
     
     if robot['gyro']:
-        for device_id in capabilities['input']['gyro']:
-            if not capabilities['input']['gyro'][device_id]['disabled']:
-                cortical_id = pns.name_to_feagi_id(sensor_name='gyro')
-                create_data_list = dict()
-                create_data_list[cortical_id] = dict()
-                try:
-                    for inner_device_id in range(len(capabilities['input']['gyro'][device_id]['max_value'])):
-                        capabilities['input']['gyro'][device_id]['max_value'][inner_device_id], \
-                            capabilities['input']['gyro'][device_id]['min_value'][
-                                inner_device_id] = sensors.measuring_max_and_min_range(
-                            robot['gyro'][inner_device_id],
-                            capabilities['input']['gyro'][device_id]['max_value'][inner_device_id],
-                            capabilities['input']['gyro'][device_id]['min_value'][inner_device_id])
-                        position_in_feagi_location = sensors.convert_sensor_to_ipu_data(
-                            capabilities['input']['gyro'][device_id]['min_value'][inner_device_id],
-                            capabilities['input']['gyro'][device_id]['max_value'][inner_device_id],
-                            robot['gyro'][inner_device_id],
-                            capabilities['input']['gyro'][device_id]['feagi_index'] + inner_device_id,
-                            sensor_name='gyro',
-                            symmetric=True)
-                        create_data_list[cortical_id][position_in_feagi_location] = 100
-                    if create_data_list[cortical_id]:
-                        message_to_feagi = sensors.add_generic_input_to_feagi_data(
-                            create_data_list, message_to_feagi)
-                except Exception as e:
-                    print("here: ", e)
-                    traceback.print_exc()
+        message_to_feagi = sensors.create_data_for_feagi('gyro', capabilities, message_to_feagi, robot['gyro'],symmetric=True)
     
     # # Add accelerator section
     if robot['accelerator']:
-        if pns.full_template_information_corticals:
-            if robot['accelerator']:
-                for device_id in capabilities['input']['accelerometer']:
-                    if not capabilities['input']['accelerometer'][device_id]['disabled']:
-                        cortical_id = pns.name_to_feagi_id(sensor_name='accelerometer')
-                        create_data_list = dict()
-                        create_data_list[cortical_id] = dict()
-                        try:
-                            for inner_device_id in range(
-                                    len(capabilities['input']['accelerometer'][device_id]['max_value'])):
-                                capabilities['input']['accelerometer'][device_id]['max_value'][inner_device_id], \
-                                    capabilities['input']['accelerometer'][device_id]['min_value'][
-                                        inner_device_id] = sensors.measuring_max_and_min_range(
-                                    robot['accelerator'][inner_device_id],
-                                    capabilities['input']['accelerometer'][device_id]['max_value'][
-                                        inner_device_id],
-                                    capabilities['input']['accelerometer'][device_id]['min_value'][
-                                        inner_device_id])
-                                position_in_feagi_location = sensors.convert_sensor_to_ipu_data(
-                                    capabilities['input']['accelerometer'][device_id]['min_value'][
-                                        inner_device_id],
-                                    capabilities['input']['accelerometer'][device_id]['max_value'][
-                                        inner_device_id],
-                                    robot['accelerator'][inner_device_id],
-                                    capabilities['input']['accelerometer'][device_id][
-                                        'feagi_index'] + inner_device_id,
-                                    sensor_name='accelerometer',
-                                    symmetric=True)
-                                create_data_list[cortical_id][position_in_feagi_location] = 100
-                            if create_data_list[cortical_id]:
-                                message_to_feagi = sensors.add_generic_input_to_feagi_data(
-                                    create_data_list, message_to_feagi)
-                        except Exception as e:
-                            pass
+        message_to_feagi = sensors.create_data_for_feagi('accelerometer', capabilities, message_to_feagi, robot['accelerator'], symmetric=True, measure_enable=True)
     
     if robot['proximity']:
-        if pns.full_template_information_corticals:
-            cortical_id = pns.name_to_feagi_id(sensor_name='proximity')
-            for device_id in capabilities['input']['proximity']:
-                if not capabilities['input']['proximity'][device_id]['disabled']:
-                    create_data_list = dict()
-                    create_data_list[cortical_id] = dict()
-                    capabilities['input']['proximity'][device_id]['max_value'], \
-                        capabilities['input']['proximity'][device_id][
-                            'min_value'] = sensors.measuring_max_and_min_range(
-                        robot['proximity'][int(device_id)],
-                        capabilities['input']['proximity'][device_id]['max_value'],
-                        capabilities['input']['proximity'][device_id]['min_value'])
-    
-                    position_in_feagi_location = sensors.convert_sensor_to_ipu_data(
-                        capabilities['input']['proximity'][device_id]['min_value'],
-                        capabilities['input']['proximity'][device_id]['max_value'],
-                        robot['proximity'][int(device_id)],
-                        capabilities['input']['proximity'][device_id]['feagi_index'],
-                        sensor_name='proximity',
-                        symmetric=True)
-                    create_data_list[cortical_id][position_in_feagi_location] = 100
-                    if create_data_list[cortical_id]:
-                        message_to_feagi = sensors.add_generic_input_to_feagi_data(create_data_list,
-                                                                                   message_to_feagi)
+        message_to_feagi = sensors.create_data_for_feagi('proximity', capabilities, message_to_feagi, robot['proximity'][0], symmetric=True, measure_enable=True)
     
     if pns.full_template_information_corticals:
+        # TODO: Figure how to fix this. Also I need to get the actual servo, not my own code tracker
         cortical_id = pns.name_to_feagi_id(sensor_name='servo')
         for device_id in capabilities['input']['servo']:
             raw_data = 0
