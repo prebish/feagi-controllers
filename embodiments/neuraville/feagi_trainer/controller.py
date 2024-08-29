@@ -16,6 +16,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 ==============================================================================
 """
+import json
 import copy
 import threading
 import flask_server
@@ -32,7 +33,10 @@ from feagi_connector import trainer as feagi_trainer
 
 config = feagi.build_up_from_configuration()
 capabilities = config["capabilities"].copy()
-image_reader_config = capabilities["input"]["image_reader"]["0"]
+fcap = open('configuration.json')
+configuration = json.load(fcap)
+fcap.close()
+image_reader_config = configuration["image_reader"]["0"]
 feagi.validate_requirements('requirements.txt')  # you should get it from the boilerplate generator
 
 
@@ -100,7 +104,7 @@ if __name__ == "__main__":
 
     one_time_run = True
     image_obj = feagi_trainer.scan_the_folder(
-        capabilities['input']['image_reader']['0']['image_path'])
+        configuration['image_reader']['0']['image_path'])
     information_files = list(image_obj)
     # raw_frame = image_obj[0]
     raw_frame = information_files[0][0]
@@ -149,7 +153,7 @@ if __name__ == "__main__":
                         failed_to_find_file = False
 
                 if failed_to_find_file:
-                    image_obj = feagi_trainer.scan_the_folder(capabilities['input']['image_reader']['0']['image_path'])
+                    image_obj = feagi_trainer.scan_the_folder(configuration['image_reader']['0']['image_path'])
                     information_files = list(image_obj)
                     counter += 1
                 else:
@@ -195,7 +199,7 @@ if __name__ == "__main__":
             # location section
             location_data = pns.recognize_location_data(message_from_feagi)
             # Testing mode section
-            if capabilities['input']['image_reader']['0']['test_mode']:
+            if configuration['image_reader']['0']['test_mode']:
                 success_rate, success, total = testing_mode.mode_testing(name_id,
                                                                          message_from_feagi,
                                                                          total, success,
@@ -214,7 +218,7 @@ if __name__ == "__main__":
         # while continue_loop:
             # Iterate through images
             image_obj = feagi_trainer.scan_the_folder(
-                capabilities['input']['image_reader']['0']['image_path'])
+                configuration['image_reader']['0']['image_path'])
             for image in image_obj:
                 raw_frame = image[0]
                 # check, raw_frame = new_cam.read() # webcam
