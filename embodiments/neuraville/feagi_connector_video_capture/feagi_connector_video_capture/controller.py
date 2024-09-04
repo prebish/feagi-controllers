@@ -38,6 +38,7 @@ camera_data = {"vision": []}
 def process_video(video_path, capabilities):
     webcam_list = list()
     webcam_data_each = dict()
+    print("bwuk: ", video_path)
     if capabilities['input']['camera']['0']["image"] == "":
         for device in video_path:
             new_cam = cv2.VideoCapture(device)
@@ -109,7 +110,6 @@ def adjust_gamma(image, gamma=5.0):
 
 
 def main(feagi_auth_url, feagi_settings, agent_settings, capabilities, message_to_feagi):
-    print("full list: ", capabilities)
     webcam_list = []
     for index in capabilities['input']['camera']:
         webcam_list.append(capabilities['input']['camera'][index]['video_device_index'])
