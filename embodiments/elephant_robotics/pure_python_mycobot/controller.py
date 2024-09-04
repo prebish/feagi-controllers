@@ -111,7 +111,7 @@ if __name__ == "__main__":
                 action(obtained_signals, arm)
 
             if pns.full_template_information_corticals:
-                message_to_feagi = sensors.create_data_for_feagi('servo', capabilities, message_to_feagi, current_data=runtime_data['for_feagi_data'], symmetric=True)
+                message_to_feagi = sensors.create_data_for_feagi('servo_position', capabilities, message_to_feagi, current_data=runtime_data['for_feagi_data'], symmetric=True)
 
 
             sleep(feagi_settings['feagi_burst_speed'])

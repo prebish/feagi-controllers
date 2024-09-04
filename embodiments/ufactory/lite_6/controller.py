@@ -33,7 +33,7 @@ def updating_encoder_position_in_bg(arm):
     for servo_id in range(6 * 2):
         rolling_window[servo_id] = deque([0] * rolling_window_len)
 
-    for i in range(len(capabilities['input']['servo'])):
+    for i in range(len(capabilities['input']['servo_position'])):
         runtime_data['actual_encoder_position'][i] = deque([0, 0, 0, 0, 0])
         runtime_data['for_feagi_data'][i] = 0
     while True:
@@ -44,7 +44,7 @@ def updating_encoder_position_in_bg(arm):
                 runtime_data['actual_encoder_position'][device_id].popleft()
                 runtime_data['for_feagi_data'][device_id] = new_degree_list_of_servo[1][int(device_id)]
         new_dict = dict()
-        for current_servo_number in range(0, len(capabilities['input']['servo']) * 2, 2):
+        for current_servo_number in range(0, len(capabilities['input']['servo_position']) * 2, 2):
             number_of_servo = current_servo_number  # A number incrementing from range(12)
             rolling_window[number_of_servo].append(new_degree_list_of_servo[1][number_of_servo // 2])
             # new degree list has 6 servos, so using floor divsion to keep it 6
@@ -162,7 +162,7 @@ if __name__ == "__main__":
                 obtained_signals = pns.obtain_opu_data(message_from_feagi)
                 speed = action(obtained_signals, arm, speed)
 
-            message_to_feagi = sensors.create_data_for_feagi('servo', capabilities, message_to_feagi,
+            message_to_feagi = sensors.create_data_for_feagi('servo_position', capabilities, message_to_feagi,
                                                              current_data=runtime_data['for_feagi_data'],
                                                              symmetric=True)
             if runtime_data['i_smot']:
