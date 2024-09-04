@@ -23,13 +23,13 @@ class Arm:
         return MyCobot(port, 115200)
 
     @staticmethod
-    def pose_to_default(arm, count):
-        for number_id in range(count):
-            if not capabilities['output']['servo'][str(number_id)]['disabled']:
-                arm.set_encoder(number_id, 2048)
-                actuators.update_servo_status_by_default(device_id=number_id, initialized_position=2048)
+    def pose_to_default(arm):
+        for device_id in capabilities['output']['servo']:
+            if not capabilities['output']['servo'][device_id]['disabled']:
+                arm.set_encoder(int(device_id) + 1, capabilities['output']['servo'][device_id]['default_value'])
+                actuators.update_servo_status_by_default(device_id=int(device_id), initialized_position=capabilities['output']['servo'][device_id]['default_value'])
             else:
-                actuators.update_servo_status_by_default(device_id=number_id, initialized_position='disabled')
+                actuators.update_servo_status_by_default(device_id=int(device_id), initialized_position='disabled')
 
 
 def updating_encoder_position_in_bg():
@@ -97,7 +97,7 @@ if __name__ == "__main__":
     mycobot = Arm()
     arm = mycobot.connection_initialize()
     arm.set_speed(100)
-    mycobot.pose_to_default(arm, len(capabilities['output']['servo']))
+    mycobot.pose_to_default(arm)
     actuators.start_servos(capabilities)
     arm.release_servo(1)
     threading.Thread(target=updating_encoder_position_in_bg, daemon=True).start()
@@ -109,24 +109,10 @@ if __name__ == "__main__":
                 pns.check_genome_status_no_vision(message_from_feagi)
                 obtained_signals = pns.obtain_opu_data(message_from_feagi)
                 action(obtained_signals, arm)
-                # print(runtime_data['servo_status'])
 
-            # # todo: resume this after OPU update
-            # if pns.full_template_information_corticals:
-            #     for x in runtime_data['for_feagi_data']:
-            #         position = runtime_data['for_feagi_data'][x]
-            #         message_to_feagi = sensors.create_data_for_feagi('servo', capabilities, message_to_feagi, current_data=position, symmetric=True)
+            if pns.full_template_information_corticals:
+                message_to_feagi = sensors.create_data_for_feagi('servo', capabilities, message_to_feagi, current_data=runtime_data['for_feagi_data'], symmetric=True)
 
-            # for device_id in capabilities['input']['servo']:
-            #     if not capabilities['input']['servo'][device_id]['disabled']:
-            #         cortical_id = capabilities['input']['servo'][device_id]["cortical_id"]
-            #         create_data_list = dict()
-            #         create_data_list[cortical_id] = dict()
-            #         capabilities['input']['servo'][device_id]['max_value'], capabilities['input']['servo'][device_id]['min_value'] = sensors.measuring_max_and_min_range(runtime_data['for_feagi_data'][int(device_id)],capabilities['input']['servo'][device_id]['max_value'],capabilities['input']['servo'][device_id]['min_value'])
-            #         position_in_feagi_location = sensors.convert_sensor_to_ipu_data(capabilities['input']['servo'][device_id]['min_value'], capabilities['input']['servo'][device_id]['max_value'], runtime_data['for_feagi_data'][int(device_id)],  capabilities['input']['servo'][device_id]['feagi_index'],cortical_id=cortical_id, symmetric=True)
-            #         create_data_list[cortical_id][position_in_feagi_location] = 100
-            #         if create_data_list[cortical_id]:
-            #             message_to_feagi = sensors.add_generic_input_to_feagi_data(create_data_list, message_to_feagi)
 
             sleep(feagi_settings['feagi_burst_speed'])
             pns.signals_to_feagi(message_to_feagi, feagi_ipu_channel, agent_settings, feagi_settings)
