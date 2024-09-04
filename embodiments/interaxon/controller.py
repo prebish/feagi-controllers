@@ -10,6 +10,9 @@ from feagi_connector import sensors
 from feagi_connector import feagi_interface as feagi
 from brainflow.board_shim import BoardShim, BrainFlowInputParams, BoardIds
 
+feagi.validate_requirements('requirements.txt')  # you should get it from the boilerplate generator
+
+
 def convert_sensor_to_ipu_data(min_output, max_output, raw_data, pin_number):
     if pns.full_list_dimension:
         if 'i__bci' in pns.full_list_dimension:
