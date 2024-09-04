@@ -13,9 +13,8 @@ FEAGI.validate_requirements('requirements.txt')  # you should get it from the bo
 
 
 
-def pose_to_default(arm, count):
-    for number_id in range(count):
-        runtime_data['servo_status'][number_id] = 0
+def pose_to_default(arm, capabilities):
+    actuators.start_servos(capabilities)
     arm.reset(wait=True)
 
 
@@ -44,65 +43,89 @@ def updating_encoder_position_in_bg(arm):
                 runtime_data['actual_encoder_position'][device_id].append(new_degree_list_of_servo[1][int(device_id)])
                 runtime_data['actual_encoder_position'][device_id].popleft()
                 runtime_data['for_feagi_data'][device_id] = new_degree_list_of_servo[1][int(device_id)]
-        new_dict = dict()
-        for current_servo_number in range(0, len(capabilities['input']['servo']) * 2, 2):
-            number_of_servo = current_servo_number  # A number incrementing from range(12)
-            rolling_window[number_of_servo].append(new_degree_list_of_servo[1][number_of_servo // 2])
-            # new degree list has 6 servos, so using floor divsion to keep it 6
-            rolling_window[number_of_servo].popleft()
-            # pop the old index from rolling_window
-
-            get_speed = calculate_the_servo_speed(rolling_window[number_of_servo],
-                                                  feagi_settings['feagi_burst_speed'])
-            # Get a speed from old index - new index / time
-            # print(get_speed)
-            position_for_i_smot = pns.fetch_servo_motion_sensor_size_and_return_percentage(
-                int(get_speed),
-                number_of_servo,
-                25)
-            if position_for_i_smot is not None:
-                if not any(key[:4] == position_for_i_smot[:4] for key in runtime_data['i_smot']):
-                    new_dict[position_for_i_smot] = 100
-                    key_name = str(number_of_servo) + '-0'
-                    if not key_name in position_for_i_smot:
-                        key_name = key_name + '-0'
-                    else:
-                        key_name = str(number_of_servo + 1) + '-0-0'
-                    new_dict[key_name] = 100
-        runtime_data['i_smot'] = new_dict.copy()
+        # new_dict = dict()
+        # for current_servo_number in range(0, len(capabilities['input']['servo']) * 2, 2):
+        #     number_of_servo = current_servo_number  # A number incrementing from range(12)
+        #     rolling_window[number_of_servo].append(new_degree_list_of_servo[1][number_of_servo // 2])
+        #     # new degree list has 6 servos, so using floor divsion to keep it 6
+        #     rolling_window[number_of_servo].popleft()
+        #     # pop the old index from rolling_window
+        #
+        #     get_speed = calculate_the_servo_speed(rolling_window[number_of_servo],
+        #                                           feagi_settings['feagi_burst_speed'])
+        #     # Get a speed from old index - new index / time
+        #     # print(get_speed)
+        #     position_for_i_smot = pns.fetch_servo_motion_sensor_size_and_return_percentage(
+        #         int(get_speed),
+        #         number_of_servo,
+        #         25)
+        #     if position_for_i_smot is not None:
+        #         if not any(key[:4] == position_for_i_smot[:4] for key in runtime_data['i_smot']):
+        #             new_dict[position_for_i_smot] = 100
+        #             key_name = str(number_of_servo) + '-0'
+        #             if not key_name in position_for_i_smot:
+        #                 key_name = key_name + '-0'
+        #             else:
+        #                 key_name = str(number_of_servo + 1) + '-0-0'
+        #             new_dict[key_name] = 100
+        # runtime_data['i_smot'] = new_dict.copy()
         sleep(0.01)
 
 
 def action(obtained_data, arm, speed):
     recieve_servo_data = actuators.get_servo_data(obtained_data)
     recieve_servo_position_data = actuators.get_servo_position_data(obtained_data)
-
     if recieve_servo_position_data:
-        for real_id in recieve_servo_position_data:
-            if not capabilities['output']['servo'][str(real_id)]['disable']:
-                new_power = actuators.get_position_data(recieve_servo_position_data[real_id], capabilities['output']['servo'][str(real_id)][ 'min_value'], capabilities['output']['servo'][str(real_id)][ 'max_value'])
-                runtime_data['servo_status'][real_id] = new_power
         angle_list = []
-        for i in runtime_data['servo_status']:
-            angle_list.append(runtime_data['servo_status'][i])
+        for i in actuators.servo_status:
+            angle_list.append(actuators.servo_status[i])
         angle_list.append(0)  # last one doesn't do anything so just add 0
+
+        for real_id in recieve_servo_position_data:
+            servo_number = real_id
+            new_power = recieve_servo_position_data[real_id]
+            angle_list[servo_number] = new_power
         if not arm.get_is_moving():
             arm.set_servo_angle(angle=angle_list, speed=speed)
 
     if recieve_servo_data:
-        for real_id in recieve_servo_data:  # example output: {0: 100, 2: 100}
-            converted_id = actuators.feagi_id_converter(real_id)
-            if not capabilities['output']['servo'][str(converted_id)]['disable']:
-                servo_power = actuators.servo_generate_power(capabilities['output']["servo"][str(converted_id)]["max_power"], recieve_servo_data[real_id], real_id)
-                pre_power = runtime_data['servo_status'][converted_id] + servo_power
-                new_power = actuators.servo_keep_boundaries(pre_power, capabilities['output']['servo'][str(converted_id)][ 'max_value'], capabilities['output']['servo'][str(converted_id)][ 'min_value'])
-                runtime_data['servo_status'][converted_id] = new_power
         angle_list = []
-        for i in runtime_data['servo_status']:
-            angle_list.append(runtime_data['servo_status'][i])
+        for i in actuators.servo_status:
+            angle_list.append(actuators.servo_status[i])
         angle_list.append(0)  # last one doesn't do anything so just add 0
+        for real_id in recieve_servo_data:
+            servo_number = real_id
+            new_power = recieve_servo_data[real_id]
+            angle_list[servo_number] = new_power
         if not arm.get_is_moving():
             arm.set_servo_angle(angle=angle_list, speed=speed)
+
+    # if recieve_servo_position_data:
+    #     for real_id in recieve_servo_position_data:
+    #         if not capabilities['output']['servo'][str(real_id)]['disabled']:
+    #             new_power = actuators.get_position_data(recieve_servo_position_data[real_id], capabilities['output']['servo'][str(real_id)][ 'min_value'], capabilities['output']['servo'][str(real_id)][ 'max_value'])
+    #             runtime_data['servo_status'][real_id] = new_power
+    #     angle_list = []
+    #     for i in runtime_data['servo_status']:
+    #         angle_list.append(runtime_data['servo_status'][i])
+    #     angle_list.append(0)  # last one doesn't do anything so just add 0
+    #     if not arm.get_is_moving():
+    #         arm.set_servo_angle(angle=angle_list, speed=speed)
+    #
+    # if recieve_servo_data:
+    #     for real_id in recieve_servo_data:  # example output: {0: 100, 2: 100}
+    #         converted_id = actuators.feagi_id_converter(real_id)
+    #         if not capabilities['output']['servo'][str(converted_id)]['disabled']:
+    #             servo_power = actuators.servo_generate_power(capabilities['output']["servo"][str(converted_id)]["max_power"], recieve_servo_data[real_id], real_id)
+    #             pre_power = runtime_data['servo_status'][converted_id] + servo_power
+    #             new_power = actuators.servo_keep_boundaries(pre_power, capabilities['output']['servo'][str(converted_id)][ 'max_value'], capabilities['output']['servo'][str(converted_id)][ 'min_value'])
+    #             runtime_data['servo_status'][converted_id] = new_power
+    #     angle_list = []
+    #     for i in runtime_data['servo_status']:
+    #         angle_list.append(runtime_data['servo_status'][i])
+    #     angle_list.append(0)  # last one doesn't do anything so just add 0
+    #     if not arm.get_is_moving():
+    #         arm.set_servo_angle(angle=angle_list, speed=speed)
 
     if "misc" in obtained_data:
         if obtained_data["misc"]:
@@ -168,7 +191,7 @@ if __name__ == "__main__":
     speed = 100
     arm.set_pause_time(0)
     # UFACTORY ENDS
-    pose_to_default(arm, len(capabilities['output']['servo']))
+    pose_to_default(arm, capabilities)
 
     threading.Thread(target=updating_encoder_position_in_bg, args=(arm,), daemon=True).start()
     while True:
@@ -179,19 +202,14 @@ if __name__ == "__main__":
                 obtained_signals = pns.obtain_opu_data(message_from_feagi)
                 speed = action(obtained_signals, arm, speed)
 
-            for device_id in capabilities['input']['servo']:
-                if not capabilities['input']['servo'][device_id]['disable']:
-                    cortical_id = capabilities['input']['servo'][device_id]["cortical_id"]
-                    create_data_list = dict()
-                    create_data_list[cortical_id] = dict()
-                    position_in_feagi_location = sensors.convert_sensor_to_ipu_data(capabilities['input']['servo'][device_id]['min_value'], capabilities['input']['servo'][device_id]['max_value'], runtime_data['for_feagi_data'][int(device_id)],  capabilities['input']['servo'][device_id]['feagi_index'],cortical_id=cortical_id, symmetric=True)
-                    create_data_list[cortical_id][position_in_feagi_location] = 100
-                    if create_data_list[cortical_id]:
-                        message_to_feagi = sensors.add_generic_input_to_feagi_data(create_data_list, message_to_feagi)
-            if runtime_data['i_smot']:
-                speed_motion = dict()
-                speed_motion['i_smot'] = runtime_data['i_smot']
-                message_to_feagi = sensors.add_generic_input_to_feagi_data(speed_motion,message_to_feagi)
+            message_to_feagi = sensors.create_data_for_feagi('servo', capabilities, message_to_feagi,
+                                                             current_data=runtime_data['for_feagi_data'],
+                                                             symmetric=True)
+
+            # if runtime_data['i_smot']:
+            #     speed_motion = dict()
+            #     speed_motion['i_smot'] = runtime_data['i_smot']
+            #     message_to_feagi = sensors.add_generic_input_to_feagi_data(speed_motion,message_to_feagi)
 
 
 
