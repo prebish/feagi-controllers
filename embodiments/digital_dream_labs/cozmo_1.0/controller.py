@@ -50,74 +50,49 @@ def face_starter(cli):
     asyncio.run(facial_expression.expressions(cli))
 
 
-def action(obtained_data, arms_angle, head_angle, motor_data, motor_mapped):
-    recieve_motor_data = actuators.get_motor_data(obtained_data, motor_data)
+def action(obtained_data):
+    recieve_motor_data = actuators.get_motor_data(obtained_data)
     recieve_servo_data = actuators.get_servo_data(obtained_data)
     recieve_servo_position_data = actuators.get_servo_position_data(obtained_data)
 
-    if recieve_servo_position_data:
-        for feagi_id in recieve_servo_position_data:
-            device_id_list = actuators.feagi_mapped_to_dev_index(dev_id='servo', feagi_index=feagi_id, mapped_dict=motor_mapped)
-            for device_id in device_id_list:
-                if not capabilities['output']['servo'][str(device_id)]['disabled']:
-                    new_power = actuators.get_position_data(recieve_servo_position_data[device_id], capabilities['output']['servo'][str(device_id)][ 'min_value'], capabilities['output']['servo'][str(device_id)][ 'max_value'])
-                    if device_id == 0:
-                        if cozmo_functions.move_head(cli, new_power, max, min):
-                            head_angle = new_power
-                    if device_id == 1:
-                        if cozmo_functions.lift_arms(cli, new_power, max_lift, min_lift):
-                            arms_angle = new_power
 
+    if recieve_servo_position_data:
+        for real_id in recieve_servo_position_data:
+            servo_number = real_id  # Feagi sends 0-indexed, mycobot needs 1-indexed
+            new_power = recieve_servo_position_data[real_id]
+            if servo_number == 0:
+                cozmo_functions.move_head(cli, new_power, max, min)
+            if servo_number == 1:
+                cozmo_functions.lift_arms(cli, new_power, max_lift, min_lift, facial_expression.face_selected)
+
+    if recieve_servo_data:
+        for real_id in recieve_servo_data:  # example output: {0: 100, 2: 100}
+            servo_number = real_id  # Feagi sends 0-indexed, mycobot needs 1-indexed
+            new_power = recieve_servo_data[real_id]
+            if servo_number == 0:
+                cozmo_functions.move_head(cli, new_power, max, min)
+            if servo_number == 1:
+                cozmo_functions.lift_arms(cli, new_power, max_lift, min_lift, facial_expression.face_selected)
 
     if recieve_motor_data:
+        rwheel_speed = 0
+        lwheel_speed = 0
         for motor_id in recieve_motor_data:
-            if str(motor_id) in capabilities['output']['motor']:
-                if not capabilities['output']['motor'][str(motor_id)]['disabled']:
-                    actuators.pass_the_power_to_motor(capabilities['output']['motor'][str(motor_id)]['max_power'],
-                                                      recieve_motor_data[motor_id],
-                                                      motor_id,
-                                                      motor_data)
-    else:
-        motor_data = actuators.rolling_window_update(motor_data)
-    rwheel_speed = 0
-    lwheel_speed = 0
-    for motor_id in motor_mapped['motor']:
-        device_id_list = actuators.feagi_mapped_to_dev_index(dev_id='motor', feagi_index=motor_id, mapped_dict=motor_mapped)
-        for motor in device_id_list:
-                data_power = motor_data[motor][0]  # negative is forward on freenove. So that way, FEAGI dont get confused
+                data_power = recieve_motor_data[motor_id]
                 if motor_id == 0:
                     rwheel_speed = data_power
                 if motor_id == 1:
                  lwheel_speed = data_power
-    cozmo_functions.drive_wheels(cli,
-                                 lwheel_speed=lwheel_speed,
-                                 rwheel_speed=rwheel_speed,
-                                 duration=feagi_settings['feagi_burst_speed'] / 2)
-
-    for feagi_id in recieve_servo_data:  # example output: {0: 100, 2: 100}
-        device_id_list = actuators.feagi_mapped_to_dev_index(dev_id='servo', feagi_index=feagi_id, mapped_dict=motor_mapped)
-        for device_id in device_id_list:
-            if not capabilities['output']['servo'][str(device_id)]['disabled']:
-                servo_power = actuators.servo_generate_power(capabilities['output']["servo"][str(device_id)]["max_power"], recieve_servo_data[feagi_id], feagi_id)
-                if device_id == 0:
-                    test_head_angle = head_angle
-                    test_head_angle += servo_power
-                    if cozmo_functions.move_head(cli, test_head_angle, max, min):
-                        head_angle = test_head_angle
-                if device_id == 1:
-                    test_arm_angle = arms_angle
-                    test_arm_angle += servo_power
-                    if cozmo_functions.lift_arms(cli, test_arm_angle, max_lift, min_lift, facial_expression.face_selected):
-                        arms_angle = test_arm_angle
-
-
+        cozmo_functions.drive_wheels(cli,
+                                     lwheel_speed=lwheel_speed,
+                                     rwheel_speed=rwheel_speed,
+                                     duration=feagi_settings['feagi_burst_speed'] / 2)
     if "misc" in obtained_data:
         if obtained_data["misc"]:
             print("face: ", facial_expression.face_selected, " misc: ", obtained_data["misc"])
             for i in obtained_data["misc"]:
                 facial_expression.face_selected.append(i)
         obtained_data['misc'].clear()
-    return arms_angle, head_angle
 
 
 if __name__ == '__main__':
@@ -134,16 +109,6 @@ if __name__ == '__main__':
         FEAGI.connect_to_feagi(feagi_settings, runtime_data, agent_settings, capabilities,
                                __version__)
     # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-    motor_data = dict()
-    for motor_id in capabilities['output']['motor']:
-        if 'rolling_window_len' in capabilities['output']['motor'][motor_id]:
-            length_rolling_window = capabilities['output']['motor'][motor_id]['rolling_window_len']
-        else:
-            length_rolling_window = 0  # Default to 0 which will be extremely sensitive and stiff
-        motor_data = actuators.create_motor_rolling_window_len(length_window=length_rolling_window,
-                                                               current_rolling_window_dict=motor_data,
-                                                               motor_id=motor_id)
-
     # # Raise head.
     cli = pycozmo.Client()
     cli.start()
@@ -159,8 +124,10 @@ if __name__ == '__main__':
         (pycozmo.robot.MAX_HEAD_ANGLE.radians - pycozmo.robot.MIN_HEAD_ANGLE.radians) / 2.0
     angle_of_arms = 50  # TODO: How to obtain the arms encoders in real time
     cli.set_head_angle(angle_of_head)  # move head
-    motor_mapped = actuators.actuator_to_feagi_map(capabilities)
-
+    actuators.start_motors(capabilities)  # initialize motors for you.
+    actuators.start_servos(capabilities)
+    actuators.update_servo_status_by_default(device_id=0, initialized_position=angle_of_head)
+    actuators.update_servo_status_by_default(device_id=1, initialized_position=angle_of_arms)
     # # vision capture
     cli.enable_camera(enable=True, color=True)
     threading.Thread(target=face_starter, args=(cli,), daemon=True).start()
@@ -178,7 +145,7 @@ if __name__ == '__main__':
             if message_from_feagi:
                 obtained_signals = pns.obtain_opu_data(message_from_feagi)
                 # action(obtained_signals, angle_of_arms, angle_of_head, motor_data)
-                angle_of_arms, angle_of_head = action(obtained_signals, angle_of_arms, angle_of_head, motor_data, motor_mapped)
+                action(obtained_signals)
                 # OPU section ENDS
                 # if "o_eye1" in message_from_feagi["opu_data"]:
                 #     if message_from_feagi["opu_data"]["o_eye1"]:
