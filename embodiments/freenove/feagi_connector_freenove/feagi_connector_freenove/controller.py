@@ -103,17 +103,24 @@ class Servo:
         elif channel == '7':
             self.PwmServo.setServoPulse(15, 500 + float((angle + error) / 0.09))
 
-    def set_default_position(self, runtime_data):
+    def set_default_position(self, capabilities):
         try:
             # Setting the initial position for the servo
-            servo_0_initial_position = 90
-            runtime_data['servo_status'][0] = servo_0_initial_position
-            self.setServoPwm(str(0), runtime_data['servo_status'][0])
-            print("Servo 0 was moved to its initial position")
+            for servo_id in capabilities['output']['servo']:
+                if not capabilities['output']['servo'][servo_id]['disabled']:
+                    position = actuators.servo_keep_boundaries(capabilities['output']['servo'][servo_id]['default_value'],
+                                                               capabilities['output']['servo'][servo_id]['max_value'],
+                                                               capabilities['output']['servo'][servo_id]['min_value'])
 
-            servo_1_initial_position = 90
-            runtime_data['servo_status'][1] = servo_1_initial_position
-            self.setServoPwm(str(1), runtime_data['servo_status'][0])
+                    self.setServoPwm(servo_id, position)
+            # servo_0_initial_position = 90
+            # runtime_data['servo_status'][0] = servo_0_initial_position
+            # self.setServoPwm(str(0), runtime_data['servo_status'][0])
+            # print("Servo 0 was moved to its initial position")
+            #
+            # servo_1_initial_position = 90
+            # runtime_data['servo_status'][1] = servo_1_initial_position
+            # self.setServoPwm(str(1), runtime_data['servo_status'][0])
         except Exception as e:
             print("Error while setting initial position for the servo:", e)
 
@@ -421,36 +428,28 @@ def vision_calculation(default_capabilities, previous_frame_data, rgb, capabilit
         sleep(0.001)
 
 
-def action(obtained_data, led_tracking_list, led, motor_data,capabilities, motor, servo, motor_mapped, runtime_data):
-    recieve_motor_data = actuators.get_motor_data(obtained_data, motor_data)
+def action(obtained_data, led_tracking_list, led,capabilities, motor, servo):
+    recieve_motor_data = actuators.get_motor_data(obtained_data)
     recieve_servo_data = actuators.get_servo_data(obtained_data)
-    if recieve_motor_data:
-        for motor_id in recieve_motor_data:
-            if str(motor_id) in capabilities['output']['motor']:
-                if not capabilities['output']['motor'][str(motor_id)]['disabled']:
-                    actuators.pass_the_power_to_motor(capabilities['output']['motor'][str(motor_id)]['max_power'],
-                                                      recieve_motor_data[motor_id],
-                                                      motor_id,
-                                                      motor_data)
-    else:
-        motor_data = actuators.rolling_window_update(motor_data)
-    for motor_id in motor_mapped:
-        for x in motor_mapped[motor_id]:
-            if motor_id in motor_data:
-                data_power = motor_data[motor_id][0] * -1  # negative is forward on freenove. So that way, FEAGI dont get confused
-                motor.move(x, data_power)
+    recieve_servo_position_data = actuators.get_servo_position_data(obtained_data)
+
+    if recieve_servo_position_data:
+        for real_id in recieve_servo_position_data:
+            servo_number = real_id
+            new_power = recieve_servo_position_data[real_id]
+            servo.move(servo_number, new_power)
 
     if recieve_servo_data:
         for real_id in recieve_servo_data:  # example output: {0: 100, 2: 100}
-            device_id = actuators.feagi_id_converter(real_id) + 1 # Since mycobot runs 1 to 6 instead of 0 to 5
-            converted_id = actuators.feagi_id_converter(real_id)
-            if not capabilities['output']['servo'][str(converted_id)]['disabled']:
-                servo_power = actuators.servo_generate_power(capabilities['output']["servo"][str(converted_id)]["max_power"], recieve_servo_data[real_id], real_id)
-                pre_power = runtime_data['servo_status'][converted_id] + servo_power
-                new_power = actuators.servo_keep_boundaries(pre_power, capabilities['output']['servo'][str(converted_id)][ 'max_value'], capabilities['output']['servo'][str(converted_id)][ 'min_value'])
-                servo.move(converted_id, new_power)
-                runtime_data['servo_status'][converted_id] = new_power
-    print(runtime_data['servo_status'])
+            servo_number = real_id
+            new_power = recieve_servo_data[real_id]
+            servo.move(servo_number, new_power)
+
+
+
+    if recieve_motor_data:
+        for motor_id in recieve_motor_data:
+            motor.move(motor_id, -1 * recieve_motor_data[motor_id]) # add negative 1 to convert forward into positive
 
 
     recieved_led_data = actuators.get_led_data(obtained_data)
@@ -527,21 +526,13 @@ def main(feagi_auth_url, feagi_settings, agent_settings, capabilities):
     # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
     # --- Initializer section ---
     motor = Motor()
+    actuators.start_motors(capabilities)  # initialize motors for you.
     servo = Servo()
+    actuators.start_servos(capabilities)
     led = LED()
     battery = Battery()  # Commented out, not currently in use
 
     # --- Variables ---
-    motor_data = dict()
-    for motor_id in capabilities['output']['motor']:
-        if 'rolling_window_len' in capabilities['output']['motor'][motor_id]:
-            length_rolling_window = capabilities['output']['motor'][motor_id]['rolling_window_len']
-        else:
-            length_rolling_window = 0  # Default to 0 which will be extremely sensitive and stiff
-        motor_data = actuators.create_motor_rolling_window_len(length_window=length_rolling_window,
-                                                               current_rolling_window_dict=motor_data,
-                                                               motor_id=motor_id)
-    led_flag = False
     rgb = dict()
     rgb['camera'] = dict()
 
@@ -550,14 +541,13 @@ def main(feagi_auth_url, feagi_settings, agent_settings, capabilities):
     led_tracking_list = {}
     previous_frame_data = {}
     message_to_feagi = {}
-    motor_mapped = actuators.actuator_to_feagi_map(capabilities)
 
     threading.Thread(target=start_IR, args=(feagi_settings,), daemon=True).start()
     threading.Thread(target=start_ultrasonic, args=(feagi_settings,), daemon=True).start()
     # ultrasonic = Ultrasonic()
     motor.stop()
     cam = cv2.VideoCapture(0)  # you need to do sudo rpi-update to be able to use this
-    servo.set_default_position(runtime_data)
+    servo.set_default_position(capabilities)
 
     default_capabilities = {}  # It will be generated in process_visual_stimuli. See the
     # overwrite manual
@@ -577,7 +567,7 @@ def main(feagi_auth_url, feagi_settings, agent_settings, capabilities):
             if message_from_feagi and message_from_feagi != None:
                 # Fetch data such as motor, servo, etc and pass to a function (you make ur own action.
                 obtained_signals = pns.obtain_opu_data(message_from_feagi)
-                action(obtained_signals, led_tracking_list, led, motor_data,capabilities, motor, servo, motor_mapped, runtime_data)
+                action(obtained_signals, led_tracking_list, led,capabilities, motor, servo)
 
             if raw_frame_internal['0'] is not []:
                 raw_frame = raw_frame_internal['0']
@@ -592,57 +582,27 @@ def main(feagi_auth_url, feagi_settings, agent_settings, capabilities):
                 # Wrapping camera data into a frame for FEAGI
                 if rgb:
                     message_to_feagi = pns.generate_feagi_data(rgb, message_to_feagi)
+
+
             # add IR data into feagi data
             ir_list = ir_data[0] if ir_data else []
             message_to_feagi = sensors.convert_ir_to_ipu_data(ir_list, len(capabilities['input']['infrared']), message_to_feagi)
             # add ultrasonic data into feagi data
-            # ultrasonic_list = ultrasonic.get_distance()
             if ultrasonic_data:
                 ultrasonic_list = ultrasonic_data[0]
             else:
                 ultrasonic_list = 0
-            for device_id in capabilities['input']['proximity']:
-                if not capabilities['input']['proximity'][device_id]['disabled']:
-                    cortical_id = capabilities['input']['proximity'][device_id]["cortical_id"]
-                    create_data_list = dict()
-                    create_data_list[cortical_id] = dict()
-                    start_point = capabilities['input']['proximity'][device_id]["feagi_index"] * len(capabilities['input']['proximity'])
-                    feagi_data_position = start_point
-                    capabilities['input']['proximity']['0']['proximity_max_distance'], capabilities['input']['proximity']['0']['proximity_min_distance'] = sensors.measuring_max_and_min_range(ultrasonic_list,
-                                                        capabilities['input']['proximity']['0']['proximity_max_distance'],
-                                                        capabilities['input']['proximity']['0']['proximity_min_distance'])
-
-                    position_in_feagi_location = sensors.convert_sensor_to_ipu_data(
-                                                        capabilities['input']['proximity']['0']['proximity_min_distance'],
-                                                       capabilities['input']['proximity']['0']['proximity_max_distance'],
-                                                       ultrasonic_list,
-                                                       capabilities['input']['proximity']['0']['feagi_index'],
-                                                       cortical_id=cortical_id)
-                    create_data_list[cortical_id][position_in_feagi_location] = 100
-                    if create_data_list[cortical_id]:
-                        message_to_feagi = sensors.add_generic_input_to_feagi_data(create_data_list, message_to_feagi)
+            message_to_feagi = sensors.create_data_for_feagi(sensor='proximity', capabilities=capabilities,
+                                                             message_to_feagi=message_to_feagi,
+                                                             current_data=ultrasonic_list,
+                                                             measure_enable=True)
             # add battery data into feagi data
             current_battery = battery.battery_total()
-            for device_id in capabilities['input']['battery']:
-                if not capabilities['input']['battery'][device_id]['disabled']:
-                    cortical_id = capabilities['input']['battery'][device_id]["cortical_id"]
-                    create_data_list = dict()
-                    create_data_list[cortical_id] = dict()
-                    start_point = capabilities['input']['battery'][device_id]["feagi_index"] * len(capabilities['input']['battery'])
-                    feagi_data_position = start_point
-                    capabilities['input']['battery']['0']['maximum_value'], capabilities['input']['battery']['0']['minimum_value'] = sensors.measuring_max_and_min_range(current_battery,
-                                                        capabilities['input']['battery']['0']['maximum_value'],
-                                                        capabilities['input']['battery']['0']['minimum_value'])
+            message_to_feagi = sensors.create_data_for_feagi(sensor='battery', capabilities=capabilities,
+                                                             message_to_feagi=message_to_feagi,
+                                                             current_data=current_battery)
 
-                    position_in_feagi_location = sensors.convert_sensor_to_ipu_data(
-                                                        capabilities['input']['battery']['0']['minimum_value'],
-                                                       capabilities['input']['battery']['0']['maximum_value'],
-                                                       current_battery,
-                                                       capabilities['input']['battery']['0']['feagi_index'],
-                                                       cortical_id=cortical_id)
-                    create_data_list[cortical_id][position_in_feagi_location] = 100
-                    if create_data_list[cortical_id]:
-                        message_to_feagi = sensors.add_generic_input_to_feagi_data(create_data_list, message_to_feagi)
+
             sleep(feagi_settings['feagi_burst_speed'])  # bottleneck
             pns.signals_to_feagi(message_to_feagi, feagi_ipu_channel, agent_settings, feagi_settings)
             message_to_feagi.clear()
