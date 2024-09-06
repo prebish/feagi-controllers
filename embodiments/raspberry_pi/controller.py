@@ -22,6 +22,8 @@ from feagi_connector import pns_gateway as pns
 from feagi_connector.version import __version__
 from feagi_connector import feagi_interface as feagi
 
+feagi.validate_requirements('requirements.txt')  # you should get it from the boilerplate generator
+
 
 def action(obtained_data):
     recieve_gpio_data = actuators.get_gpio_data(obtained_data)

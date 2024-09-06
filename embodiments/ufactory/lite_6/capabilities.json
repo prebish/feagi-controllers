@@ -1,0 +1,108 @@
+{
+	"capabilities": {
+		"input": {
+			"servo_position": {
+				"0": {
+					"custom_name": "servo 0",
+					"disabled": false,
+					"feagi_index": 0,
+					"max_value": 340,
+					"min_value": -340
+				},
+				"1": {
+					"custom_name": "servo 1",
+					"disabled": false,
+					"feagi_index": 1,
+					"max_value": 100,
+					"min_value": -100
+				},
+				"2": {
+					"custom_name": "servo 2",
+					"disabled": false,
+					"feagi_index": 2,
+					"max_value": 280,
+					"min_value": -280
+				},
+				"3": {
+					"custom_name": "servo 3",
+					"disabled": false,
+					"feagi_index": 3,
+					"max_value": 340,
+					"min_value": -340
+				},
+				"4": {
+					"custom_name": "servo 4",
+					"disabled": false,
+					"feagi_index": 4,
+					"max_value": 100,
+					"min_value": -100
+				},
+				"5": {
+					"custom_name": "servo 5",
+					"disabled": false,
+					"feagi_index": 5,
+					"max_value": 340,
+					"min_value": -340
+				}
+			}
+		},
+		"output": {
+			"servo": {
+				"0": {
+					"custom_name": "servo 0",
+					"default_value": 0,
+					"disabled": false,
+					"feagi_index": 0,
+					"max_power": 10,
+					"max_value": 340,
+					"min_value": -340
+				},
+				"1": {
+					"custom_name": "servo 1",
+					"default_value": 0,
+					"disabled": false,
+					"feagi_index": 1,
+					"max_power": 10,
+					"max_value": 100,
+					"min_value": -100
+				},
+				"2": {
+					"custom_name": "servo 2",
+					"default_value": 0,
+					"disabled": false,
+					"feagi_index": 2,
+					"max_power": 10,
+					"max_value": 280,
+					"min_value": -280
+				},
+				"3": {
+					"custom_name": "servo 3",
+					"default_value": 0,
+					"disabled": false,
+					"feagi_index": 3,
+					"max_power": 10,
+					"max_value": 340,
+					"min_value": -340
+				},
+				"4": {
+					"custom_name": "servo 4",
+					"default_value": 0,
+					"disabled": false,
+					"feagi_index": 4,
+					"max_power": 10,
+					"max_value": 100,
+					"min_value": -100
+				},
+				"5": {
+					"custom_name": "servo 5",
+					"default_value": 0,
+					"disabled": false,
+					"feagi_index": 5,
+					"max_power": 10,
+					"max_value": 340,
+					"min_value": -340
+				}
+			}
+		}
+	}
+}

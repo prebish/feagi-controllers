@@ -1,5 +1,5 @@
 opencv-python
-feagi-connector
+feagi-connector>=0.0.17
 requests
 zmq
 lz4

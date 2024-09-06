@@ -1,4 +1,2 @@
 pyfirmata
-feagi_connector
-websockets
-opencv-python
+feagi-connector>=0.0.17
