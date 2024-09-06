@@ -1,5 +1,5 @@
 zmq
-feagi-connector
+feagi-connector>=0.0.17
 rpi_ws281x
 RPi.GPIO
 smbus

@@ -1,0 +1,22 @@
+{
+    "description": "generic_mobile",
+    "version": "v0.0.0",
+    "feagi_settings": {
+        "feagi_url": null,
+        "feagi_dns": null,
+        "feagi_host": "127.0.0.1",
+        "feagi_api_port": 8000
+    },
+    "agent_settings": {
+        "agent_data_port": 10010,
+        "agent_id": "generic_mobile_controller",
+        "udp_ip": "127.0.0.1",
+        "udp_port": 1234,
+        "agent_type": "embodiment",
+        "compression": true
+    },
+    "capabilities": {
+        "accelerometer": {},
+        "gyro": {}
+    }
+}

@@ -7,10 +7,13 @@ import traceback
 import subprocess
 from time import sleep
 import feagi_connector_freenove
+from feagi_connector import feagi_interface as feagi
 
 
 if __name__ == '__main__':
     # Check if feagi_connector has arg
+    current_path = feagi_connector_freenove.__path__
+    feagi.validate_requirements(str(current_path[0]) + '/requirements.txt')  # you should get it from the boilerplate generator
     parser = argparse.ArgumentParser(description='configuration for any webcam')
     parser.add_argument('-ip', '--ip', help='to connect FEAGI, required=False')
     parser.add_argument('-setup', '--setup', help='first time setup only', required=False)
@@ -31,7 +34,6 @@ if __name__ == '__main__':
     args = vars(parser.parse_args())
 
     # NEW JSON UPDATE
-    current_path = feagi_connector_freenove.__path__
     f = open(str(current_path[0]) + '/configuration.json')
     configuration = json.load(f)
     feagi_settings =  configuration["feagi_settings"]

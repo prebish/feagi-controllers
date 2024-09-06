@@ -12,6 +12,7 @@ from feagi_connector import actuators
 
 servo_status = dict()
 gyro = {}
+feagi.validate_requirements('requirements.txt')  # you should get it from the boilerplate generator
 
 
 # Function to handle receiving data
