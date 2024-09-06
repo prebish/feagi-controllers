@@ -1,0 +1,16 @@
+{
+    "description": "ufactory",
+    "version": "v0.0.0",
+    "feagi_settings": {
+        "feagi_url": null,
+        "feagi_dns": null,
+        "feagi_host": "127.0.0.1",
+        "feagi_api_port": 8000
+    },
+    "agent_settings": {
+        "agent_data_port": 10001,
+        "agent_id": "Ufactory_arm_lite_6",
+        "agent_type": "embodiment",
+        "compression": true
+    }
+}
