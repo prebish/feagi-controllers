@@ -103,45 +103,52 @@ class Servo:
         elif channel == '7':
             self.PwmServo.setServoPulse(15, 500 + float((angle + error) / 0.09))
 
-    def set_default_position(self, runtime_data):
+    def set_default_position(self, capabilities):
         try:
             # Setting the initial position for the servo
-            servo_0_initial_position = 90
-            runtime_data['servo_status'][0] = servo_0_initial_position
-            self.setServoPwm(str(0), runtime_data['servo_status'][0])
-            print("Servo 0 was moved to its initial position")
+            for servo_id in capabilities['output']['servo']:
+                if not capabilities['output']['servo'][servo_id]['disabled']:
+                    position = actuators.servo_keep_boundaries(capabilities['output']['servo'][servo_id]['default_value'],
+                                                               capabilities['output']['servo'][servo_id]['max_value'],
+                                                               capabilities['output']['servo'][servo_id]['min_value'])
 
-            servo_1_initial_position = 90
-            runtime_data['servo_status'][1] = servo_1_initial_position
-            self.setServoPwm(str(1), runtime_data['servo_status'][0])
+                    self.setServoPwm(servo_id, position)
+            # servo_0_initial_position = 90
+            # runtime_data['servo_status'][0] = servo_0_initial_position
+            # self.setServoPwm(str(0), runtime_data['servo_status'][0])
+            # print("Servo 0 was moved to its initial position")
+            #
+            # servo_1_initial_position = 90
+            # runtime_data['servo_status'][1] = servo_1_initial_position
+            # self.setServoPwm(str(1), runtime_data['servo_status'][0])
         except Exception as e:
             print("Error while setting initial position for the servo:", e)
 
-    def move(self, feagi_device_id, power, capabilities, feagi_settings, runtime_data):
+    def move(self, device_index, power):
         try:
-            if feagi_device_id > 2 * capabilities['servo']['count']:
-                print("Warning! Number of servo channels from FEAGI exceed available Motor count!")
-            # Translate feagi_motor_id to motor backward and forward motion to individual motors
-            device_index = feagi_device_id // 2
-            if feagi_device_id % 2 == 1:
-                power *= 1
-            else:
-                power *= -1
-            if device_index not in runtime_data['servo_status']:
-                runtime_data['servo_status'][device_index] = device_index
+            # if feagi_device_id > 2 * capabilities['servo']['count']:
+            #     print("Warning! Number of servo channels from FEAGI exceed available Motor count!")
+            # # Translate feagi_motor_id to motor backward and forward motion to individual motors
+            # device_index = feagi_device_id // 2
+            # if feagi_device_id % 2 == 1:
+            #     power *= 1
+            # else:
+            #     power *= -1
+            # if device_index not in runtime_data['servo_status']:
+            #     runtime_data['servo_status'][device_index] = device_index
+            #
+            # device_current_position = runtime_data['servo_status'][device_index]
+            # self.device_position = float((power * feagi_settings['feagi_burst_speed'] /
+            #                               capabilities["servo"][
+            #                                   "power_amount"]) + device_current_position)
+            #
+            # self.device_position = self.keep_boundaries(device_id=device_index,
+            #                                             current_position=self.device_position)
 
-            device_current_position = runtime_data['servo_status'][device_index]
-            self.device_position = float((power * feagi_settings['feagi_burst_speed'] /
-                                          capabilities["servo"][
-                                              "power_amount"]) + device_current_position)
-
-            self.device_position = self.keep_boundaries(device_id=device_index,
-                                                        current_position=self.device_position)
-
-            runtime_data['servo_status'][device_index] = self.device_position
+            # runtime_data['servo_status'][device_index] = self.device_position
             # print("device index, position, power = ", device_index, self.device_position, power)
             # self.servo_node[device_index].publish(self.device_position)
-            self.setServoPwm(str(device_index), self.device_position)
+            self.setServoPwm(str(device_index), power)
         except Exception:
             exc_info = sys.exc_info()
             traceback.print_exception(*exc_info)
@@ -399,7 +406,7 @@ class Battery:
 
 def process_video(default_capabilities, cam):
     while True:
-        if default_capabilities['camera']['disabled'] is not True:
+        if default_capabilities['input']['camera']['0']['disabled'] is not True:
             ret, raw_frame = cam.read()
             raw_frame_internal['0'] = raw_frame
         sleep(0.001)
@@ -409,41 +416,42 @@ def vision_calculation(default_capabilities, previous_frame_data, rgb, capabilit
     while True:
         if raw_frame_internal['0'] != []:
             raw_frame = raw_frame_internal['0']
-            if len(default_capabilities['camera']['blink']) > 0:
-                raw_frame = default_capabilities['camera']['blink']
+            if len(default_capabilities['input']['camera']['0']['blink']) > 0:
+                raw_frame = default_capabilities['input']['camera']['0']['blink']
             # Post image into vision
             previous_frame_data, rgb, default_capabilities = \
                 retina.process_visual_stimuli(raw_frame, default_capabilities,
                                               previous_frame_data,
                                               rgb, capabilities)
-            default_capabilities['camera']['blink'] = []
+            default_capabilities['input']['camera']['0']['blink'] = []
             # Wrapping camera data into a frame for FEAGI
         sleep(0.001)
 
 
-def action(obtained_data, led_tracking_list, feagi_settings, capabilities, rolling_window, motor,
-           servo, led, runtime_data):
-    motor_count = capabilities['motor']['count']
-    recieve_motor_data = actuators.get_motor_data(obtained_data,
-                                                  capabilities['motor']['power_amount'],
-                                                  motor_count, rolling_window,
-                                                  id_converter=True, power_inverse=True)
+def action(obtained_data, led_tracking_list, led,capabilities, motor, servo):
+    recieve_motor_data = actuators.get_motor_data(obtained_data)
     recieve_servo_data = actuators.get_servo_data(obtained_data)
-    # Do some custom work with motor data
-    for id in range(motor_count):
-        if id in recieve_motor_data:
-            converted_id = motor.motor_converter(id)
-            motor.move(converted_id, recieve_motor_data[id])
-        else:
-            motor.move(id, 0)
-    # print(rolling_window)
-    # Do some custom work with servo data as well
-    if capabilities['servo']['disabled'] is not True:
-        for id in recieve_servo_data:
-            servo_power = actuators.servo_generate_power(180, recieve_servo_data[id], id)
-            servo.move(feagi_device_id=id, power=servo_power,
-                       capabilities=capabilities, feagi_settings=feagi_settings,
-                       runtime_data=runtime_data)
+    recieve_servo_position_data = actuators.get_servo_position_data(obtained_data)
+
+    if recieve_servo_position_data:
+        for real_id in recieve_servo_position_data:
+            servo_number = real_id
+            new_power = recieve_servo_position_data[real_id]
+            servo.move(servo_number, new_power)
+
+    if recieve_servo_data:
+        for real_id in recieve_servo_data:  # example output: {0: 100, 2: 100}
+            servo_number = real_id
+            new_power = recieve_servo_data[real_id]
+            servo.move(servo_number, new_power)
+
+
+
+    if recieve_motor_data:
+        for motor_id in recieve_motor_data:
+            motor.move(motor_id, -1 * recieve_motor_data[motor_id]) # add negative 1 to convert forward into positive
+
+
     recieved_led_data = actuators.get_led_data(obtained_data)
     if recieved_led_data:
         for data_point in recieved_led_data:
@@ -518,38 +526,29 @@ def main(feagi_auth_url, feagi_settings, agent_settings, capabilities):
     # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
     # --- Initializer section ---
     motor = Motor()
+    actuators.start_motors(capabilities)  # initialize motors for you.
     servo = Servo()
+    actuators.start_servos(capabilities)
     led = LED()
     battery = Battery()  # Commented out, not currently in use
 
     # --- Variables ---
-    rolling_window_len = capabilities['motor']['rolling_window_len']
-    led_flag = False
     rgb = dict()
     rgb['camera'] = dict()
 
     # --- Data Containers ---
-    previous_genome_timestamp = dict()
     # Status for data points
     led_tracking_list = {}
     previous_frame_data = {}
     message_to_feagi = {}
-    # Rolling windows for each motor
-    rolling_window = {}
 
     threading.Thread(target=start_IR, args=(feagi_settings,), daemon=True).start()
-    motor_count = capabilities['motor']['count']
-
-    # Initialize rolling window for each motor
-    for motor_id in range(motor_count):
-        rolling_window[motor_id] = deque([0] * rolling_window_len)
     threading.Thread(target=start_ultrasonic, args=(feagi_settings,), daemon=True).start()
     # ultrasonic = Ultrasonic()
     motor.stop()
     cam = cv2.VideoCapture(0)  # you need to do sudo rpi-update to be able to use this
-    servo.set_default_position(runtime_data)
+    servo.set_default_position(capabilities)
 
-    raw_frame = []
     default_capabilities = {}  # It will be generated in process_visual_stimuli. See the
     # overwrite manual
     camera_data = {"vision": {}}
@@ -560,51 +559,57 @@ def main(feagi_auth_url, feagi_settings, agent_settings, capabilities):
 
     # router.websocket_client_initalize('192.168.50.218', '9053')
     threading.Thread(target=retina.vision_progress,
-                     args=(default_capabilities, feagi_opu_channel, api_address, feagi_settings,
-                           camera_data['vision'],), daemon=True).start()
+                     args=(default_capabilities, feagi_settings, camera_data,), daemon=True).start()
     # threading.Thread(target=router.websocket_recieve, daemon=True).start()
-    msg_counter = 0
     while True:
         try:
             message_from_feagi = pns.message_from_feagi
             if message_from_feagi and message_from_feagi != None:
                 # Fetch data such as motor, servo, etc and pass to a function (you make ur own action.
                 obtained_signals = pns.obtain_opu_data(message_from_feagi)
-                action(obtained_signals, led_tracking_list, feagi_settings, capabilities,
-                       rolling_window, motor, servo, led, runtime_data)
+                action(obtained_signals, led_tracking_list, led,capabilities, motor, servo)
 
             if raw_frame_internal['0'] is not []:
                 raw_frame = raw_frame_internal['0']
-                if len(default_capabilities['camera']['blink']) > 0:
-                    raw_frame = default_capabilities['camera']['blink']
+                if len(default_capabilities['input']['camera']['0']['blink']) > 0:
+                    raw_frame = default_capabilities['input']['camera']['0']['blink']
                 # Post image into vision
                 previous_frame_data, rgb, default_capabilities = \
                     retina.process_visual_stimuli(raw_frame, default_capabilities,
                                                   previous_frame_data,
                                                   rgb, capabilities)
-                default_capabilities['camera']['blink'] = []
+                default_capabilities['input']['camera']['0']['blink'] = []
                 # Wrapping camera data into a frame for FEAGI
                 if rgb:
                     message_to_feagi = pns.generate_feagi_data(rgb, message_to_feagi)
+
+
             # add IR data into feagi data
             ir_list = ir_data[0] if ir_data else []
-            message_to_feagi = sensors.add_infrared_to_feagi_data(ir_list, message_to_feagi,
-                                                                  capabilities)
+            message_to_feagi = sensors.convert_ir_to_ipu_data(ir_list, len(capabilities['input']['infrared']), message_to_feagi)
             # add ultrasonic data into feagi data
-            # ultrasonic_list = ultrasonic.get_distance()
             if ultrasonic_data:
                 ultrasonic_list = ultrasonic_data[0]
             else:
                 ultrasonic_list = 0
-            message_to_feagi = sensors.add_ultrasonic_to_feagi_data(ultrasonic_list,
-                                                                    message_to_feagi)
+            message_to_feagi = sensors.create_data_for_feagi(sensor='proximity', capabilities=capabilities,
+                                                             message_to_feagi=message_to_feagi,
+                                                             current_data=ultrasonic_list,
+                                                             measure_enable=True)
             # add battery data into feagi data
-            message_to_feagi = sensors.add_battery_to_feagi_data(battery.battery_total(),
-                                                                 message_to_feagi)
-            sleep(feagi_settings['feagi_burst_speed'])
-            # Send the data contains IR, Ultrasonic, and camera
+            current_battery = battery.battery_total()
+            message_to_feagi = sensors.create_data_for_feagi(sensor='battery', capabilities=capabilities,
+                                                             message_to_feagi=message_to_feagi,
+                                                             current_data=current_battery)
+
+
+            sleep(feagi_settings['feagi_burst_speed'])  # bottleneck
             pns.signals_to_feagi(message_to_feagi, feagi_ipu_channel, agent_settings, feagi_settings)
             message_to_feagi.clear()
+
+            if rgb:
+                for i in rgb['camera']:
+                    rgb['camera'][i].clear()
         except KeyboardInterrupt as ke:  # Keyboard error
             motor.stop()
             cam.release()

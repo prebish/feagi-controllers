@@ -1,0 +1,117 @@
+{
+	"capabilities": {
+		"input": {
+			"accelerometer": {
+				"0": {
+					"custom_name": "accelerometer_0",
+					"disabled": false,
+					"feagi_index": 0,
+					"max_value": [
+						0,
+						0,
+						0
+					],
+					"min_value": [
+						0,
+						0,
+						0
+					]
+				}
+			},
+			"battery": {
+				"0": {
+					"custom_name": "battery 0",
+					"disabled": false,
+					"feagi_index": 0,
+					"max_value": 100,
+					"min_value": 0
+				}
+			},
+			"camera": {
+				"0": {
+					"custom_name": "camera 0",
+					"disabled": false,
+					"eccentricity_control": {
+						"X offset percentage": 1,
+						"Y offset percentage": 1
+					},
+					"feagi_index": 0,
+					"index": "00",
+					"mirror": true,
+					"modulation_control": {
+						"X offset percentage": 99,
+						"Y offset percentage": 99
+					},
+					"threshold_default": 50
+				}
+			},
+			"gyro": {
+				"0": {
+					"custom_name": "",
+					"disabled": false,
+					"feagi_index": 0,
+					"max_value": [
+						3,
+						3,
+						3
+					],
+					"min_value": [
+						-3,
+						-3,
+						-3
+					]
+				}
+			},
+			"proximity": {
+				"0": {
+					"custom_name": "floor_distance_detector",
+					"disabled": false,
+					"feagi_index": 0,
+					"max_value": 0,
+					"min_value": 0
+				}
+			}
+		},
+		"output": {
+			"misc": {
+				"0": {
+					"custom_name": "misc 0",
+					"disabled": false,
+					"feagi_index": 0
+				},
+				"1": {
+					"custom_name": "take off",
+					"disabled": false,
+					"feagi_index": 1
+				},
+				"2": {
+					"custom_name": "land",
+					"disabled": false,
+					"feagi_index": 2
+				}
+			},
+			"motion_control": {
+				"0": {
+					"custom_name": "go up",
+					"disabled": false,
+					"feagi_index": 0
+				},
+				"1": {
+					"custom_name": "1",
+					"disabled": false,
+					"feagi_index": 1
+				},
+				"2": {
+					"custom_name": "2",
+					"disabled": false,
+					"feagi_index": 2
+				},
+				"3": {
+					"custom_name": "3",
+					"disabled": false,
+					"feagi_index": 3
+				}
+			}
+		}
+	}
+}

@@ -12,6 +12,8 @@ previous_frame_data = dict()
 flag = False
 camera_data = {"vision": []}
 speed = {'0': 50}
+FEAGI.validate_requirements('requirements.txt')  # you should get it from the boilerplate generator
+
 
 
 def get_battery(full_data):
@@ -238,7 +240,7 @@ if __name__ == '__main__':
     start_camera(tello)
 
     # overwrite manual
-    threading.Thread(target=retina.vision_progress, args=(default_capabilities, feagi_settings, camera_data['vision'],), daemon=True).start()
+    threading.Thread(target=retina.vision_progress, args=(default_capabilities, feagi_settings, camera_data,), daemon=True).start()
 
     while True:
         try:
@@ -255,9 +257,6 @@ if __name__ == '__main__':
             battery = get_battery(data)
             raw_frame = full_frame(tello)
             camera_data['vision'] = raw_frame
-            default_capabilities['camera']['blink'] = []
-            if len(default_capabilities['camera']['blink']) > 0:
-                raw_frame = default_capabilities['camera']['blink']
             # Post image into vision
             previous_frame_data, rgb, default_capabilities = retina.process_visual_stimuli(
                 raw_frame,
@@ -269,113 +268,25 @@ if __name__ == '__main__':
             message_to_feagi = pns.generate_feagi_data(rgb,message_to_feagi)
             # Add gyro data into feagi data
             if gyro:
-                for device_id in capabilities['input']['gyro']:
-                    if not capabilities['input']['gyro'][device_id]['disable']:
-                        cortical_id = capabilities['input']['gyro'][device_id]["cortical_id"]
-                        create_data_list = dict()
-                        create_data_list[cortical_id] = dict()
-                        start_point = capabilities['input']['gyro'][device_id]["feagi_index"] * len(capabilities['input']['gyro'])
-                        feagi_data_position = start_point
-                        try:
-                            for device_id in range(len(capabilities['input']['gyro'][device_id]['max_value'])):
-                                capabilities['input']['gyro']['0']['max_value'][device_id], capabilities['input']['gyro']['0']['min_value'][device_id] = sensors.measuring_max_and_min_range(gyro[device_id],
-                                                                    capabilities['input']['gyro']['0']['max_value'][device_id],
-                                                                    capabilities['input']['gyro']['0']['min_value'][device_id])
+                message_to_feagi = sensors.create_data_for_feagi('gyro', capabilities, message_to_feagi, gyro,
+                                                                 symmetric=True)
 
-                                position_in_feagi_location = sensors.convert_sensor_to_ipu_data(
-                                    capabilities['input']['gyro']['0']['min_value'][device_id],
-                                    capabilities['input']['gyro']['0']['max_value'][device_id],
-                                    gyro[device_id],
-                                    capabilities['input']['gyro']['0']['feagi_index'] + device_id,
-                                    cortical_id=cortical_id,
-                                    symmetric=True)
-                                create_data_list[cortical_id][position_in_feagi_location] = 100
-                            if create_data_list[cortical_id]:
-                                message_to_feagi = sensors.add_generic_input_to_feagi_data(create_data_list, message_to_feagi)
-                        except:
-                            pass
-                # message_to_feagi, capabilities['gyro']['gyro_max_value_list'], \
-                #     capabilities['gyro']['gyro_min_value_list'] = sensors.create_data_for_feagi(
-                #     cortical_id='i__gyr',
-                #     robot_data=gyro,
-                #     maximum_range=capabilities['gyro']['gyro_max_value_list'],
-                #     minimum_range=capabilities['gyro']['gyro_min_value_list'],
-                #     enable_symmetric=True,
-                #     index=capabilities['gyro']['dev_index'],
-                #     count=capabilities['gyro']['sub_channel_count'],
-                #     message_to_feagi=message_to_feagi)
             # Add battery data into feagi data
             if battery:
-                for device_id in capabilities['input']['battery']:
-                    if not capabilities['input']['battery'][device_id]['disable']:
-                        cortical_id = capabilities['input']['battery'][device_id]["cortical_id"]
-                        create_data_list = dict()
-                        create_data_list[cortical_id] = dict()
-                        start_point = capabilities['input']['battery'][device_id]["feagi_index"] * len(capabilities['input']['battery'])
-                        feagi_data_position = start_point
-                        capabilities['input']['battery']['0']['maximum_value'], capabilities['input']['battery']['0']['minimum_value'] = sensors.measuring_max_and_min_range(battery,
-                                                            capabilities['input']['battery']['0']['maximum_value'],
-                                                            capabilities['input']['battery']['0']['minimum_value'])
-
-                        position_in_feagi_location = sensors.convert_sensor_to_ipu_data(
-                                                            capabilities['input']['battery']['0']['minimum_value'],
-                                                           capabilities['input']['battery']['0']['maximum_value'],
-                                                           battery,
-                                                           capabilities['input']['battery']['0']['feagi_index'],
-                                                           cortical_id=cortical_id)
-                        create_data_list[cortical_id][position_in_feagi_location] = 100
-                        if create_data_list[cortical_id]:
-                            message_to_feagi = sensors.add_generic_input_to_feagi_data(create_data_list, message_to_feagi)
+                message_to_feagi = sensors.create_data_for_feagi('battery', capabilities, message_to_feagi,
+                                                                 battery, symmetric=False)
 
             # Add accelerator data into feagi data
             if acc:
-                for device_id in capabilities['input']['accelerator']:
-                    if not capabilities['input']['accelerator'][device_id]['disable']:
-                        cortical_id = capabilities['input']['accelerator'][device_id]["cortical_id"]
-                        create_data_list = dict()
-                        create_data_list[cortical_id] = dict()
-                        start_point = capabilities['input']['accelerator'][device_id]["feagi_index"] * len(capabilities['input']['accelerator'])
-                        feagi_data_position = start_point
-                        try:
-                            for device_id in range(len(capabilities['input']['accelerator']['0']['max_value'])):
-                                capabilities['input']['accelerator']['0']['max_value'][device_id], capabilities['input']['accelerator']['0']['min_value'][device_id] = sensors.measuring_max_and_min_range(acc[device_id],
-                                                                    capabilities['input']['accelerator']['0']['max_value'][device_id],
-                                                                    capabilities['input']['accelerator']['0']['min_value'][device_id])
+                message_to_feagi = sensors.create_data_for_feagi('accelerometer', capabilities, message_to_feagi,
+                                                                 acc, symmetric=True,
+                                                                 measure_enable=True)
 
-                                position_in_feagi_location = sensors.convert_sensor_to_ipu_data(
-                                    capabilities['input']['accelerator']['0']['min_value'][device_id],
-                                    capabilities['input']['accelerator']['0']['max_value'][device_id],
-                                    acc[device_id],
-                                    capabilities['input']['accelerator']['0']['feagi_index'] + device_id,
-                                    cortical_id=cortical_id,
-                                    symmetric=True)
-                                create_data_list[cortical_id][position_in_feagi_location] = 100
-                            if create_data_list[cortical_id]:
-                                message_to_feagi = sensors.add_generic_input_to_feagi_data(create_data_list, message_to_feagi)
-                        except:
-                            pass
             # Add sonar data into feagi data. Leveraging the same process as ultrasonic.
             if sonar:
-                for device_id in capabilities['input']['proximity']:
-                    if not capabilities['input']['proximity'][device_id]['disable']:
-                        cortical_id = capabilities['input']['proximity'][device_id]["cortical_id"]
-                        create_data_list = dict()
-                        create_data_list[cortical_id] = dict()
-                        start_point = capabilities['input']['proximity'][device_id]["feagi_index"] * len(capabilities['input']['proximity'])
-                        feagi_data_position = start_point
-                        capabilities['input']['proximity']['0']['proximity_max_distance'], capabilities['input']['proximity']['0']['proximity_min_distance'] = sensors.measuring_max_and_min_range(sonar,
-                                                            capabilities['input']['proximity']['0']['proximity_max_distance'],
-                                                            capabilities['input']['proximity']['0']['proximity_min_distance'])
-
-                        position_in_feagi_location = sensors.convert_sensor_to_ipu_data(
-                                                            capabilities['input']['proximity']['0']['proximity_min_distance'],
-                                                           capabilities['input']['proximity']['0']['proximity_max_distance'],
-                                                           sonar,
-                                                           capabilities['input']['proximity']['0']['feagi_index'],
-                                                           cortical_id=cortical_id)
-                        create_data_list[cortical_id][position_in_feagi_location] = 100
-                        if create_data_list[cortical_id]:
-                            message_to_feagi = sensors.add_generic_input_to_feagi_data(create_data_list, message_to_feagi)
+                message_to_feagi = sensors.create_data_for_feagi('proximity', capabilities, message_to_feagi,
+                                                                 sonar, symmetric=True,
+                                                                 measure_enable=True)
             # Sending data to FEAGI
             pns.signals_to_feagi(message_to_feagi, feagi_ipu_channel, agent_settings, feagi_settings)
             message_to_feagi.clear()
