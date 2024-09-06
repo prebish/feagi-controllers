@@ -1,3 +1,2 @@
 djitellopy
-feagi_connector
-websockets
+feagi-connector>=0.0.17

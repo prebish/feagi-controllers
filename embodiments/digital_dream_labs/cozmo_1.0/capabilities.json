@@ -1,0 +1,130 @@
+{
+	"capabilities": {
+		"input": {
+			"accelerometer": {
+				"0": {
+					"custom_name": "accelerometer_0",
+					"disabled": false,
+					"feagi_index": 0,
+					"max_value": [
+						0,
+						0,
+						0
+					],
+					"min_value": [
+						0,
+						0,
+						0
+					]
+				}
+			},
+			"battery": {
+				"0": {
+					"custom_name": "battery_0",
+					"disabled": false,
+					"feagi_index": 0,
+					"max_value": 100,
+					"min_value": 0
+				}
+			},
+			"camera": {
+				"0": {
+					"custom_name": "camera_0",
+					"disabled": false,
+					"eccentricity_control": {
+						"X offset percentage": 1,
+						"Y offset percentage": 1
+					},
+					"feagi_index": 0,
+					"index": "00",
+					"mirror": true,
+					"modulation_control": {
+						"X offset percentage": 99,
+						"Y offset percentage": 99
+					},
+					"threshold_default": 50
+				}
+			},
+			"gyro": {
+				"0": {
+					"custom_name": "gyro_0",
+					"disabled": false,
+					"feagi_index": 0,
+					"max_value": [
+						3,
+						3,
+						3
+					],
+					"min_value": [
+						-3,
+						-3,
+						-3
+					]
+				}
+			},
+			"proximity": {
+				"0": {
+					"custom_name": "proximity_0",
+					"disabled": false,
+					"feagi_index": 0,
+					"max_value": 0,
+					"min_value": 0
+				}
+			},
+			"servo": {
+				"0": {
+					"custom_name": "servo_0",
+					"disabled": false,
+					"feagi_index": 0,
+					"max_value": 0.676671517137477,
+					"min_value": -0.33633231299858
+				},
+				"1": {
+					"custom_name": "servo_1",
+					"disabled": false,
+					"feagi_index": 1,
+					"max_value": 87,
+					"min_value": 37
+				}
+			}
+		},
+		"output": {
+			"motor": {
+				"0": {
+					"custom_name": "left_wheel",
+					"disabled": false,
+					"feagi_index": 0,
+					"max_power": 300,
+					"rolling_window_len": 2
+				},
+				"1": {
+					"custom_name": "right_wheel",
+					"disabled": false,
+					"feagi_index": 1,
+					"max_power": 300,
+					"rolling_window_len": 2
+				}
+			},
+			"servo": {
+				"0": {
+					"custom_name": "servo_0",
+					"disabled": false,
+					"feagi_index": 0,
+					"max_power": 0.2,
+					"max_value": 0.676671517137477,
+					"min_value": -0.33633231299858,
+					"default_value": 0
+				},
+				"1": {
+					"custom_name": "servo_1",
+					"disabled": false,
+					"feagi_index": 1,
+					"max_power": 3,
+					"max_value": 87,
+					"min_value": 37,
+					"default_value": 0
+				}
+			}
+		}
+	}
+}

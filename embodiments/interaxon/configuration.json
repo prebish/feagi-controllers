@@ -1,0 +1,20 @@
+{
+    "description": "interaxon",
+    "version": "v0.0.0",
+    "feagi_settings": {
+        "feagi_url": null,
+        "feagi_dns": null,
+        "feagi_host": "127.0.0.1",
+        "feagi_api_port": "8000"
+    },
+    "agent_settings": {
+        "agent_data_port": 10008,
+        "agent_id": "muse2_BCI_controller",
+        "agent_type": "embodiment",
+        "compression": true
+    },
+    "capabilities": {
+        "bci":
+            {}
+    }
+}

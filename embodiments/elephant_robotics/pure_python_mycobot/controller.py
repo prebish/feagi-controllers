@@ -9,8 +9,8 @@ from pymycobot.mycobot import MyCobot
 from feagi_connector import pns_gateway as pns
 from feagi_connector import feagi_interface as FEAGI
 
-
 previous_data_frame = dict()
+FEAGI.validate_requirements('requirements.txt')  # you should get it from the boilerplate generator
 
 
 class Arm:
@@ -23,102 +23,47 @@ class Arm:
         return MyCobot(port, 115200)
 
     @staticmethod
-    def pose_to_default(arm, count):
-        for number_id in range(1, count, 1):
-            if number_id != 2:
-                runtime_data['servo_status'][number_id] = 2048
-                arm.set_encoder(number_id, 2048)
-
-    @staticmethod
-    def power_convert(encoder_id, power):
-        if encoder_id % 2 == 0:
-            return -1 * power
-        else:
-            return abs(power)
-
-    @staticmethod
-    def encoder_converter(encoder_id):
-        """
-        This will convert from godot to motor's id. Let's say, you have 8x10 (width x depth from static_genome).
-        So, you click 4 to go forward. It will be like this:
-        o__mot': {'1-0-9': 1, '5-0-9': 1, '3-0-9': 1, '7-0-9': 1}
-        which is 1,3,5,7. So this code will convert from 1,3,5,7 to 0,1,2,3 on motor id.
-        Since 0-1 is motor 1, 2-3 is motor 2 and so on. In this case, 0 is for forward and 1 is for backward.
-        """
-        if encoder_id <= 1:
-            return 1
-        elif encoder_id <= 3:
-            return 2
-        elif encoder_id <= 5:
-            return 3
-        elif encoder_id <= 7:
-            return 4
-        elif encoder_id <= 9:
-            return 5
-        elif encoder_id <= 11:
-            return 6
-        else:
-            print("Input has been refused. Please put encoder ID.")
+    def pose_to_default(arm):
+        for device_id in capabilities['output']['servo']:
+            if not capabilities['output']['servo'][device_id]['disabled']:
+                arm.set_encoder(int(device_id) + 1, capabilities['output']['servo'][device_id]['default_value'])
+                actuators.update_servo_status_by_default(device_id=int(device_id), initialized_position=capabilities['output']['servo'][device_id]['default_value'])
+            else:
+                actuators.update_servo_status_by_default(device_id=int(device_id), initialized_position='disabled')
 
 
 def updating_encoder_position_in_bg():
     global runtime_data, capabilities, feagi_settings
-    for i in range(1, capabilities['servo']['count'], 1):
+    for i in range(len(capabilities['output']['servo'])):
         runtime_data['actual_encoder_position'][i] = deque([0, 0, 0, 0, 0])
-        runtime_data['for_feagi_data'][i-1] = 0
+        runtime_data['for_feagi_data'][i] = 0
     while True:
-        for i in range(1, capabilities['servo']['count'], 1):
-            new_data = arm.get_encoder(i)
+        for i in range(len(capabilities['output']['servo'])):
+            new_data = arm.get_encoder(i + 1)
             if new_data != -1:
                 if runtime_data['actual_encoder_position'][i]:
                     runtime_data['actual_encoder_position'][i].append(new_data)
                     runtime_data['actual_encoder_position'][i].popleft()
-                    runtime_data['for_feagi_data'][i-1] = new_data
+                    runtime_data['for_feagi_data'][i] = new_data
         sleep(0.01)
 
 
-def move(arm, encoder_id, power):
-    max_range = capabilities['servo']['servo_range'][str(encoder_id)][1]
-    min_range = capabilities['servo']['servo_range'][str(encoder_id)][0]
-    pre_power = runtime_data['servo_status'][encoder_id] + power
-    if max_range >= pre_power >= min_range:
-        arm.set_encoder(encoder_id, pre_power)
-        runtime_data['servo_status'][encoder_id] = pre_power
-
-
-def move_encoder(arm, encoder_id, degree):
-    max_range = capabilities['servo']['servo_range'][str(encoder_id)][1]
-    min_range = capabilities['servo']['servo_range'][str(encoder_id)][0]
-    if max_range >= degree >= min_range:
-        arm.set_encoder(encoder_id, degree)
-        runtime_data['servo_status'][encoder_id] = degree
-
-
 def action(obtained_data, arm):
-    if 'servo_position' in obtained_data:
-        try:
-            if obtained_data['servo_position']:
-                for data_point in obtained_data['servo_position']:
-                    device_id = data_point + 1
-                    encoder_position = actuators.get_position_data(obtained_data['servo_position'][data_point], capabilities, device_id)
-                    move_encoder(arm, device_id, encoder_position)
-        except Exception as e:
-            print("ERROR: ", e)
-            traceback.print_exc()
+    recieve_servo_data = actuators.get_servo_data(obtained_data)
+    recieve_servo_position_data = actuators.get_servo_position_data(obtained_data)
 
-    if 'servo' in obtained_data:
-        try:
-            if obtained_data['servo']:
-                for data_point in obtained_data['servo']:
-                    new_position = obtained_data['servo'][data_point]
-                    if data_point % 2 != 0:
-                        new_position *= -1
-                    device_id = (data_point // 2) + 1
-                    power = new_position
-                    move(arm, device_id, power)
-        except Exception as e:
-            print("ERROR: ", e)
-            traceback.print_exc()
+    if recieve_servo_position_data:
+        for real_id in recieve_servo_position_data:
+            servo_number = real_id + 1  # Feagi sends 0-indexed, mycobot needs 1-indexed
+            new_power = recieve_servo_position_data[real_id]
+            arm.set_encoder(servo_number, new_power)
+
+    if recieve_servo_data:
+        for real_id in recieve_servo_data:  # example output: {0: 100, 2: 100}
+            servo_number = real_id + 1  # Feagi sends 0-indexed, mycobot needs 1-indexed
+            new_power = recieve_servo_data[real_id]
+            arm.set_encoder(servo_number, new_power)
+
 
 
 if __name__ == "__main__":
@@ -148,12 +93,12 @@ if __name__ == "__main__":
                                __version__)
     # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-
     # MYCOBOT SECTION
     mycobot = Arm()
-    arm = mycobot.connection_initialize(port='/dev/cu.usbserial-023EDC85')
+    arm = mycobot.connection_initialize()
     arm.set_speed(100)
-    mycobot.pose_to_default(arm, capabilities['servo']['count'])
+    mycobot.pose_to_default(arm)
+    actuators.start_servos(capabilities)
     arm.release_servo(1)
     threading.Thread(target=updating_encoder_position_in_bg, daemon=True).start()
 
@@ -165,17 +110,9 @@ if __name__ == "__main__":
                 obtained_signals = pns.obtain_opu_data(message_from_feagi)
                 action(obtained_signals, arm)
 
-            message_to_feagi, capabilities['servo']['max_value_list'], \
-                capabilities['servo']['min_value_list'] = sensors.create_data_for_feagi(
-                cortical_id='i_spos',
-                robot_data=runtime_data['for_feagi_data'],
-                maximum_range=capabilities['servo']['max_value_list'],
-                minimum_range=capabilities['servo']['min_value_list'],
-                enable_symmetric=True,
-                index=capabilities['servo']['dev_index'],
-                count=capabilities['servo']['sub_channel_count'],
-                message_to_feagi=message_to_feagi,
-                has_range=True)
+            if pns.full_template_information_corticals:
+                message_to_feagi = sensors.create_data_for_feagi('servo_position', capabilities, message_to_feagi, current_data=runtime_data['for_feagi_data'], symmetric=True)
+
 
             sleep(feagi_settings['feagi_burst_speed'])
             pns.signals_to_feagi(message_to_feagi, feagi_ipu_channel, agent_settings, feagi_settings)

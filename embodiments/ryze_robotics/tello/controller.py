@@ -12,6 +12,8 @@ previous_frame_data = dict()
 flag = False
 camera_data = {"vision": []}
 speed = {'0': 50}
+FEAGI.validate_requirements('requirements.txt')  # you should get it from the boilerplate generator
+
 
 
 def get_battery(full_data):
@@ -19,9 +21,7 @@ def get_battery(full_data):
     full data should be a raw data of get_current_state().
     This will return the battery using the raw full data
     """
-    new_data = dict()
-    new_data[0] = full_data['bat']
-    return new_data
+    return full_data['bat']
 
 
 def get_ultrasonic(full_data):
@@ -31,7 +31,7 @@ def get_ultrasonic(full_data):
     """
     if full_data['tof'] > 400:
         full_data['tof'] = 400
-    return [full_data['tof']]  # convert to meter unit
+    return full_data['tof']  # convert to meter unit
 
 
 def get_gyro(full_data):
@@ -210,6 +210,9 @@ if __name__ == '__main__':
     default_capabilities = config['default_capabilities'].copy()
     message_to_feagi = config['message_to_feagi'].copy()
     capabilities = config['capabilities'].copy()
+    default_capabilities = retina.convert_new_json_to_old_json(default_capabilities)  # temporary
+    print("cap: ", capabilities)
+    print("default: ", default_capabilities)
 
     # # # FEAGI registration # # # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
     # - - - - - - - - - - - - - - - - - - #
@@ -237,7 +240,7 @@ if __name__ == '__main__':
     start_camera(tello)
 
     # overwrite manual
-    threading.Thread(target=retina.vision_progress, args=(default_capabilities, feagi_settings, camera_data['vision'],), daemon=True).start()
+    threading.Thread(target=retina.vision_progress, args=(default_capabilities, feagi_settings, camera_data,), daemon=True).start()
 
     while True:
         try:
@@ -254,9 +257,6 @@ if __name__ == '__main__':
             battery = get_battery(data)
             raw_frame = full_frame(tello)
             camera_data['vision'] = raw_frame
-            default_capabilities['camera']['blink'] = []
-            if len(default_capabilities['camera']['blink']) > 0:
-                raw_frame = default_capabilities['camera']['blink']
             # Post image into vision
             previous_frame_data, rgb, default_capabilities = retina.process_visual_stimuli(
                 raw_frame,
@@ -268,54 +268,25 @@ if __name__ == '__main__':
             message_to_feagi = pns.generate_feagi_data(rgb,message_to_feagi)
             # Add gyro data into feagi data
             if gyro:
-                message_to_feagi, capabilities['gyro']['gyro_max_value_list'], \
-                    capabilities['gyro']['gyro_min_value_list'] = sensors.create_data_for_feagi(
-                    cortical_id='i__gyr',
-                    robot_data=gyro,
-                    maximum_range=capabilities['gyro']['gyro_max_value_list'],
-                    minimum_range=capabilities['gyro']['gyro_min_value_list'],
-                    enable_symmetric=True,
-                    index=capabilities['gyro']['dev_index'],
-                    count=capabilities['gyro']['sub_channel_count'],
-                    message_to_feagi=message_to_feagi)
+                message_to_feagi = sensors.create_data_for_feagi('gyro', capabilities, message_to_feagi, gyro,
+                                                                 symmetric=True)
+
             # Add battery data into feagi data
             if battery:
-                message_to_feagi, capabilities['battery']['battery_max_value_list'], capabilities['battery']['battery_min_value_list'] = (
-                    sensors.create_data_for_feagi(
-                        cortical_id='i__bat',
-                        robot_data=battery,
-                        maximum_range=capabilities['battery']['battery_max_value_list'],
-                        minimum_range=capabilities['battery']['battery_min_value_list'],
-                        enable_symmetric=False,
-                        index=capabilities['battery']['dev_index'],
-                        count=capabilities['battery']['sub_channel_count'],
-                        message_to_feagi=message_to_feagi,
-                        has_range=True))
+                message_to_feagi = sensors.create_data_for_feagi('battery', capabilities, message_to_feagi,
+                                                                 battery, symmetric=False)
+
             # Add accelerator data into feagi data
             if acc:
-                message_to_feagi, capabilities['acceleration']['acceleration_max_value_list'], \
-                capabilities['acceleration']['acceleration_min_value_list'] = sensors.create_data_for_feagi(
-                    cortical_id='i__acc',
-                    robot_data=acc,
-                    maximum_range=capabilities['acceleration']['acceleration_max_value_list'],
-                    minimum_range=capabilities['acceleration']['acceleration_min_value_list'],
-                    enable_symmetric=True,
-                    index=capabilities['acceleration']['dev_index'],
-                    count=capabilities['acceleration']['sub_channel_count'],
-                    message_to_feagi=message_to_feagi)
+                message_to_feagi = sensors.create_data_for_feagi('accelerometer', capabilities, message_to_feagi,
+                                                                 acc, symmetric=True,
+                                                                 measure_enable=True)
+
             # Add sonar data into feagi data. Leveraging the same process as ultrasonic.
             if sonar:
-                message_to_feagi, capabilities['proximity']['proximity_max_distance'], \
-                    capabilities['proximity']['proximity_min_distance'] = sensors.create_data_for_feagi(
-                    cortical_id='i__pro',
-                    robot_data=sonar,
-                    maximum_range=capabilities['proximity']['proximity_max_distance'],
-                    minimum_range=capabilities['proximity']['proximity_min_distance'],
-                    enable_symmetric=False,
-                    index=capabilities['proximity']['dev_index'],
-                    count=capabilities['proximity']['sub_channel_count'],
-                    message_to_feagi=message_to_feagi,
-                    has_range=True)
+                message_to_feagi = sensors.create_data_for_feagi('proximity', capabilities, message_to_feagi,
+                                                                 sonar, symmetric=True,
+                                                                 measure_enable=True)
             # Sending data to FEAGI
             pns.signals_to_feagi(message_to_feagi, feagi_ipu_channel, agent_settings, feagi_settings)
             message_to_feagi.clear()
