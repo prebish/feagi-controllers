@@ -45,12 +45,12 @@ def action(obtained_data, capabilities):
     recieve_servo_position_data = actuators.get_servo_position_data(obtained_data)
 
     if recieve_servo_position_data:
-        pass # output like {0:50, 1:20, 2:30} # example but the data comes from your capabilities' servo range
+        pass # output like {0:0.50, 1:0.20, 2:0.30} # example but the data comes from your capabilities' servo range
 
     if recieve_servo_data:
-        pass  # example output: {0: 100, 2: 100}
+        pass  # example output: {0: 0.245, 2: 1.0}
 
-    if recieve_motor_data: # example output: {0: 100, 2: 100}
+    if recieve_motor_data: # example output: {0: 0.245, 2: 1.0}
         pass
 
 
