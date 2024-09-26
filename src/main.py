@@ -18,17 +18,14 @@ with mujoco.viewer.launch_passive(m, d) as viewer:
 
     # make model spaz out
     for i in range(len(d.ctrl)):
-      d.ctrl[i] += random.randint(0, 2)
-      d.ctrl[i] -= random.randint(0, 2)
-      if d.ctrl[i] > 4: d.ctrl = 0
-    # if d.ctrl[0] < 1 and inc_flag:
-    #     d.ctrl[0] += 0.001  # Increment the value
-        
-    # print(m.njnt)
+      d.ctrl[i] += random.randint(0, 2) # increase pos of random joint
+      d.ctrl[i] -= random.randint(0, 2) # decrease pos of random joint
+      if d.ctrl[i] > 4: d.ctrl = 0  # reset value if too high
 
     # mj_step can be replaced with code that also evaluates
     # a policy and applies a control signal before stepping the physics.
     mujoco.mj_step(m, d)
+    ##### - - - - - - -
 
     # Example modification of a viewer option: toggle contact points every two seconds.
     # with viewer.lock():
