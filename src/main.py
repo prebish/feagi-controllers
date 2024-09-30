@@ -53,8 +53,11 @@ def main():
 
 
       ### READ POSITIONAL DATA HERE ###
-
-
+      positions = data.qpos #all positions
+      positions = positions[7:] #don't know what the first 7 positions are, but they're not joints so ignore them
+ 
+      for i, pos in enumerate(positions):
+        print("index: ", i, "  position: " ,f"{pos:{.3}g}")
       ###                           ###
 
 
