@@ -9,7 +9,7 @@ m = mujoco.MjModel.from_xml_path('/Users/ctd/Downloads/humanoid.xml')
 d = mujoco.MjData(m)
 
 
-#d.qpos = m.key_qpos[0]
+#d.qpos = m.key_qpos[0] #this is how you put the model to one of its preset positions
 
 with mujoco.viewer.launch_passive(m, d) as viewer:
   # Close the viewer automatically after 30 wall-seconds.
@@ -62,7 +62,24 @@ with mujoco.viewer.launch_passive(m, d) as viewer:
     positions = positions[7:] #idk what the first 7 are
  
     for i, pos in enumerate(positions):
-        print(i, pos)
+        #print(i, pos)
+        #print(i, f"{pos:.{2}e}")
+        #string_pos = f"{pos:.{2}f}"
+        string_pos = f"{pos}"
+        
+        
+        test = string_pos.split('e')
+        print(i, "test: ", test, "string_pos:", string_pos)
+
+        if len(test) > 1:
+          exponent = int(test[1])
+        else:
+          exponent = 0
+
+        if -3 < exponent < 3:
+          print(i, f"{pos:1.{2}e}")#.rstrip('0').rstrip('.'))
+        else:
+          print(i, f"{pos:.{2}e}")
 
     # Rudimentary time keeping, will drift relative to wall clock.
     time_until_next_step = m.opt.timestep - (time.time() - step_start)
