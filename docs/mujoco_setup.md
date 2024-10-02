@@ -41,3 +41,17 @@ with mujoco.viewer.launch_passive(m, d) as viewer:
 
 # MuJoCo Documentation link:
 https://mujoco.readthedocs.io/en/stable/APIreference/APItypes.html#mjmodel
+
+# Troubleshooting
+Issue: Black Screen or Glitches in MuJoCo on Windows 11 with AMD GPU
+
+Problem: If the MuJoCo simulation screen appears black, contains graphical glitches, or the interface becomes unresponsive, the issue is likely related to outdated drivers.
+
+Solution:
+
+1. Ensure that your AMD GPU drivers are up to date. You can download the latest drivers directly from the AMD website.
+2. Follow the prompts to install the new drivers and restart your computer.
+3. Relaunch MuJoCo to verify that the issue has been resolved.
+
+If the problem persists after updating drivers, consider verifying your system’s compatibility with MuJoCo or seeking additional support from the MuJoCo community.
+
