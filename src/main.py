@@ -8,6 +8,9 @@ SPEED   = 120 # simulation step speed
 #endregion CONSTANTS
 
 #region data.qpos name references
+'''
+POS INDICIES
+
 abdomen_z   = 7
 abdomen_y   = 8
 abdomen_x   = 9
@@ -29,9 +32,35 @@ elbow_right     = 24
 shoulder1_left  = 25
 shoulder2_left  = 26
 elbow_left      = 27
+
+'''
+
+joints = [
+  "abdomen_z",
+  "abdomen_y",
+  "abdomen_x",
+  "hip_x_right",
+  "hip_z_right",
+  "hip_y_right",
+  "knee_right",
+  "ankle_y_right",
+  "ankle_x_right",
+  "hip_x_left",
+  "hip_z_left",
+  "hip_y_left",
+  "knee_left",
+  "ankle_y_left",
+  "ankle_x_left",
+  "shoulder1_right",
+  "shoulder2_right",
+  "elbow_right",
+  "shoulder1_left",
+  "shoulder2_left", 
+  "elbow_left"
+]
 #endregion data.qpos name references
 
-model = mujoco.MjModel.from_xml_path('mujoco/model/humanoid/humanoid.xml')
+model = mujoco.MjModel.from_xml_path('/Users/apostolikarpouzis/Documents/GitHub/feagi-controllers/mujoco/model/humanoid/humanoid.xml')
 data  = mujoco.MjData(model)
 
 def main():
@@ -57,9 +86,8 @@ def main():
       positions = positions[7:] #don't know what the first 7 positions are, but they're not joints so ignore them
  
       for i, pos in enumerate(positions):
-        print("index: ", i, "  position: " ,f"{pos:{.3}g}")
-      ###                           ###
-
+        
+        print("[", i, "]", joints[i] ,f": {pos:{.3}g}")
 
       # Pick up changes to the physics state, apply perturbations, update options from GUI.
       viewer.sync()
