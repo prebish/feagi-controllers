@@ -60,7 +60,7 @@ joints = [
 ]
 #endregion data.qpos name references
 
-model = mujoco.MjModel.from_xml_path('/Users/apostolikarpouzis/Documents/GitHub/feagi-controllers/mujoco/model/humanoid/humanoid.xml')
+model = mujoco.MjModel.from_xml_path('insert path to humanoid.xml based on you system')
 data  = mujoco.MjData(model)
 
 def main():
