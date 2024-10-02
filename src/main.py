@@ -1,9 +1,10 @@
-import time, random
+import time
+import random
 
 import mujoco
 import mujoco.viewer
 
-m = mujoco.MjModel.from_xml_path('mujoco\model\humanoid\humanoid.xml')
+m = mujoco.MjModel.from_xml_path('/Users/apostolikarpouzis/Documents/GitHub/feagi-controllers/mujoco/model/humanoid/humanoid.xml')
 d = mujoco.MjData(m)
 
 inc_flag: bool = True # init flags for inc and dec in mujoco loop
@@ -26,14 +27,21 @@ with mujoco.viewer.launch_passive(m, d) as viewer:
     # a policy and applies a control signal before stepping the physics.
     mujoco.mj_step(m, d)
     ##### - - - - - - -
-
+    # -0.4 - 0.4
+    # 0
+    # -0.1__
+    # -0.11_
+    # -0.201
+  
+    print(d.qpos[7])
+ 
     # Example modification of a viewer option: toggle contact points every two seconds.
     # with viewer.lock():
     #   viewer.opt.flags[mujoco.mjtVisFlag.mjVIS_CONTACTPOINT] = int(d.time % 2)
-
+    
     # Pick up changes to the physics state, apply perturbations, update options from GUI.
     viewer.sync()
-
+    
     # Rudimentary time keeping, will drift relative to wall clock.
     time_until_next_step = m.opt.timestep - (time.time() - step_start)
     if time_until_next_step > 0:
