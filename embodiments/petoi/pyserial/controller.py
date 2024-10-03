@@ -3,7 +3,6 @@ import time
 import threading
 import serial
 from datetime import datetime
-from configuration import *
 from feagi_connector import feagi_interface as feagi
 from feagi_connector import sensors
 from feagi_connector import pns_gateway as pns
@@ -97,8 +96,8 @@ def action(obtained_data):
 
 
 if __name__ == "__main__":
-    ser = serial.Serial('/dev/ttyACM0', 115200)
-    thread_read = threading.Thread(target=read_from_port, args=(ser,))
+    # ser = serial.Serial('/dev/ttyACM0', 115200)
+    # thread_read = threading.Thread(target=read_from_port, args=(ser,))
     # thread_write = threading.Thread(target=write_to_port, args=(ser,))
 
     thread_read.start()
@@ -107,26 +106,21 @@ if __name__ == "__main__":
     # thread_read.join()
     # thread_write.join()
     print("Ready...")
-    feagi_flag = False
-    print("Waiting on FEAGI...")
-    while not feagi_flag:
-        feagi_flag = feagi.is_FEAGI_reachable(os.environ.get('FEAGI_HOST_INTERNAL', "127.0.0.1"),
-                                              int(os.environ.get('FEAGI_OPU_PORT', "3000")))
-        sleep(2)
-    print("DONE")
-    previous_data_frame = {}
-    runtime_data = {"cortical_data": {}, "current_burst_id": None, "stimulation_period": 0.01,
-                    "feagi_state": None, "feagi_network": None}
+    config = FEAGI.build_up_from_configuration()
+    feagi_settings = config['feagi_settings'].copy()
+    agent_settings = config['agent_settings'].copy()
+    default_capabilities = config['default_capabilities'].copy()
+    message_to_feagi = config['message_to_feagi'].copy()
+    capabilities = config['capabilities'].copy()
 
     # # # FEAGI registration # # # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+    # - - - - - - - - - - - - - - - - - - #
     feagi_settings, runtime_data, api_address, feagi_ipu_channel, feagi_opu_channel = \
-        feagi.connect_to_feagi(feagi_settings, runtime_data, agent_settings, capabilities,
+        FEAGI.connect_to_feagi(feagi_settings, runtime_data, agent_settings, capabilities,
                                __version__)
-    # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-    msg_counter = runtime_data["feagi_state"]['burst_counter']
+    # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
     # To give ardiuno some time to open port. It's required
-    threading.Thread(target=pns.feagi_listener, args=(feagi_opu_channel,), daemon=True).start()
     time.sleep(5)
     while True:
         message_from_feagi = pns.message_from_feagi
@@ -136,12 +130,9 @@ if __name__ == "__main__":
             pns.check_genome_status_no_vision(message_from_feagi)
             feagi_settings['feagi_burst_speed'] = pns.check_refresh_rate(message_from_feagi, feagi_settings['feagi_burst_speed'])
             obtained_signals = pns.obtain_opu_data(message_from_feagi)
-            action(obtained_signals)
-        if gyro:
-            message_to_feagi = sensors.add_gyro_to_feagi_data(gyro['gyro'], message_to_feagi)
-
-        message_to_feagi['timestamp'] = datetime.now()
-        message_to_feagi['counter'] = msg_counter
+            # action(obtained_signals)
+        # if gyro:
+        #     message_to_feagi = sensors.add_gyro_to_feagi_data(gyro['gyro'], message_to_feagi)
+        sleep(feagi_settings['feagi_burst_speed'])  # bottleneck
         pns.signals_to_feagi(message_to_feagi, feagi_ipu_channel, agent_settings, feagi_settings)
         message_to_feagi.clear()
-        sleep(feagi_settings['feagi_burst_speed'])
