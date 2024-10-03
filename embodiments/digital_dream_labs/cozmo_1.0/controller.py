@@ -94,6 +94,17 @@ def action(obtained_data):
                 facial_expression.face_selected.append(i)
         obtained_data['misc'].clear()
 
+def data_OPU(action):
+    old_message = {}
+    while True:
+        message_from_feagi = pns.message_from_feagi
+        if old_message != message_from_feagi:
+            if message_from_feagi:
+                if pns.full_template_information_corticals:
+                    obtained_signals = pns.obtain_opu_data(message_from_feagi)
+                    action(obtained_signals)
+        sleep(0.001)
+
 
 if __name__ == '__main__':
     config = FEAGI.build_up_from_configuration()
@@ -136,16 +147,17 @@ if __name__ == '__main__':
     threading.Thread(target=retina.vision_progress,
                      args=(default_capabilities,feagi_settings,
                            cozmo_functions.camera_data,), daemon=True).start()
+    threading.Thread(target=data_OPU, args=(action, ), daemon=True).start()
     time.sleep(2)
     # vision ends
 
     while True:
         try:
             message_from_feagi = pns.message_from_feagi
-            if message_from_feagi:
-                obtained_signals = pns.obtain_opu_data(message_from_feagi)
+            # if message_from_feagi:
+                # obtained_signals = pns.obtain_opu_data(message_from_feagi)
                 # action(obtained_signals, angle_of_arms, angle_of_head, motor_data)
-                action(obtained_signals)
+                # action(obtained_signals)
                 # OPU section ENDS
                 # if "o_eye1" in message_from_feagi["opu_data"]:
                 #     if message_from_feagi["opu_data"]["o_eye1"]:
