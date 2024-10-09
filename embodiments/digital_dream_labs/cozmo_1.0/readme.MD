@@ -26,9 +26,10 @@
 1. Download the Cozmo cognitive connector: [here](https://storage.googleapis.com/nrs_embodiments/em-iqgkoadn/controller.zip). 
 2. Unzip and click the executable file, `controller.exe`
 3. You should see a white dialog screen pop up. 
-4. Since you are using Docker, simply click "submit" button while `Magic Link` has "null" in it.
+4. Since you are using Docker, simply click "submit" button under the `IP:port` since it has "https://127.0.0.1:8000" in it.
 
-![image](https://storage.googleapis.com/nrs-artifacts/em-iqgkoadn/pasteyourmagictohere.png)
+
+![image](_static/IP_port_submit.png)
 
 Note: If you don't want to download anything but prefer to run it from Python source, go to the above section.
 
