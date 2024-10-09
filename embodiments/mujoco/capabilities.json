@@ -1,0 +1,92 @@
+{
+	"capabilities": {
+		"input": {
+
+		},
+		"output": {
+			"servo": {
+				"0": {
+					"custom_name": "abdomen_z",
+					"default_value": 0,
+					"disabled": false,
+					"feagi_index": 0,
+					"max_power": 10,
+					"max_value": 0.793,
+					"min_value": -0.793
+				},
+				"1": {
+					"custom_name": "abdomen_y",
+					"default_value": 0,
+					"disabled": false,
+					"feagi_index": 1,
+					"max_power": 10,
+					"max_value": 0.531,
+					"min_value": 0
+				},
+				"2": {
+					"custom_name": "abdomen_x",
+					"default_value": 0,
+					"disabled": false,
+					"feagi_index": 2,
+					"max_power": 10,
+					"max_value": 0.619,
+					"min_value": 0
+				},
+				"3": {
+					"custom_name": "hip_x_right",
+					"default_value": 0,
+					"disabled": false,
+					"feagi_index": 3,
+					"max_power": 10,
+					"max_value": 0.182,
+					"min_value": 0
+				},
+				"4": {
+					"custom_name": "hip_z_right",
+					"default_value": 0,
+					"disabled": false,
+					"feagi_index": 4,
+					"max_power": 10,
+					"max_value": 0.62,
+					"min_value": 0
+				},
+				"5": {
+					"custom_name": "hip_y_right",
+					"default_value": 0,
+					"disabled": false,
+					"feagi_index": 5,
+					"max_power": 10,
+					"max_value": 0.358,
+					"min_value": 0
+				},
+				"6": {
+					"custom_name": "knee_right",
+					"default_value": 0,
+					"disabled": false,
+					"feagi_index": 6,
+					"max_power": 10,
+					"max_value": 0.0443,
+					"min_value": 0
+				},
+				"7": {
+					"custom_name": "ankle_y_right",
+					"default_value": 0,
+					"disabled": false,
+					"feagi_index": 7,
+					"max_power": 10,
+					"max_value": 0.882,
+					"min_value": 0
+				},
+				"8": {
+					"custom_name": "ankle_x_right",
+					"default_value": 0,
+					"disabled": false,
+					"feagi_index": 8,
+					"max_power": 10,
+					"max_value": 0.882,
+					"min_value": 0
+				}
+			}
+		}
+	}
+}
