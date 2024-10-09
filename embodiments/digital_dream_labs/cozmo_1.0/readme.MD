@@ -22,6 +22,17 @@
 15. `python3 controller.py` (Windows: `python controller.py`)
 16. Go back to the Playground website and watch it in action!
 
+# Installer of Cozmo for window users (BETA)
+1. Download the Cozmo cognitive connector: [here](https://storage.googleapis.com/nrs_embodiments/em-iqgkoadn/controller.zip). 
+2. Unzip and click the executable file, `controller.exe`
+3. You should see a white dialog screen pop up. 
+4. Since you are using Docker, simply click "submit" button while `Magic Link` has "null" in it.
+
+![image](https://storage.googleapis.com/nrs-artifacts/em-iqgkoadn/pasteyourmagictohere.png)
+
+Note: If you don't want to download anything but prefer to run it from Python source, go to the above section.
+
+
 # How do I turn Cozmo on and connect it?
 
 1. Place Cozmo on the charger (repeat this step if Cozmo is already on the charger while turned off).
