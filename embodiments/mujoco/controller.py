@@ -31,12 +31,10 @@ import mujoco, mujoco.viewer
 #region CONSTANTS
 RUNTIME = 60 # (seconds)
 SPEED   = 120 # simulation step speed
-
 #endregion 
 
 #region Global Variables
 camera_data = {"vision": []}  # This will be heavily relies for vision
-
 #endregion
 
 def action(obtained_data, capabilities):
