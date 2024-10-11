@@ -25,9 +25,14 @@ from feagi_connector import retina as retina
 from feagi_connector import pns_gateway as pns
 from feagi_connector.version import __version__
 from feagi_connector import feagi_interface as feagi
+import time, random
+import mujoco, mujoco.viewer
 
 # Global variable section
 camera_data = {"vision": []}  # This will be heavily relies for vision
+
+RUNTIME = 60 # (seconds)
+SPEED   = 120 # simulation step speed
 
 
 def action(obtained_data, capabilities):
@@ -92,24 +97,58 @@ if __name__ == "__main__":
         threading.Thread(target=retina.vision_progress,
                          args=(default_capabilities, feagi_settings, camera_data['vision'],),
                          daemon=True).start()
+    
+    model = mujoco.MjModel.from_xml_path('/Users/ctd/Documents/GitHub/feagi-controllers/embodiments/mujoco/humanoid.xml')
+    data  = mujoco.MjData(model)
+    actuators.start_servos(capabilities) # inserted here. This is not something you should do on your end. I will fix it shortly
+    with mujoco.viewer.launch_passive(model, data) as viewer:
+        start_time = time.time()
 
-    while True:
-        # The controller will grab the data from FEAGI in real-time
-        message_from_feagi = pns.message_from_feagi
-        if message_from_feagi: # Verify if the feagi data is not empty
-            # Translate from feagi data to human readable data
-            obtained_signals = pns.obtain_opu_data(message_from_feagi)
-            action(obtained_signals, capabilities)
+        while viewer.is_running() and time.time() - start_time < RUNTIME:
+            step_start = time.time()
 
-        # Example to send data to FEAGI. This is basically reading the joint. R
-        message_to_feagi = sensors.create_data_for_feagi('servo_position', capabilities, message_to_feagi,
-                                                         current_data=joint_read, symmetric=True)
-        # Sends to feagi data
-        pns.signals_to_feagi(message_to_feagi, feagi_ipu_channel, agent_settings, feagi_settings)
+            # steps the simulation forward 'tick'
+            mujoco.mj_step(model, data)
 
-        # Clear data that is created by controller such as sensors
-        message_to_feagi.clear()
+            ### READ POSITIONAL DATA HERE ###
+            positions = data.qpos #all positions
+            positions = positions[7:] #don't know what the first 7 positions are, but they're not joints so ignore them
 
-        # cool down everytime
-        sleep(feagi_settings['feagi_burst_speed'])
+            """ for i, pos in enumerate(positions):
+                
+                print("[", i, "]", joints[i] ,f": {pos:{.3}g}") """
+
+            # Pick up changes to the physics state, apply perturbations, update options from GUI.
+            viewer.sync()
+
+            # Tick Speed # 
+            time_until_next_step = (1/SPEED) - (time.time() - step_start)
+            if time_until_next_step > 0:
+                time.sleep(time_until_next_step)
+
+
+            # The controller will grab the data from FEAGI in real-time
+            message_from_feagi = pns.message_from_feagi
+            if message_from_feagi: # Verify if the feagi data is not empty
+                # Translate from feagi data to human readable data
+                obtained_signals = pns.obtain_opu_data(message_from_feagi)
+                action(obtained_signals, capabilities)
+
+            # Example to send data to FEAGI. This is basically reading the joint. R
+            servo_data = {i: pos for i, pos in enumerate(positions[:20]) if
+                          pns.full_template_information_corticals}
+            message_to_feagi = sensors.create_data_for_feagi('servo_position',
+                                                             capabilities,
+                                                             message_to_feagi,
+                                                             current_data=servo_data,
+                                                             symmetric=True)
+
+            # Sends to feagi data
+            pns.signals_to_feagi(message_to_feagi, feagi_ipu_channel, agent_settings, feagi_settings)
+
+            # Clear data that is created by controller such as sensors
+            message_to_feagi.clear()
+
+            # cool down everytime
+            sleep(feagi_settings['feagi_burst_speed'])
         
