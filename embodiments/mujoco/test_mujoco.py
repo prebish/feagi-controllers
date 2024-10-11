@@ -86,7 +86,6 @@ def main():
       positions = positions[7:] #don't know what the first 7 positions are, but they're not joints so ignore them
 
       for i, pos in enumerate(positions):
-        
         print("[", i, "]", joints[i] ,f": {pos:{.3}g}")
 
       # Pick up changes to the physics state, apply perturbations, update options from GUI.

@@ -28,12 +28,16 @@ from feagi_connector import feagi_interface as feagi
 import time, random
 import mujoco, mujoco.viewer
 
-# Global variable section
-camera_data = {"vision": []}  # This will be heavily relies for vision
-
+#region CONSTANTS
 RUNTIME = 60 # (seconds)
 SPEED   = 120 # simulation step speed
 
+#endregion 
+
+#region Global Variables
+camera_data = {"vision": []}  # This will be heavily relies for vision
+
+#endregion
 
 def action(obtained_data, capabilities):
     """
@@ -57,7 +61,6 @@ def action(obtained_data, capabilities):
 
     if recieve_motor_data: # example output: {0: 0.245, 2: 1.0}
         pass
-
 
 
 if __name__ == "__main__":
@@ -98,24 +101,34 @@ if __name__ == "__main__":
                          args=(default_capabilities, feagi_settings, camera_data['vision'],),
                          daemon=True).start()
     
-    model = mujoco.MjModel.from_xml_path('/Users/ctd/Documents/GitHub/feagi-controllers/embodiments/mujoco/humanoid.xml')
+    # This is for defining the model (xml file) we want to use with MuJoCo
+    # and the data variable which holds useful data about the current simulation
+    model = mujoco.MjModel.from_xml_path('../../mujoco/model/humanoid.xml')
     data  = mujoco.MjData(model)
     actuators.start_servos(capabilities) # inserted here. This is not something you should do on your end. I will fix it shortly
+
+    # Opening the MuJoCo viewer, where the program runs within the while loop
     with mujoco.viewer.launch_passive(model, data) as viewer:
         start_time = time.time()
 
         while viewer.is_running() and time.time() - start_time < RUNTIME:
             step_start = time.time()
 
-            # steps the simulation forward 'tick'
+            # Simulation forward 'tick'
             mujoco.mj_step(model, data)
 
-            ### READ POSITIONAL DATA HERE ###
-            positions = data.qpos #all positions
-            positions = positions[7:] #don't know what the first 7 positions are, but they're not joints so ignore them
+            ### READ POSITIONAL DATA ###
+            positions = data.qpos # all positions
+            positions = positions[7:] # joints start at index 7
+
+            ### MOVE JOINTS RANDOMLY ###
+            moving_jnt = random.randint(0, len(data.ctrl)-1)
+            data.ctrl[moving_jnt] += random.randint(0, 2) # increase pos of random joint
+            data.ctrl[moving_jnt] -= random.randint(0, 2) # decrease pos of random joint
+            if data.ctrl[moving_jnt] > 4: 
+              data.ctrl = 0  # reset position if too high
 
             """ for i, pos in enumerate(positions):
-                
                 print("[", i, "]", joints[i] ,f": {pos:{.3}g}") """
 
             # Pick up changes to the physics state, apply perturbations, update options from GUI.
@@ -125,7 +138,6 @@ if __name__ == "__main__":
             time_until_next_step = (1/SPEED) - (time.time() - step_start)
             if time_until_next_step > 0:
                 time.sleep(time_until_next_step)
-
 
             # The controller will grab the data from FEAGI in real-time
             message_from_feagi = pns.message_from_feagi
@@ -148,6 +160,11 @@ if __name__ == "__main__":
 
             # Clear data that is created by controller such as sensors
             message_to_feagi.clear()
+
+            # Tick Speed # 
+            time_until_next_step = (1/SPEED) - (time.time() - step_start)
+            if time_until_next_step > 0:
+                time.sleep(time_until_next_step)
 
             # cool down everytime
             sleep(feagi_settings['feagi_burst_speed'])
