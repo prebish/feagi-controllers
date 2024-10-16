@@ -66,8 +66,9 @@ def gather_all_input_data():
 def gather_all_analog_output_data(analog_pins):
     create_analog_data_list = dict()
     for channel in range(len(analog_pins)):
-        position_of_analog = sensors.convert_sensor_to_ipu_data(0, 1, round(analog_pins[channel].value, 2), channel)
-        create_analog_data_list[position_of_analog] = 100
+        create_analog_data_list[str(channel)] = round(analog_pins[channel].value, 2)
+        # position_of_analog = sensors.convert_sensor_to_ipu_data(min_output=0, max_output=1, current_data=round(analog_pins[channel].value, 2), channel)
+        # create_analog_data_list[position_of_analog] = 100
     return create_analog_data_list
 
 
