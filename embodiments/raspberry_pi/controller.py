@@ -75,7 +75,10 @@ if __name__ == "__main__":
             generic_input_dict = dict()
             generic_input_dict['idgpio'] = rpi.gather_all_input_data()
             if capabilities['analog']['enable_analog']:
-                generic_input_dict['iagpio'] = rpi.gather_all_analog_output_data(analog_list)
+                analog_input_list_data = rpi.gather_all_analog_output_data(analog_list)
+                message_to_feagi = sensors.create_data_for_feagi('analog_input', capabilities, message_to_feagi,
+                                                                 current_data=analog_input_list_data,
+                                                                 symmetric=True)
             message_to_feagi = sensors.add_generic_input_to_feagi_data(generic_input_dict,
                                                                        message_to_feagi)
             pns.signals_to_feagi(message_to_feagi, feagi_ipu_channel, agent_settings,
