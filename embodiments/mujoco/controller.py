@@ -31,7 +31,7 @@ import mujoco, mujoco.viewer
 # Global variable section
 camera_data = {"vision": []}  # This will be heavily relies for vision
 
-RUNTIME = 600 # (seconds)
+RUNTIME = 600 # (seconds) //timeout time
 SPEED   = 120 # simulation step speed
 
 
@@ -45,7 +45,6 @@ def action(obtained_data, capabilities):
     obtained_data: dictionary.
     capabilities: dictionary.
     """
-    recieve_motor_data = actuators.get_motor_data(obtained_data)
     recieve_servo_data = actuators.get_servo_data(obtained_data)
     recieve_servo_position_data = actuators.get_servo_position_data(obtained_data)
     
@@ -62,10 +61,6 @@ def action(obtained_data, capabilities):
             servo_number = real_id
             new_power = recieve_servo_data[real_id]
             data.ctrl[servo_number] = new_power
-
-    if recieve_motor_data:
-        pass    # example output: {0: 0.245, 2: 1.0}
-
 
 
 if __name__ == "__main__":
