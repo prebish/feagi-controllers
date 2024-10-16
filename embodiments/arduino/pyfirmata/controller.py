@@ -44,6 +44,7 @@ def list_all_pins(board):
         current = pin  # Due to serial communcations port
         pin_board[current] = board.get_pin('d:{0}:s'.format(int(pin)))
         pin_mode[current] = 4
+    print("pins: ", all_pins)
 
 
 def list_all_analog_pins(board):
@@ -61,7 +62,7 @@ def set_pin_mode(pin, mode, id):
 
 
 def action(obtained_data):
-    recieve_servo_data = actuators.get_servo_data(obtained_data, True)
+    recieve_servo_data = actuators.get_servo_data(obtained_data)
     recieve_gpio_data = actuators.get_gpio_data(obtained_data)
     check_input_request = actuators.check_convert_gpio_to_input(obtained_data)
     if check_input_request:
@@ -153,6 +154,9 @@ if __name__ == "__main__":
                     location_string = str(pin) + "-0-0"
                     create_generic_input_dict['idgpio'][location_string] = 100
             message_to_feagi = sensors.add_generic_input_to_feagi_data(create_generic_input_dict, message_to_feagi)
+        print("here: ", analog_pin_board)
+        print("@@@" * 20)
+        print("digital: ", input_track)
         if analog_pin_board:
             for device_id in capabilities['input']['analog']:
                 if not capabilities['input']['analog'][device_id]['disable']:
@@ -186,21 +190,21 @@ if __name__ == "__main__":
                         message_to_feagi = sensors.add_generic_input_to_feagi_data(create_data_list,
                                                                                    message_to_feagi)
 
-            # analog_encoded = dict()
-            # for pin in range(len(analog_pin_board)):
-            #     analog_encoded[pin] = analog_pin_board[pin].read()
-            # message_to_feagi, capabilities['analog']['max_value_list'], capabilities['analog'][
-            #     'min_value_list'] = (
-            #     sensors.create_data_for_feagi(
-            #         cortical_id='iagpio',
-            #         robot_data=analog_encoded,
-            #         maximum_range=capabilities['analog']['max_value_list'],
-            #         minimum_range=capabilities['analog']['min_value_list'],
-            #         enable_symmetric=False,
-            #         index=capabilities['analog']['dev_index'],
-            #         count=capabilities['analog']['sub_channel_count'],
-            #         message_to_feagi=message_to_feagi,
-            #         has_range=True))
+            analog_encoded = dict()
+            for pin in range(len(analog_pin_board)):
+                analog_encoded[pin] = analog_pin_board[pin].read()
+            message_to_feagi, capabilities['analog']['max_value_list'], capabilities['analog'][
+                'min_value_list'] = (
+                sensors.create_data_for_feagi(
+                    cortical_id='iagpio',
+                    robot_data=analog_encoded,
+                    maximum_range=capabilities['analog']['max_value_list'],
+                    minimum_range=capabilities['analog']['min_value_list'],
+                    enable_symmetric=False,
+                    index=capabilities['analog']['dev_index'],
+                    count=capabilities['analog']['sub_channel_count'],
+                    message_to_feagi=message_to_feagi,
+                    has_range=True))
         pns.signals_to_feagi(message_to_feagi, feagi_ipu_channel, agent_settings, feagi_settings)
         message_to_feagi.clear()
         sleep(feagi_settings['feagi_burst_speed'])
