@@ -1,5 +1,5 @@
 {
-    "description": "name embodiment here",
+    "description": "mujoco",
     "version": "v0.0.1",
     "feagi_settings": {
       "feagi_url": "http://127.0.0.1",
@@ -7,8 +7,8 @@
       "magic_link": "null"
    },
     "agent_settings": {
-       "agent_data_port": 10009,
-       "agent_id": "name embodiment here",
+       "agent_data_port": 10012,
+       "agent_id": "mujoco simulation",
        "agent_type": "embodiment",
        "compression": true,
        "godot_websocket_ip": "0.0.0.0",
