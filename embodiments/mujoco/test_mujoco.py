@@ -60,7 +60,7 @@ joints = [
 ]
 #endregion data.qpos name references
 
-model = mujoco.MjModel.from_xml_path('insert path to humanoid.xml based on you system')
+model = mujoco.MjModel.from_xml_path('../MuJoCo/model/humanoid/humanoid.xml')
 data  = mujoco.MjData(model)
 
 def main():
@@ -76,17 +76,16 @@ def main():
       # make model spaz out
       moving_jnt = random.randint(0, len(data.ctrl)-1)
       data.ctrl[moving_jnt] += random.randint(0, 2) # increase pos of random joint
-      data.ctrl[moving_jnt] -= random.randint(0, 2) # decrease pos of random joint
-      if data.ctrl[moving_jnt] > 4: 
-        data.ctrl = 0  # reset value if too high
+      data.ctrl[moving_jnt] += random.randint(0, 2) # decrease pos of random joint
+      # if data.ctrl[moving_jnt] > 4: 
+      #   data.ctrl = 0  # reset value if too high
 
 
       ### READ POSITIONAL DATA HERE ###
       positions = data.qpos #all positions
       positions = positions[7:] #don't know what the first 7 positions are, but they're not joints so ignore them
- 
+
       for i, pos in enumerate(positions):
-        
         print("[", i, "]", joints[i] ,f": {pos:{.3}g}")
 
       # Pick up changes to the physics state, apply perturbations, update options from GUI.
