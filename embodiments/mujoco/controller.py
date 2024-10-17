@@ -102,7 +102,7 @@ if __name__ == "__main__":
                          args=(default_capabilities, feagi_settings, camera_data['vision'],),
                          daemon=True).start()
     
-    model = mujoco.MjModel.from_xml_path('../../mujoco/model/humanoid.xml')
+    model = mujoco.MjModel.from_xml_path('Enter local path for humanoid.xml (found in README.md)')
     data  = mujoco.MjData(model)
     actuators.start_servos(capabilities) # inserted here. This is not something you should do on your end. I will fix it shortly
     with mujoco.viewer.launch_passive(model, data) as viewer:
