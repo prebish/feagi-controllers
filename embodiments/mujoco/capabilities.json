@@ -1,0 +1,54 @@
+{
+	"capabilities": {
+		"input": {
+			"gyro": {
+				"0": {
+					"custom_name": "abdomen",
+					"disabled": false,
+					"feagi_index": 0,
+					"max_value": [
+						0.619,
+						0.531,
+						0.794
+					],
+					"min_value": [
+						-0.619,
+						-0.509,
+						-0.578
+					]
+				}
+			}
+		},
+		"output": {
+			"servo": {
+				"0": {
+					"custom_name": "abdomen_z",
+					"default_value": 0,
+					"disabled": false,
+					"feagi_index": 0,
+					"max_power": 10,
+					"max_value": 0.794,
+					"min_value": -0.578
+				},
+				"1": {
+					"custom_name": "abdomen_y",
+					"default_value": 0,
+					"disabled": false,
+					"feagi_index": 1,
+					"max_power": 10,
+					"max_value": 0.531,
+					"min_value": -0.509
+				},
+				"2": {
+					"custom_name": "abdomen_x",
+					"default_value": 0,
+					"disabled": false,
+					"feagi_index": 2,
+					"max_power": 10,
+					"max_value": 0.619,
+					"min_value": -0.619
+				}
+			}
+		}
+	}
+}
