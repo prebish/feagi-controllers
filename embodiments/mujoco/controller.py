@@ -139,7 +139,7 @@ if __name__ == "__main__":
             positions = positions[7:] #don't know what the first 7 positions are, but they're not joints so ignore them
 
             abdomen_positions = positions[:3] #don't know what the first 7 positions are, but they're not joints so ignore them
-
+            abdomen_positions = abdomen_positions[::-1] #reverse it because it's in z,y,x order rn
             """ for i, pos in enumerate(positions):
                 
                 print("[", i, "]", joints[i] ,f": {pos:{.3}g}") """
