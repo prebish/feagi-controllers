@@ -64,6 +64,7 @@ def action(obtained_data, capabilities):
     
     if recieve_servo_position_data:
         # output like {0:0.50, 1:0.20, 2:0.30} # example but the data comes from your capabilities' servo range
+        #print("hello1")
         for real_id in recieve_servo_position_data:
             servo_number = real_id
             new_power = recieve_servo_position_data[real_id]
@@ -71,6 +72,7 @@ def action(obtained_data, capabilities):
             
     if recieve_servo_data:
         # example output: {0: 0.245, 2: 1.0}
+        #print("hello2")
         for real_id in recieve_servo_data:
             servo_number = real_id
             new_power = recieve_servo_data[real_id]
@@ -138,8 +140,8 @@ if __name__ == "__main__":
             positions = data.qpos #all positions
             positions = positions[7:] #don't know what the first 7 positions are, but they're not joints so ignore them
 
-            abdomen_positions = positions[:3] #don't know what the first 7 positions are, but they're not joints so ignore them
-            abdomen_positions = abdomen_positions[::-1] #reverse it because it's in z,y,x order rn
+            abdomen_positions = positions[:3] #first 3 are abdomen z,y,x
+            abdomen_positions = abdomen_positions[::-1] #reverse it to x,y,z order
             """ for i, pos in enumerate(positions):
                 
                 print("[", i, "]", joints[i] ,f": {pos:{.3}g}") """
