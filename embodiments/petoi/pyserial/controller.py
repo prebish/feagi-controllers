@@ -12,6 +12,7 @@ from feagi_connector import actuators
 servo_status = dict()
 gyro = {}
 feagi.validate_requirements('requirements.txt')  # you should get it from the boilerplate generator
+runtime_data = {}
 
 
 # Function to handle receiving data
@@ -96,8 +97,8 @@ def action(obtained_data):
 
 
 if __name__ == "__main__":
-    # ser = serial.Serial('/dev/ttyACM0', 115200)
-    # thread_read = threading.Thread(target=read_from_port, args=(ser,))
+    ser = serial.Serial('/dev/cu.usbmodem58CF0754261', 115200)
+    thread_read = threading.Thread(target=read_from_port, args=(ser,))
     # thread_write = threading.Thread(target=write_to_port, args=(ser,))
 
     thread_read.start()
@@ -106,7 +107,7 @@ if __name__ == "__main__":
     # thread_read.join()
     # thread_write.join()
     print("Ready...")
-    config = FEAGI.build_up_from_configuration()
+    config = feagi.build_up_from_configuration()
     feagi_settings = config['feagi_settings'].copy()
     agent_settings = config['agent_settings'].copy()
     default_capabilities = config['default_capabilities'].copy()
@@ -116,12 +117,14 @@ if __name__ == "__main__":
     # # # FEAGI registration # # # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
     # - - - - - - - - - - - - - - - - - - #
     feagi_settings, runtime_data, api_address, feagi_ipu_channel, feagi_opu_channel = \
-        FEAGI.connect_to_feagi(feagi_settings, runtime_data, agent_settings, capabilities,
+        feagi.connect_to_feagi(feagi_settings, runtime_data, agent_settings, capabilities,
                                __version__)
     # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
     # To give ardiuno some time to open port. It's required
+    actuators.start_servos(capabilities)
     time.sleep(5)
+    print("done")
     while True:
         message_from_feagi = pns.message_from_feagi
 
