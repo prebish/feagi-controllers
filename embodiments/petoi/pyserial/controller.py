@@ -11,9 +11,9 @@ from feagi_connector import actuators
 
 servo_status = dict()
 gyro = {}
-feagi.validate_requirements(
-    'requirements.txt')  # you should get it from the boilerplate generator
+feagi.validate_requirements('requirements.txt')  # you should get it from the boilerplate generator
 runtime_data = {}
+petoi_data = {'servo_status': {}}
 
 
 # Function to handle receiving data
@@ -22,14 +22,21 @@ def read_from_port(ser):
     full_data = ''
     # start_time = datetime.now()
     # counter = 0
+    ser.write('F'.encode())
     while True:
         # total_time = (datetime.now() - start_time).total_seconds()
         # if total_time > 1:
         #     start_time = datetime.now()
         #     print("data recieved: ", counter, " after 1 second", total_time)
         #     counter = 0
-        received_data = ser.readline().decode('utf-8').rstrip()
-        print("DATA FROM PETOI: ", received_data)
+        obtained_data = ser.readline().decode('utf-8').rstrip()
+        split_data = obtained_data.split()
+        received_data = {}
+        if len(split_data) == 9:
+            for servo_id in range(len(split_data)):
+                received_data[str(servo_id)] = float(split_data[servo_id])
+        petoi_data['servo_status'] = received_data
+        print(petoi_data['servo_status'], " and lengtrh: ", len(split_data), " and data: ", obtained_data)
         try:
             if '#' in received_data:
                 cleaned_data = received_data.replace('#', '')
@@ -50,6 +57,7 @@ def read_from_port(ser):
                 full_data = received_data
         except Exception as Error_case:
             pass
+            print(Error_case)
         # counter += 1
 
 
@@ -77,7 +85,9 @@ def action(obtained_data):
         for device_id in recieve_servo_position_data:
             new_power = recieve_servo_position_data[device_id]
             servo_for_feagi += str(feagi_to_petoi_id(device_id)) + " " + str(new_power) + " "
+            print(servo_for_feagi)
             ser.write(servo_for_feagi.encode())
+            ser.write('F'.encode())
 
     if servo_data:
         servo_for_feagi = 'i '
@@ -86,6 +96,7 @@ def action(obtained_data):
             servo_for_feagi += str(feagi_to_petoi_id(device_id)) + " " + str(power) + " "
         print(servo_for_feagi)
         ser.write(servo_for_feagi.encode())
+        ser.write('F'.encode())
 
 
 if __name__ == "__main__":
@@ -130,6 +141,12 @@ if __name__ == "__main__":
             action(obtained_signals)
         # if gyro:
         #     message_to_feagi = sensors.add_gyro_to_feagi_data(gyro['gyro'], message_to_feagi)
+        if petoi_data['servo_status']:
+            message_to_feagi = sensors.create_data_for_feagi('servo_position',
+                                                             capabilities,
+                                                             message_to_feagi,
+                                                             current_data=petoi_data['servo_status'],
+                                                             symmetric=True)
         sleep(feagi_settings['feagi_burst_speed'])  # bottleneck
         pns.signals_to_feagi(message_to_feagi, feagi_ipu_channel,
                              agent_settings, feagi_settings)
