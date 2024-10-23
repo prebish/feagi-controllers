@@ -160,7 +160,7 @@ if __name__ == "__main__":
                     information_files = list(image_obj)
                     counter += 1
                 else:
-                    if information_files[0][2] == '.mp4':
+                    if information_files[0][2] in feagi_trainer.video_extensions:
                         cap = information_files[0][0]
                         print(information_files[0][1]) # needs to detect when the id changed
                         while cap.isOpened():
