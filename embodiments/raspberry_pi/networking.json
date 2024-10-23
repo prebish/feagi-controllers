@@ -1,4 +1,5 @@
-{    "description": "timer",
+{
+    "description": "raspberry_pi",
     "version": "v0.0.0",
     "feagi_settings": {
         "feagi_url": "http://127.0.0.1",
@@ -6,8 +7,8 @@
         "magic_link": "null"
   },
     "agent_settings": {
-        "agent_data_port": 10006,
-        "agent_id": "timer",
+        "agent_data_port": 100013,
+        "agent_id": "raspberrypi-generic",
         "agent_type": "embodiment",
         "compression": true
     }
