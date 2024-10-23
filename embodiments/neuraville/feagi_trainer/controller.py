@@ -315,12 +315,15 @@ if __name__ == "__main__":
                         if ret:
                             pass
                         else:
-                            break
+                            if float(image_reader_config["image_display_duration"]) >= (datetime.now() - start_timer).total_seconds():
+                                cap.set(cv2.CAP_PROP_POS_FRAMES, 0)
+                                continue
+                            else:
+                                break
                         camera_data["vision"] = raw_frame
                         # Update the latest image data for Flask server to display
                         flask_server.latest_raw_image = raw_frame
-                        flask_server.latest_static.raw_image_dimensions = (
-                            f"{raw_frame.shape[1]} x {raw_frame.shape[0]}")
+                        flask_server.latest_static.raw_image_dimensions = (f"{raw_frame.shape[1]} x {raw_frame.shape[0]}")
                         flask_server.latest_static = img_coords.update_image_ids(new_image_id=image_id,
                                                                                  new_feagi_image_id=None,
                                                                                  static=flask_server.latest_static)
@@ -428,6 +431,7 @@ if __name__ == "__main__":
                     message_to_feagi = feagi_trainer.id_training_with_image(message_to_feagi, name_id)
                     if start_timer == 0.0:
                         start_timer = datetime.now()
+
                     while (float(image_reader_config["image_display_duration"]) >= (
                             datetime.now() - start_timer).total_seconds()):
                         # Apply any browser UI user changes to config data
