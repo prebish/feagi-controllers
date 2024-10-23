@@ -107,7 +107,6 @@ if __name__ == "__main__":
         configuration['image_reader']['0']['image_path'])
     information_files = list(image_obj)
     # raw_frame = image_obj[0]
-    print(information_files)
     if information_files:
         raw_frame = information_files[0][0]
         camera_data['vision'] = raw_frame
@@ -165,6 +164,7 @@ if __name__ == "__main__":
                         cap = information_files[0][0]
                         print(information_files[0][1]) # needs to detect when the id changed
                         while cap.isOpened():
+                            message_from_feagi = pns.message_from_feagi
                             ret, raw_frame = cap.read()
                             if ret:
                                 pass
@@ -183,6 +183,8 @@ if __name__ == "__main__":
                                 recognition_id = pns.detect_ID_data(message_from_feagi)
                                 if recognition_id:
                                     name_id = recognition_id
+                                    if information_files[0][1] != name_id:
+                                        break
                                     for i in name_id:
                                         feagi_image_id = i
                                         break
@@ -226,6 +228,65 @@ if __name__ == "__main__":
 
                             sleep(feagi_settings['burst_duration'])
                             previous_frame_data = temporary_previous.copy()
+                    else:
+                        temporary_previous, rgb, default_capabilities, modified_data = retina.process_visual_stimuli_trainer(
+                            raw_frame,
+                            default_capabilities,
+                            previous_frame_data,
+                            rgb, capabilities, False)  # processes visual data into FEAGI-comprehensible form
+                        flask_server.latest_raw_image = raw_frame
+                        if "00_C" in modified_data:
+                            flask_server.latest_image = process_image(modified_data["00_C"])
+                    if 'opu_data' in message_from_feagi:
+                        recognition_id = pns.detect_ID_data(message_from_feagi)
+                        if recognition_id:
+                            name_id = recognition_id
+                            for i in name_id:
+                                feagi_image_id = i
+                                break
+                            flask_server.latest_static = img_coords.update_image_ids(new_image_id=None,
+                                                                                     new_feagi_image_id=feagi_image_id,
+                                                                                     static=flask_server.latest_static)
+
+                        # Show user image currently sent to FEAGI, with a bounding box showing FEAGI's location data if it exists
+                    location_data = pns.recognize_location_data(message_from_feagi)
+                    if previous_frame_data:
+                        flask_server.latest_static.image_dimensions = f"{modified_data['00_C'].shape[1]} x {modified_data['00_C'].shape[0]}"
+                        new_image_id = getattr(flask_server.latest_static, "image_id", "")
+                        feagi_image_id = getattr(flask_server.latest_static, "feagi_image_id", "")
+                        if location_data:
+                            if "00_C" in modified_data:
+                                flask_server.latest_image = process_image(modified_data["00_C"], location_data,
+                                                                          size_of_cortical)
+                        elif latest_image_id != new_image_id:
+                            latest_image_id = new_image_id
+                            if "00_C" in modified_data:
+                                flask_server.latest_image = process_image(modified_data["00_C"])
+
+                    # If camera data is available, generate data for FEAGI
+                    if 'camera' in rgb:  # This is the data wrapped for feagi data to read
+                        if rgb['camera'] == {}:
+                            # break
+                            pass
+                        else:
+                            message_to_feagi = pns.generate_feagi_data(rgb, message_to_feagi)
+
+                    # location section
+                    location_data = pns.recognize_location_data(message_from_feagi)
+                    # Testing mode section
+                    if configuration['image_reader']['0']['test_mode']:
+                        success_rate, success, total = testing_mode.mode_testing(name_id,
+                                                                                 message_from_feagi,
+                                                                                 total, success,
+                                                                                 success_rate)
+                    else:
+                        success_rate, success, total = 0, 0, 0
+                    # Send signals to FEAGI
+                    pns.signals_to_feagi(message_to_feagi, feagi_ipu_channel, agent_settings,
+                                         feagi_settings)
+
+                    sleep(feagi_settings['burst_duration'])
+                    previous_frame_data = temporary_previous.copy()
 
         else:
             # Previous design
