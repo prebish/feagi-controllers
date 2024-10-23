@@ -107,9 +107,13 @@ if __name__ == "__main__":
         configuration['image_reader']['0']['image_path'])
     information_files = list(image_obj)
     # raw_frame = image_obj[0]
-    raw_frame = information_files[0][0]
-    camera_data['vision'] = raw_frame
-    name_id = information_files[0][1]
+    print(information_files)
+    if information_files:
+        raw_frame = information_files[0][0]
+        camera_data['vision'] = raw_frame
+        name_id = information_files[0][1]
+    else:
+        name_id = ''
     previous_name = ''
     previous_capabilities = {}
     modified_data = {}
@@ -157,6 +161,7 @@ if __name__ == "__main__":
                     information_files = list(image_obj)
                     counter += 1
                 else:
+                    
                     temporary_previous, rgb, default_capabilities, modified_data = retina.process_visual_stimuli_trainer(
                         raw_frame,
                         default_capabilities,
