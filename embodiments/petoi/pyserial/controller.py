@@ -11,7 +11,8 @@ from feagi_connector import actuators
 
 servo_status = dict()
 gyro = {}
-feagi.validate_requirements('requirements.txt')  # you should get it from the boilerplate generator
+feagi.validate_requirements(
+    'requirements.txt')  # you should get it from the boilerplate generator
 runtime_data = {}
 petoi_data = {'servo_status': {}}
 
@@ -22,22 +23,20 @@ def read_from_port(ser):
     full_data = ''
     # start_time = datetime.now()
     # counter = 0
-    ser.write('F'.encode())
     while True:
         # total_time = (datetime.now() - start_time).total_seconds()
         # if total_time > 1:
         #     start_time = datetime.now()
         #     print("data recieved: ", counter, " after 1 second", total_time)
         #     counter = 0
-        obtained_data = ser.readline().decode('utf-8').rstrip()
-        split_data = obtained_data.split()
-        received_data = {}
-        if len(split_data) == 9:
-            for servo_id in range(len(split_data)):
-                received_data[str(servo_id)] = float(split_data[servo_id])
-        petoi_data['servo_status'] = received_data
-        print(petoi_data['servo_status'], " and lengtrh: ", len(split_data), " and data: ", obtained_data)
         try:
+            obtained_data = ser.readline().decode('utf-8').rstrip()
+            split_data = obtained_data.split()
+            received_data = {}
+            if len(split_data) == 9:
+                for servo_id in range(len(split_data)):
+                    received_data[str(servo_id)] = int(float(split_data[servo_id]))
+            petoi_data['servo_status'] = received_data
             if '#' in received_data:
                 cleaned_data = received_data.replace('#', '')
                 new_data = full_data + cleaned_data
@@ -57,7 +56,7 @@ def read_from_port(ser):
                 full_data = received_data
         except Exception as Error_case:
             pass
-            print(Error_case)
+            print("error: ", Error_case)
         # counter += 1
 
 
@@ -79,15 +78,23 @@ def feagi_to_petoi_id(device_id):
 def action(obtained_data):
     servo_data = actuators.get_servo_data(obtained_data)
     recieve_servo_position_data = actuators.get_servo_position_data(obtained_data)
+    recieved_misc_data = actuators.get_generic_opu_data_from_feagi(obtained_data, 'misc')
+
+
+    if recieved_misc_data:
+        for data_point in recieved_misc_data:
+            print("here: ", recieved_misc_data)
+            if data_point == 0:
+                ser.write('G'.encode())
+            if data_point == 1:
+                ser.write('f'.encode())
 
     if recieve_servo_position_data:
         servo_for_feagi = 'i '
         for device_id in recieve_servo_position_data:
             new_power = recieve_servo_position_data[device_id]
             servo_for_feagi += str(feagi_to_petoi_id(device_id)) + " " + str(new_power) + " "
-            print(servo_for_feagi)
             ser.write(servo_for_feagi.encode())
-            ser.write('F'.encode())
 
     if servo_data:
         servo_for_feagi = 'i '
@@ -96,7 +103,7 @@ def action(obtained_data):
             servo_for_feagi += str(feagi_to_petoi_id(device_id)) + " " + str(power) + " "
         print(servo_for_feagi)
         ser.write(servo_for_feagi.encode())
-        ser.write('F'.encode())
+
 
 
 if __name__ == "__main__":
