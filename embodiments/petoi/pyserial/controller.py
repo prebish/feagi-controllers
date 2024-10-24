@@ -71,6 +71,16 @@ def feagi_to_petoi_id(device_id):
 def action(obtained_data):
     servo_data = actuators.get_servo_data(obtained_data)
     recieve_servo_position_data = actuators.get_servo_position_data(obtained_data)
+    recieved_misc_data = actuators.get_generic_opu_data_from_feagi(obtained_data, 'misc')
+
+
+    if recieved_misc_data:
+        for data_point in recieved_misc_data:
+            print("here: ", recieved_misc_data)
+            if data_point == 0:
+                WS_STRING = 'G'
+            if data_point == 1:
+                WS_STRING = 'f'
 
     if recieve_servo_position_data:
         servo_for_feagi = 'i '
