@@ -18,6 +18,8 @@ limitations under the License.
 """
 
 import threading
+import copy
+
 from time import sleep
 from feagi_connector import sensors
 from feagi_connector import actuators
@@ -35,6 +37,20 @@ RUNTIME = 600 # (seconds) //timeout time
 SPEED   = 120 # simulation step speed
 
 
+
+def pause_standing(data, start_pos):
+    data.qpos = start_pos 
+
+def balance_attempt(data, start_pos): #this does not work lol it stresses him out
+    current_pos = data.qpos[7:]
+    start_pos = start_pos[7:]
+    for i, pos in enumerate(current_pos):
+            if (pos < start_pos[i]):
+                data.ctrl[i] += .01
+            elif (pos > start_pos[i]):
+                data.ctrl[i] -= .01
+    
+
 def action(obtained_data, capabilities):
     """
     This is where you can make the robot do something based on FEAGI data. The variable
@@ -48,8 +64,14 @@ def action(obtained_data, capabilities):
     recieve_servo_data = actuators.get_servo_data(obtained_data)
     recieve_servo_position_data = actuators.get_servo_position_data(obtained_data)
 
-    print("obtained data string: %s", obtained_data)
-    print("obtained data d: %d", obtained_data)
+    if obtained_data:
+        #print("obtained data d: %d", obtained_data) #testing
+        pass
+        
+    if recieve_servo_position_data:
+        # output like {0:0.50, 1:0.20, 2:0.30} # example but the data comes from your capabilities' servo range
+        #print("servo position data d: %d", recieve_servo_position_data) #testing
+
 
     """ recieve_gyro_data = actuators.get_gyro_data(obtained_data)
 
@@ -72,12 +94,10 @@ def action(obtained_data, capabilities):
             
     if recieve_servo_data:
         # example output: {0: 0.245, 2: 1.0}
-        #print("hello2")
         for real_id in recieve_servo_data:
             servo_number = real_id
             new_power = recieve_servo_data[real_id]
             data.ctrl[servo_number] = new_power
-
 
 
 if __name__ == "__main__":
@@ -118,20 +138,32 @@ if __name__ == "__main__":
                          args=(default_capabilities, feagi_settings, camera_data['vision'],),
                          daemon=True).start()
     
-    model = mujoco.MjModel.from_xml_path('/Users/ctd/Downloads/humanoid-1.xml')
+    model = mujoco.MjModel.from_xml_path('./humanoid.xml')
     data  = mujoco.MjData(model)
+    
     actuators.start_servos(capabilities) # inserted here. This is not something you should do on your end. I will fix it shortly
     with mujoco.viewer.launch_passive(model, data) as viewer:
         start_time = time.time()
+        start_pos = copy.copy(data.qpos) # get the starting positions before the simulation starts
 
         while viewer.is_running() and time.time() - start_time < RUNTIME:
 
             step_start = time.time()
 
+            ### PAUSING ###
+            #pause_standing(data, start_pos) #pause the model in the standing position
+            #balance_attempt(data, start_pos) #tries to use ctrl to balance instead of hardcoding qpos but doesn't work
+            ###############
+
+            #print("proximity data:" , data.sensordata[0]) #test to print proximity data
+
             # steps the simulation forward 'tick'
             mujoco.mj_step(model, data)
+
+            # The controller will grab the data from FEAGI in real-time
             message_from_feagi = pns.message_from_feagi
             if message_from_feagi:
+                # Translate from feagi data to human readable data
                 obtained_signals = pns.obtain_opu_data(message_from_feagi)
                 pns.check_genome_status_no_vision(message_from_feagi)
                 action(obtained_signals, data)
@@ -142,9 +174,11 @@ if __name__ == "__main__":
 
             abdomen_positions = positions[:3] #first 3 are abdomen z,y,x
             abdomen_positions = abdomen_positions[::-1] #reverse it to x,y,z order
+
+
             """ for i, pos in enumerate(positions):
-                
-                print("[", i, "]", joints[i] ,f": {pos:{.3}g}") """
+                print("[", i, "]", joints[i] ,f": {pos:{.3}g}") #print all joint positions"""
+
 
             # Pick up changes to the physics state, apply perturbations, update options from GUI.
             viewer.sync()
@@ -163,21 +197,43 @@ if __name__ == "__main__":
                 action(obtained_signals, capabilities)
 
             # Example to send data to FEAGI. This is basically reading the joint. R
-
             abdomen_gyro_data = {i: pos for i, pos in enumerate(abdomen_positions) if
                           pns.full_template_information_corticals}
             servo_data = {i: pos for i, pos in enumerate(positions[:20]) if
                           pns.full_template_information_corticals}
-            message_to_feagi = sensors.create_data_for_feagi('gyro',
+
+            
+            
+            #Creating message to send to FEAGI
+            message_to_feagi_gyro = sensors.create_data_for_feagi('gyro',
+
                                                              capabilities,
                                                              message_to_feagi,
                                                              current_data=abdomen_gyro_data,
                                                              symmetric=True)
+            message_to_feagi_servo = sensors.create_data_for_feagi('servo_position',
+                                                             capabilities,
+                                                             message_to_feagi,
+                                                             current_data=servo_data,
+                                                             symmetric=True)
+            message_to_feagi_prox = sensors.create_data_for_feagi('proximity',
+                                                             capabilities,
+                                                             message_to_feagi,
+                                                             current_data=data.sensordata[0],
+                                                             symmetric=True, measure_enable=True)
 
             # Sends to feagi data
-            pns.signals_to_feagi(message_to_feagi, feagi_ipu_channel, agent_settings, feagi_settings)
+            pns.signals_to_feagi(message_to_feagi_servo, feagi_ipu_channel, agent_settings, feagi_settings)
+            pns.signals_to_feagi(message_to_feagi_gyro, feagi_ipu_channel, agent_settings, feagi_settings)
+            pns.signals_to_feagi(message_to_feagi_prox, feagi_ipu_channel, agent_settings, feagi_settings) #confused why it still shows up in the bv when commented out
 
             # Clear data that is created by controller such as sensors
             message_to_feagi.clear()
 
-        
+            # Pick up changes to the physics state, apply perturbations, update options from GUI.
+            viewer.sync()
+
+            # Tick Speed # 
+            time_until_next_step = (1/SPEED) - (time.time() - step_start)
+            if time_until_next_step > 0:
+                time.sleep(time_until_next_step)
