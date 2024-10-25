@@ -71,6 +71,7 @@ def action(obtained_data, capabilities):
     if recieve_servo_position_data:
         # output like {0:0.50, 1:0.20, 2:0.30} # example but the data comes from your capabilities' servo range
         #print("servo position data d: %d", recieve_servo_position_data) #testing
+        pass
 
 
     """ recieve_gyro_data = actuators.get_gyro_data(obtained_data)
