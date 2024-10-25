@@ -64,11 +64,11 @@ def action(obtained_data, capabilities):
     recieve_servo_position_data = actuators.get_servo_position_data(obtained_data)
 
     if obtained_data:
-        print("obtained data d: %d", obtained_data)
+        print("obtained data d: %d", obtained_data) #testing
         
     if recieve_servo_position_data:
         # output like {0:0.50, 1:0.20, 2:0.30} # example but the data comes from your capabilities' servo range
-        print("servo position data d: %d", recieve_servo_position_data)
+        print("servo position data d: %d", recieve_servo_position_data) #testing
         for real_id in recieve_servo_position_data:
             servo_number = real_id
             new_power = recieve_servo_position_data[real_id]
@@ -76,7 +76,7 @@ def action(obtained_data, capabilities):
             
     if recieve_servo_data:
         # example output: {0: 0.245, 2: 1.0}
-        print("servo data d: %d", recieve_servo_data)
+        print("servo data d: %d", recieve_servo_data) #testing
         for real_id in recieve_servo_data:
             servo_number = real_id
             new_power = recieve_servo_data[real_id]
@@ -133,7 +133,7 @@ if __name__ == "__main__":
                          args=(default_capabilities, feagi_settings, camera_data['vision'],),
                          daemon=True).start()
     
-    model = mujoco.MjModel.from_xml_path('/Users/ctd/Downloads/humanoid-1.xml')
+    model = mujoco.MjModel.from_xml_path('./humanoid.xml')
     data  = mujoco.MjData(model)
     
     actuators.start_servos(capabilities) # inserted here. This is not something you should do on your end. I will fix it shortly
@@ -145,7 +145,7 @@ if __name__ == "__main__":
             step_start = time.time()
 
             ##PAUSING 
-            pause_standing(data, start_pos) #pause the model in the standing position
+            #pause_standing(data, start_pos) #pause the model in the standing position
             #pause_standing_ctrl(data, start_pos) this doesn't work
             ##
 
@@ -169,7 +169,7 @@ if __name__ == "__main__":
 
             """ for i, pos in enumerate(positions):
                 print("[", i, "]", joints[i] ,f": {pos:{.3}g}") #print all joint positions"""
-            print("data:" , data.sensordata)
+            
 
 
             # Preparing data to send to FEAGI
@@ -177,6 +177,8 @@ if __name__ == "__main__":
                           pns.full_template_information_corticals}
             servo_data = {i: pos for i, pos in enumerate(positions[:20]) if
                           pns.full_template_information_corticals}
+            
+            #print("proximity data:" , data.sensordata[0]) #test to print proximity data
             
             #Creating message to send to FEAGI
             message_to_feagi_gyro = sensors.create_data_for_feagi('gyro',
@@ -192,13 +194,13 @@ if __name__ == "__main__":
             message_to_feagi_prox = sensors.create_data_for_feagi('proximity',
                                                              capabilities,
                                                              message_to_feagi,
-                                                             current_data=servo_data[0],
+                                                             current_data=data.sensordata[0],
                                                              symmetric=True, measure_enable=True)
 
             # Sends to feagi data
             pns.signals_to_feagi(message_to_feagi_servo, feagi_ipu_channel, agent_settings, feagi_settings)
             pns.signals_to_feagi(message_to_feagi_gyro, feagi_ipu_channel, agent_settings, feagi_settings)
-            pns.signals_to_feagi(message_to_feagi_prox, feagi_ipu_channel, agent_settings, feagi_settings)
+            #pns.signals_to_feagi(message_to_feagi_prox, feagi_ipu_channel, agent_settings, feagi_settings)
 
             # Clear data that is created by controller such as sensors
             message_to_feagi.clear()
