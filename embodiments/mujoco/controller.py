@@ -31,8 +31,6 @@ import mujoco, mujoco.viewer
 
 # Global variable section
 camera_data = {"vision": []}  # This will be heavily relies for vision
-paused = False
-
 
 RUNTIME = 600 # (seconds) //timeout time
 SPEED   = 120 # simulation step speed
@@ -41,7 +39,7 @@ SPEED   = 120 # simulation step speed
 def pause_standing(data, start_pos):
     data.qpos = start_pos 
 
-def pause_standing_ctrl(data, start_pos): #this does not work lol it stresses him out
+def balance_attempt(data, start_pos): #this does not work lol it stresses him out
     current_pos = data.qpos[7:]
     start_pos = start_pos[7:]
     for i, pos in enumerate(current_pos):
@@ -64,11 +62,12 @@ def action(obtained_data, capabilities):
     recieve_servo_position_data = actuators.get_servo_position_data(obtained_data)
 
     if obtained_data:
-        print("obtained data d: %d", obtained_data) #testing
+        #print("obtained data d: %d", obtained_data) #testing
+        pass
         
     if recieve_servo_position_data:
         # output like {0:0.50, 1:0.20, 2:0.30} # example but the data comes from your capabilities' servo range
-        print("servo position data d: %d", recieve_servo_position_data) #testing
+        #print("servo position data d: %d", recieve_servo_position_data) #testing
         for real_id in recieve_servo_position_data:
             servo_number = real_id
             new_power = recieve_servo_position_data[real_id]
@@ -76,7 +75,7 @@ def action(obtained_data, capabilities):
             
     if recieve_servo_data:
         # example output: {0: 0.245, 2: 1.0}
-        print("servo data d: %d", recieve_servo_data) #testing
+        #print("servo data d: %d", recieve_servo_data) #testing
         for real_id in recieve_servo_data:
             servo_number = real_id
             new_power = recieve_servo_data[real_id]
@@ -144,10 +143,12 @@ if __name__ == "__main__":
 
             step_start = time.time()
 
-            ##PAUSING 
+            ### PAUSING ###
             #pause_standing(data, start_pos) #pause the model in the standing position
-            #pause_standing_ctrl(data, start_pos) this doesn't work
-            ##
+            #balance_attempt(data, start_pos) #tries to use ctrl to balance instead of hardcoding qpos but doesn't work
+            ###############
+
+            #print("proximity data:" , data.sensordata[0]) #test to print proximity data
 
             # steps the simulation forward 'tick'
             mujoco.mj_step(model, data)
@@ -178,7 +179,6 @@ if __name__ == "__main__":
             servo_data = {i: pos for i, pos in enumerate(positions[:20]) if
                           pns.full_template_information_corticals}
             
-            #print("proximity data:" , data.sensordata[0]) #test to print proximity data
             
             #Creating message to send to FEAGI
             message_to_feagi_gyro = sensors.create_data_for_feagi('gyro',
@@ -200,7 +200,7 @@ if __name__ == "__main__":
             # Sends to feagi data
             pns.signals_to_feagi(message_to_feagi_servo, feagi_ipu_channel, agent_settings, feagi_settings)
             pns.signals_to_feagi(message_to_feagi_gyro, feagi_ipu_channel, agent_settings, feagi_settings)
-            #pns.signals_to_feagi(message_to_feagi_prox, feagi_ipu_channel, agent_settings, feagi_settings)
+            pns.signals_to_feagi(message_to_feagi_prox, feagi_ipu_channel, agent_settings, feagi_settings) #confused why it still shows up in the bv when commented out
 
             # Clear data that is created by controller such as sensors
             message_to_feagi.clear()
