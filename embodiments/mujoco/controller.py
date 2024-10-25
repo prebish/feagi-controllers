@@ -169,6 +169,7 @@ if __name__ == "__main__":
 
             """ for i, pos in enumerate(positions):
                 print("[", i, "]", joints[i] ,f": {pos:{.3}g}") #print all joint positions"""
+            print("data:" , data.sensordata)
 
 
             # Preparing data to send to FEAGI
@@ -192,7 +193,7 @@ if __name__ == "__main__":
                                                              capabilities,
                                                              message_to_feagi,
                                                              current_data=servo_data[0],
-                                                             symmetric=True)
+                                                             symmetric=True, measure_enable=True)
 
             # Sends to feagi data
             pns.signals_to_feagi(message_to_feagi_servo, feagi_ipu_channel, agent_settings, feagi_settings)

@@ -214,8 +214,8 @@
 					"custom_name": "abdomen",
 					"disabled": false,
 					"feagi_index": 0,
-					"max_value": 1,
-					"min_value": -1
+					"max_value": 0,
+					"min_value": 0
 				}
 			}
 		},
