@@ -60,7 +60,9 @@ joints = [
 ]
 #endregion data.qpos name references
 
+
 model = mujoco.MjModel.from_xml_path('/Users/ctd/Downloads/humanoid-1.xml')
+
 data  = mujoco.MjData(model)
 
 def main():
@@ -85,11 +87,12 @@ def main():
       positions = data.qpos #all positions
       positions = positions[7:] #don't know what the first 7 positions are, but they're not joints so ignore them
 
-      """ for i, pos in enumerate(positions):
-        print("[", i, "]", joints[i] ,f": {pos:{.3}g}") """
-      
       abdomen_positions = positions[:3]
       print("abdomen positions: %d", abdomen_positions)
+      
+      for i, pos in enumerate(positions):
+        print("[", i, "]", joints[i] ,f": {pos:{.3}g}")
+
 
       # Pick up changes to the physics state, apply perturbations, update options from GUI.
       viewer.sync()

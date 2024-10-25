@@ -19,6 +19,7 @@ limitations under the License.
 
 import threading
 import copy
+
 from time import sleep
 from feagi_connector import sensors
 from feagi_connector import actuators
@@ -36,6 +37,7 @@ RUNTIME = 600 # (seconds) //timeout time
 SPEED   = 120 # simulation step speed
 
 
+
 def pause_standing(data, start_pos):
     data.qpos = start_pos 
 
@@ -48,6 +50,7 @@ def balance_attempt(data, start_pos): #this does not work lol it stresses him ou
             elif (pos > start_pos[i]):
                 data.ctrl[i] -= .01
     
+
 def action(obtained_data, capabilities):
     """
     This is where you can make the robot do something based on FEAGI data. The variable
@@ -68,19 +71,7 @@ def action(obtained_data, capabilities):
     if recieve_servo_position_data:
         # output like {0:0.50, 1:0.20, 2:0.30} # example but the data comes from your capabilities' servo range
         #print("servo position data d: %d", recieve_servo_position_data) #testing
-        for real_id in recieve_servo_position_data:
-            servo_number = real_id
-            new_power = recieve_servo_position_data[real_id]
-            data.ctrl[servo_number] = new_power
-            
-    if recieve_servo_data:
-        # example output: {0: 0.245, 2: 1.0}
-        #print("servo data d: %d", recieve_servo_data) #testing
-        for real_id in recieve_servo_data:
-            servo_number = real_id
-            new_power = recieve_servo_data[real_id]
-            data.ctrl[servo_number] = new_power
-        
+
 
     """ recieve_gyro_data = actuators.get_gyro_data(obtained_data)
 
@@ -91,7 +82,22 @@ def action(obtained_data, capabilities):
             servo_number = real_id
             new_power = recieve_servo_data[real_id]
             data.ctrl[servo_number] = new_power """
+    
+    
+    if recieve_servo_position_data:
+        # output like {0:0.50, 1:0.20, 2:0.30} # example but the data comes from your capabilities' servo range
+        #print("hello1")
+        for real_id in recieve_servo_position_data:
+            servo_number = real_id
+            new_power = recieve_servo_position_data[real_id]
+            data.ctrl[servo_number] = new_power
             
+    if recieve_servo_data:
+        # example output: {0: 0.245, 2: 1.0}
+        for real_id in recieve_servo_data:
+            servo_number = real_id
+            new_power = recieve_servo_data[real_id]
+            data.ctrl[servo_number] = new_power
 
 
 if __name__ == "__main__":
@@ -139,6 +145,7 @@ if __name__ == "__main__":
     with mujoco.viewer.launch_passive(model, data) as viewer:
         start_time = time.time()
         start_pos = copy.copy(data.qpos) # get the starting positions before the simulation starts
+
         while viewer.is_running() and time.time() - start_time < RUNTIME:
 
             step_start = time.time()
@@ -168,20 +175,38 @@ if __name__ == "__main__":
             abdomen_positions = positions[:3] #first 3 are abdomen z,y,x
             abdomen_positions = abdomen_positions[::-1] #reverse it to x,y,z order
 
+
             """ for i, pos in enumerate(positions):
                 print("[", i, "]", joints[i] ,f": {pos:{.3}g}") #print all joint positions"""
-            
 
 
-            # Preparing data to send to FEAGI
+            # Pick up changes to the physics state, apply perturbations, update options from GUI.
+            viewer.sync()
+
+            # Tick Speed # 
+            time_until_next_step = (1/SPEED) - (time.time() - step_start)
+            if time_until_next_step > 0:
+                time.sleep(time_until_next_step)
+
+
+            # The controller will grab the data from FEAGI in real-time
+            message_from_feagi = pns.message_from_feagi
+            if message_from_feagi: # Verify if the feagi data is not empty
+                # Translate from feagi data to human readable data
+                obtained_signals = pns.obtain_opu_data(message_from_feagi)
+                action(obtained_signals, capabilities)
+
+            # Example to send data to FEAGI. This is basically reading the joint. R
             abdomen_gyro_data = {i: pos for i, pos in enumerate(abdomen_positions) if
                           pns.full_template_information_corticals}
             servo_data = {i: pos for i, pos in enumerate(positions[:20]) if
                           pns.full_template_information_corticals}
+
             
             
             #Creating message to send to FEAGI
             message_to_feagi_gyro = sensors.create_data_for_feagi('gyro',
+
                                                              capabilities,
                                                              message_to_feagi,
                                                              current_data=abdomen_gyro_data,
@@ -212,5 +237,3 @@ if __name__ == "__main__":
             time_until_next_step = (1/SPEED) - (time.time() - step_start)
             if time_until_next_step > 0:
                 time.sleep(time_until_next_step)
-
-        
