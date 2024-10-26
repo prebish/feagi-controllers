@@ -33,8 +33,6 @@ import numpy as np
 
 # Global variable section
 camera_data = {"vision": []}  # This will be heavily relies for vision
-#free_joints = [0] * 21
-
 RUNTIME = 600 # (seconds) //timeout time
 SPEED   = 120 # simulation step speed
 
@@ -92,7 +90,7 @@ def pause_until_move(data, start_pos):
     for i, pos in enumerate(data.qpos[7:]):
             data.qpos[i+7] = start_pos[i+7]
 
-# Since we're ignoring the physics behind everything, moving multiple joints will create very large numbers in data.qacc 
+# Since we're ignoring the physics behind everything, moving multiple joints will create overflow in data.qacc 
 # which briefly resets the model. Tried to fix this but solution is not simple. I notice the qpos positions go outside their bounds 
 # when it happens so maybe hard bounds along with resetting the respective data.qvel and data.qacc values could fix it (just an idea) 
 def pause_standing_unstable(data, start_pos, free_joints):
@@ -226,10 +224,10 @@ if __name__ == "__main__":
             pause_until_move(data, start_pos) #pauses the simulation until control is applied.
 
             #free_joints = pause_standing_unstable(data, start_pos, free_joints) #Unstable. Mainly for testing. lock the model but move joints freely. Helpful for seeing what controls actually do
-            #balance_attempt_basic(data, start_pos) #tries to use ctrl to balance instead of hardcoding qpos. bad
+            #balance_attempt_basic(data, start_pos) #Bad. tries to use ctrl to balance instead of hardcoding qpos.
             ###############
 
-            print("proximity data:" , data.sensordata) #test to print proximity data
+            #print("proximity data:" , data.sensordata) #test to print proximity data
 
             # steps the simulation forward 'tick'
             mujoco.mj_step(model, data)
@@ -263,20 +261,14 @@ if __name__ == "__main__":
                 time.sleep(time_until_next_step)
 
 
-            # The controller will grab the data from FEAGI in real-time
-            message_from_feagi = pns.message_from_feagi
-            if message_from_feagi: # Verify if the feagi data is not empty
-                # Translate from feagi data to human readable data
-                obtained_signals = pns.obtain_opu_data(message_from_feagi)
-                action(obtained_signals, capabilities)
-
             # Example to send data to FEAGI. This is basically reading the joint. R
             abdomen_gyro_data = {i: pos for i, pos in enumerate(abdomen_positions) if
                           pns.full_template_information_corticals}
             servo_data = {i: pos for i, pos in enumerate(positions[:20]) if
                           pns.full_template_information_corticals}
-
-            
+            sensor_data = {i: pos for i, pos in enumerate(data.sensordata) if
+                          pns.full_template_information_corticals}
+            #print(sensor_data)
             
             #Creating message to send to FEAGI
             message_to_feagi_gyro = sensors.create_data_for_feagi('gyro',
@@ -292,7 +284,7 @@ if __name__ == "__main__":
             message_to_feagi_prox = sensors.create_data_for_feagi('proximity',
                                                              capabilities,
                                                              message_to_feagi,
-                                                             current_data=data.sensordata[1],
+                                                             current_data=sensor_data,
                                                              symmetric=True, measure_enable=True)
         
 
