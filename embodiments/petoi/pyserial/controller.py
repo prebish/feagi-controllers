@@ -76,7 +76,6 @@ def action(obtained_data):
 
     if recieved_misc_data:
         for data_point in recieved_misc_data:
-            print("here: ", recieved_misc_data)
             if data_point == 0:
                 WS_STRING = 'G'
             if data_point == 1:
