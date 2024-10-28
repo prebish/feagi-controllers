@@ -146,7 +146,6 @@ if __name__ == "__main__":
                 rgb['camera'] = {}
             # Print each variable before evaluating the condition
             if (previous_name != name_id) or (previous_capabilities != default_capabilities) or (not rgb['camera']):
-                print("entered here")
                 rgb['camera'].clear()
                 previous_name = name_id  # Update name so it wont need to recaluate the vision
                 previous_capabilities = copy.deepcopy(default_capabilities)
