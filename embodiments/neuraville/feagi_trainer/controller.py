@@ -157,12 +157,10 @@ if __name__ == "__main__":
                         failed_to_find_file = False
 
             if failed_to_find_file:
-                print("INSIDE FAILED TO FIND FILE")
                 image_obj = feagi_trainer.scan_the_folder(configuration['image_reader']['0']['image_path'])
                 information_files = list(image_obj)
                 counter += 1
             else:
-                print("before video or not")
                 if information_files[0][2] in feagi_trainer.video_extensions:
                     cap = information_files[0][0]
                     while cap.isOpened():
@@ -192,7 +190,6 @@ if __name__ == "__main__":
                                     break
                                 flask_server.latest_static = img_coords.update_image_ids(new_image_id=None, new_feagi_image_id=feagi_image_id, static=flask_server.latest_static)
                                 if information_files[0][1] != name_id:
-                                    print("info name: ", information_files[0][1], " and feagi id: ", name_id)
                                     break
 
                         # Show user image currently sent to FEAGI, with a bounding box showing FEAGI's location data if it exists
