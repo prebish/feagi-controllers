@@ -14,6 +14,7 @@ gyro = {}
 feagi.validate_requirements(
     'requirements.txt')  # you should get it from the boilerplate generator
 runtime_data = {}
+petoi_data = {'servo_status': {}}
 
 
 # Function to handle receiving data
@@ -28,9 +29,14 @@ def read_from_port(ser):
         #     start_time = datetime.now()
         #     print("data recieved: ", counter, " after 1 second", total_time)
         #     counter = 0
-        received_data = ser.readline().decode('utf-8').rstrip()
-        print("DATA FROM PETOI: ", received_data)
         try:
+            obtained_data = ser.readline().decode('utf-8').rstrip()
+            split_data = obtained_data.split()
+            received_data = {}
+            if len(split_data) == 9:
+                for servo_id in range(len(split_data)):
+                    received_data[str(servo_id)] = int(float(split_data[servo_id]))
+            petoi_data['servo_status'] = received_data
             if '#' in received_data:
                 cleaned_data = received_data.replace('#', '')
                 new_data = full_data + cleaned_data
@@ -50,6 +56,7 @@ def read_from_port(ser):
                 full_data = received_data
         except Exception as Error_case:
             pass
+            print("error: ", Error_case)
         # counter += 1
 
 
@@ -71,6 +78,15 @@ def feagi_to_petoi_id(device_id):
 def action(obtained_data):
     servo_data = actuators.get_servo_data(obtained_data)
     recieve_servo_position_data = actuators.get_servo_position_data(obtained_data)
+    recieved_misc_data = actuators.get_generic_opu_data_from_feagi(obtained_data, 'misc')
+
+
+    if recieved_misc_data:
+        for data_point in recieved_misc_data:
+            if data_point == 0:
+                ser.write('G'.encode())
+            if data_point == 1:
+                ser.write('f'.encode())
 
     if recieve_servo_position_data:
         servo_for_feagi = 'i '
@@ -86,6 +102,7 @@ def action(obtained_data):
             servo_for_feagi += str(feagi_to_petoi_id(device_id)) + " " + str(power) + " "
         print(servo_for_feagi)
         ser.write(servo_for_feagi.encode())
+
 
 
 if __name__ == "__main__":
@@ -130,6 +147,12 @@ if __name__ == "__main__":
             action(obtained_signals)
         # if gyro:
         #     message_to_feagi = sensors.add_gyro_to_feagi_data(gyro['gyro'], message_to_feagi)
+        if petoi_data['servo_status']:
+            message_to_feagi = sensors.create_data_for_feagi('servo_position',
+                                                             capabilities,
+                                                             message_to_feagi,
+                                                             current_data=petoi_data['servo_status'],
+                                                             symmetric=True)
         sleep(feagi_settings['feagi_burst_speed'])  # bottleneck
         pns.signals_to_feagi(message_to_feagi, feagi_ipu_channel,
                              agent_settings, feagi_settings)
