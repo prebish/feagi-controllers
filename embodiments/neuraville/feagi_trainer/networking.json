@@ -2,10 +2,9 @@
   "description": "feagi_trainer_configuration",
   "version": "v0.0.0",
   "feagi_settings": {
-    "feagi_url": null,
-    "feagi_dns": null,
-    "feagi_host": "127.0.0.1",
-    "feagi_api_port": 8000
+        "feagi_url": "http://127.0.0.1",
+        "feagi_api_port": 8000,
+        "magic_link": "null"
   },
   "agent_settings": {
     "agent_data_port": 10009,
