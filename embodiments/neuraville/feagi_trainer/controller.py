@@ -108,7 +108,7 @@ if __name__ == "__main__":
     # raw_frame = image_obj[0]
     if information_files:
         name_id = information_files[0][1]
-        if information_files[0][0] in feagi_trainer.image_extensions:
+        if information_files[0][1] in feagi_trainer.image_extensions:
             raw_frame = information_files[0][0]
             camera_data['vision'] = raw_frame
     else:
@@ -381,12 +381,11 @@ if __name__ == "__main__":
                                         flask_server.latest_image = process_image(
                                             modified_data["00_C"], location_data, size_of_cortical
                                         )
-                                elif latest_image_id != new_image_id:
-                                    latest_image_id = new_image_id
-                                    if "00_C" in modified_data:
-                                        flask_server.latest_image = process_image(
-                                            modified_data["00_C"]
-                                        )
+                                latest_image_id = new_image_id
+                                if "00_C" in modified_data:
+                                    flask_server.latest_image = process_image(
+                                        modified_data["00_C"]
+                                    )
 
                         # If camera data is available, generate data for FEAGI
                         if "camera" in rgb:  # This is the data wrapped for feagi data to read
