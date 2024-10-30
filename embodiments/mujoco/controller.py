@@ -118,7 +118,7 @@ if __name__ == "__main__":
                          args=(default_capabilities, feagi_settings, camera_data['vision'],),
                          daemon=True).start()
     
-    model = mujoco.MjModel.from_xml_path('/Users/ctd/Downloads/humanoid-1.xml')
+    model = mujoco.MjModel.from_xml_path('./humanoid.xml')
     data  = mujoco.MjData(model)
     actuators.start_servos(capabilities) # inserted here. This is not something you should do on your end. I will fix it shortly
     with mujoco.viewer.launch_passive(model, data) as viewer:
@@ -142,9 +142,10 @@ if __name__ == "__main__":
 
             abdomen_positions = positions[:3] #first 3 are abdomen z,y,x
             abdomen_positions = abdomen_positions[::-1] #reverse it to x,y,z order
-            """ for i, pos in enumerate(positions):
-                
-                print("[", i, "]", joints[i] ,f": {pos:{.3}g}") """
+
+            # Position
+            for i, pos in enumerate(positions):
+                print("[", i, "]", joints[i] ,f": {pos:{.3}g}")
 
             # Pick up changes to the physics state, apply perturbations, update options from GUI.
             viewer.sync()
