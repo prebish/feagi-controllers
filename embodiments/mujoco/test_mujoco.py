@@ -5,7 +5,7 @@ import numpy as np
 import math
 
 #region CONSTANTS
-RUNTIME = 60 # (seconds)
+RUNTIME = 6000 # (seconds)
 SPEED   = 120 # simulation step speed
 
 #endregion CONSTANTS
@@ -68,19 +68,22 @@ model = mujoco.MjModel.from_xml_path('./humanoid.xml')
 data  = mujoco.MjData(model)
 
 
-#Position number can be 1-4
-def start_keypos(data, position_number):
+def check_keypos(data, model):
+    #check if current data.qpos matches a model.keypos
+    # Loop over each keyframe
+    for i in range(model.nkey):
+        # Compare with current data.qpos using np.allclose
+        if np.allclose(data.qpos, model.key_qpos[i], atol=1e-6):
+            #print(f"Current qpos matches keyframe {i}")
+            return i
+    else:
+        return -1
+
+#Position number can be 1-5
+def start_keypos(data, model, position_number):
     data.qpos = model.key_qpos[position_number] 
-
-#Better starting standing position for balance. Puts arms down to the side. 
-def start_standing(data):
-    data.qpos[22] = .8      # right arm
-    data.qpos[23] = -.5   # right arm
-    data.qpos[24]     = -1.75      # right elbow
-
-    data.qpos[25]  = .8 #left arm
-    data.qpos[26]  = -.5 #left arm 
-    data.qpos[27]  = -1.75  #left elbow
+    #mujoco.mj_step(model, data) # single step to make sure data renders
+    return model.key_qpos[position_number]
 
 #Better balance attempt using actual physics 
 def balance_attempt_advanced(data, desired_qpos, desired_qvel):
@@ -110,18 +113,14 @@ def balance_attempt_basic(data, start_pos):
 
 #Pauses the model until control is applied somewhere.
 def pause_until_move(data, start_pos):
-    moved = False
     for i, ctrl in enumerate(data.ctrl):
         if (ctrl != 0): #if we change the ctrl we "free" the limb
-            moved= True
-    if (moved):
-        return
-    for i, pos in enumerate(data.qpos[:7]):
-            data.qpos[i] = start_pos[i]
-    for i, pos in enumerate(data.qpos[7:]):
-            data.qpos[i+7] = start_pos[i+7]
+            return False # we are no longer paused
+    
+    data.qpos[:] = start_pos[:]
+    return True
 
-# Since we're ignoring the physics behind everything, moving multiple joints will create very large numbers in data.qacc 
+# Since we're ignoring the physics behind everything, moving multiple joints will create overflow in data.qacc 
 # which briefly resets the model. Tried to fix this but solution is not simple. I notice the qpos positions go outside their bounds 
 # when it happens so maybe hard bounds along with resetting the respective data.qvel and data.qacc values could fix it (just an idea) 
 def pause_standing_unstable(data, start_pos, free_joints):
@@ -136,65 +135,102 @@ def pause_standing_unstable(data, start_pos, free_joints):
     for i, pos in enumerate(data.qpos[7:]):
         if (free_joints[i] != -1):
             data.qpos[i+7] = start_pos[i+7]
-    """ for i, k in enumerate(data.qacc):
-          if (data.qacc[i] > 10000):
-              data.qacc[i] = 0 #physics related but doesnt matter since we're frozen. idek if this helps """
-    return free_joints    
+    return free_joints      
 
 def main():
+  mujoco.mj_resetDataKeyframe(model, data, 4)
   with mujoco.viewer.launch_passive(model, data) as viewer:
-    start_time = time.time()
-    zero_pos = copy.copy(data.qpos) #starting position model will reset to, copied before
-    start_standing(data)
-    #start_keypos(data, 0) #preset positions, 0: squat, 1: standing one leg, 2:...
-    start_pos = copy.copy(data.qpos) #alternate starting position chosen between start_standing and start_keypos
+     start_time = time.time()
+     free_joints = [0] * 21 #keep track of which joints to lock and free (for unstable pause method)
+     start_pos = copy.copy(data.qpos)
+     paused = True
 
-    free_joints = [0] * 21 #keep track of which joints to lock and free (for pause method)
+     camera_name = "egocentric"
+     camera_id = mujoco.mj_name2id(model, mujoco.mjtObj.mjOBJ_CAMERA, camera_name)
+     camera = mujoco.MjvCamera()
+     camera.fixedcamid = camera_id
+     camera.type = mujoco.mjtCamera.mjCAMERA_FIXED
+     mujoco.mjv_defaultFreeCamera(model, camera)
+     while viewer.is_running() and time.time() - start_time < RUNTIME:
+        step_start = time.time()
+        # Assuming qfrc_applied and xfrc_applied are lists or arrays and nv is the size
+        
+        
+        for i, cam_pos in enumerate(data.cam_xpos):
+            print(f"Cam position {i}: {cam_pos}")
+        for i, cam_mat in enumerate(data.cam_xmat):
+            print(f"Cam orientation {i}: {cam_mat}")
+        for i, force in enumerate(data.qfrc_applied):
+            print(f"Force {i}: {force}")
+        for i, matforce in enumerate(data.xfrc_applied):
+            print(f"Cartesian Force {i}: {matforce}")
+    
+         # Iterate over contacts
+        for i in range(data.ncon):
+            contact = data.contact[i]  # Access the contact object
 
-    while viewer.is_running() and time.time() - start_time < RUNTIME:
-      step_start = time.time()
+            # Extract contact details
+            
+            dist = contact.dist  # Penetration distance
+            geom1 = contact.geom1  # ID of the first geometry
+            geom2 = contact.geom2  # ID of the second geometry
+            pos = contact.pos  # Contact position, size 3 array. x,y,z
+            frame = contact.frame  # ID of the first geometry
+            #print(contact)
+            # Print contact information
+            #print(f"Contact {i}: pos=({pos[0]:.3f}, {pos[1]:.3f}, {pos[2]:.3f}), dist={dist}")
+            #print(f"Contact {i}: pos=({pos[0]:.3f}, {pos[1]:.3f}, {pos[2]:.3f}), frame={frame}")
 
-      if (np.array_equal(data.qpos, zero_pos)): #means we're not in the starting position (hit delete to reset sim)
-          start_standing(data)
-  
-      ### PAUSING/BALANCE ###
-      #pause_until_move(data, start_pos) #pauses the simulation until control is applied.
-      #free_joints = pause_standing_unstable(data, start_pos, free_joints) #Unstable. Mainly for testing. lock the model but move joints freely. Helpful for seeing what controls actually do
-      #balance_attempt_basic(data, start_pos) #tries to use ctrl to balance instead of hardcoding qpos. bad
-      balance_attempt_advanced(data, start_pos[7:], np.zeros_like(start_pos[7:])) #better attempt at balancing
-      ###############
+            print(contact)
 
-      #print("proximity data:" , data.sensordata) #test to print proximity data
+        """ if (np.array_equal(data.qpos, zero_pos)): #means we're not in the starting position (hit delete to reset sim)
+            start_standing(data) """
+    
+        #check if key pos was manually changed
+        if check_keypos(data, model) >= 0:
+            #print("hello, ", check_keypos(data, model))
+            #start_pos = start_keypos(data, model, check_keypos(data, model)) #if it was, update the start_pos
+            pass
 
-      # steps the simulation forward 'tick'
-      mujoco.mj_step(model, data)
+        ### PAUSING/BALANCE ### Only try one at a time.
+        #balance_attempt_advanced(data, start_pos[7:], np.zeros_like(start_pos[7:])) #better attempt at balancing
+        #if paused:
+        #paused = pause_until_move(data, start_pos) #pauses the simulation until control is applied. Will lock positions if d.ctrl[:]==0 
+        #free_joints = pause_standing_unstable(data, start_pos, free_joints) #Unstable. Mainly for testing. lock the model but move joints freely. Helpful for seeing what controls actually do
+        #balance_attempt_basic(data, start_pos) #Bad. tries to use ctrl to balance instead of hardcoding qpos.
+        ###############
 
-      # make model spaz out
-      #moving_jnt = random.randint(0, len(data.ctrl)-1)
-      #data.ctrl[moving_jnt] += random.randint(0, 2) # increase pos of random joint
-      #data.ctrl[moving_jnt] += random.randint(0, 2) # decrease pos of random joint 
-      # if data.ctrl[moving_jnt] > 4: 
-      #   data.ctrl = 0  # reset value if too high
+        #print("proximity data:" , data.sensordata) #test to print proximity data
+
+        # steps the simulation forward 'tick' -- Only step if we aren't paused because it breaks the physics
+        #if not paused:
+        mujoco.mj_step(model, data)
+        # make model spaz out
+        #moving_jnt = random.randint(0, len(data.ctrl)-1)
+        #data.ctrl[moving_jnt] += random.randint(0, 2) # increase pos of random joint
+        #data.ctrl[moving_jnt] += random.randint(0, 2) # decrease pos of random joint 
+        # if data.ctrl[moving_jnt] > 4: 
+        #   data.ctrl = 0  # reset value if too high
 
 
-      ### READ POSITIONAL DATA HERE ###
-      positions = data.qpos #all positions
-      positions = positions[7:] #don't know what the first 7 positions are, but they're not joints so ignore them
+        ### READ POSITIONAL DATA HERE ###
+        positions = data.qpos #all positions
+        positions = positions[7:] #don't know what the first 7 positions are, but they're not joints so ignore them
 
-      abdomen_positions = positions[:3]
-     
-      
-      """ for i, pos in enumerate(positions):
-        print("[", i, "]", joints[i] ,f": {pos:{.3}g}") """
-      
+        abdomen_positions = positions[:3]
+        
+        
+        """ for i, pos in enumerate(positions):
+            print("[", i, "]", joints[i] ,f": {pos:{.3}g}") """
+        
 
-      # Pick up changes to the physics state, apply perturbations, update options from GUI.
-      viewer.sync()
+        # Pick up changes to the physics state, apply perturbations, update options from GUI.
+        viewer.sync()
 
-      # Tick Speed # 
-      time_until_next_step = (1/SPEED) - (time.time() - step_start)
-      if time_until_next_step > 0:
-        time.sleep(time_until_next_step)
+        # Tick Speed # 
+        time_until_next_step = (1/SPEED) - (time.time() - step_start)
+        if time_until_next_step > 0:
+            time.sleep(time_until_next_step)
 
 
 if __name__ == "__main__":

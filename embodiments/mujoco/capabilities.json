@@ -1,6 +1,24 @@
 {
 	"capabilities": {
 		"input": {
+			"camera": {
+				"0": {
+					"custom_name": "head_camera",
+					"disabled": false,
+					"eccentricity_control": {
+						"X offset percentage": 1,
+						"Y offset percentage": 1
+					},
+					"feagi_index": 0,
+					"index": "00",
+					"mirror": false,
+					"modulation_control": {
+						"X offset percentage": 99,
+						"Y offset percentage": 99
+					},
+					"threshold_default": 50
+				}
+			},
 			"gyro": {
 				"0": {
 					"custom_name": "abdomen",
