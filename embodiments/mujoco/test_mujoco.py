@@ -156,14 +156,10 @@ def main():
         # Assuming qfrc_applied and xfrc_applied are lists or arrays and nv is the size
         
         
-        for i, cam_pos in enumerate(data.cam_xpos):
+        """ for i, cam_pos in enumerate(data.cam_xpos):
             print(f"Cam position {i}: {cam_pos}")
         for i, cam_mat in enumerate(data.cam_xmat):
-            print(f"Cam orientation {i}: {cam_mat}")
-        for i, force in enumerate(data.qfrc_applied):
-            print(f"Force {i}: {force}")
-        for i, matforce in enumerate(data.xfrc_applied):
-            print(f"Cartesian Force {i}: {matforce}")
+            print(f"Cam orientation {i}: {cam_mat}") """
     
          # Iterate over contacts
         for i in range(data.ncon):
@@ -181,7 +177,7 @@ def main():
             #print(f"Contact {i}: pos=({pos[0]:.3f}, {pos[1]:.3f}, {pos[2]:.3f}), dist={dist}")
             #print(f"Contact {i}: pos=({pos[0]:.3f}, {pos[1]:.3f}, {pos[2]:.3f}), frame={frame}")
 
-            print(contact)
+            #print(contact)
 
         """ if (np.array_equal(data.qpos, zero_pos)): #means we're not in the starting position (hit delete to reset sim)
             start_standing(data) """
