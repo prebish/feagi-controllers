@@ -29,19 +29,46 @@ from feagi_connector.version import __version__
 from feagi_connector import feagi_interface as feagi
 import time, random
 import mujoco, mujoco.viewer
+import numpy as np
 
 # Global variable section
 camera_data = {"vision": []}  # This will be heavily relies for vision
-
 RUNTIME = 600 # (seconds) //timeout time
 SPEED   = 120 # simulation step speed
 
 
+#Position number can be 1-4
+def start_keypos(data, position_number):
+    data.qpos = model.key_qpos[position_number] 
 
-def pause_standing(data, start_pos):
-    data.qpos = start_pos 
+#Better starting standing position for balance. Puts arms down to the side. 
+def start_standing(data):
+    data.qpos[22] = .8      # right arm
+    data.qpos[23] = -.5   # right arm
+    data.qpos[24]     = -1.75      # right elbow
 
-def balance_attempt(data, start_pos): #this does not work lol it stresses him out
+    data.qpos[25]  = .8 #left arm
+    data.qpos[26]  = -.5 #left arm 
+    data.qpos[27]  = -1.75  #left elbow
+
+#Better balance attempt using actual physics 
+def balance_attempt_advanced(data, desired_qpos, desired_qvel):
+    # Control gains
+    Kp = np.array([100] * len(desired_qpos))  # Proportional gains
+    Kd = np.array([10] * len(desired_qpos))   # Derivative gains
+    # Current joint positions and velocities
+    current_qpos = data.qpos[7:]
+    current_qvel = data.qvel[6:]  # Exclude global velocities
+    # Compute errors
+    qpos_error = desired_qpos - current_qpos
+    qvel_error = desired_qvel - current_qvel
+    # PD control law
+    control_torques = Kp * qpos_error + Kd * qvel_error
+    # Apply control torques within actuator limits
+    data.ctrl[:] = np.clip(control_torques, model.actuator_ctrlrange[:, 0], model.actuator_ctrlrange[:, 1])
+
+#This does not work lol it stresses him out
+def balance_attempt_basic(data, start_pos): 
     current_pos = data.qpos[7:]
     start_pos = start_pos[7:]
     for i, pos in enumerate(current_pos):
@@ -49,7 +76,40 @@ def balance_attempt(data, start_pos): #this does not work lol it stresses him ou
                 data.ctrl[i] += .01
             elif (pos > start_pos[i]):
                 data.ctrl[i] -= .01
-    
+
+#Pauses the model until control is applied somewhere.
+def pause_until_move(data, start_pos):
+    moved = False
+    for i, ctrl in enumerate(data.ctrl):
+        if (ctrl != 0): #if we change the ctrl we "free" the limb
+            moved= True
+    if (moved):
+        return
+    for i, pos in enumerate(data.qpos[:7]):
+            data.qpos[i] = start_pos[i]
+    for i, pos in enumerate(data.qpos[7:]):
+            data.qpos[i+7] = start_pos[i+7]
+
+# Since we're ignoring the physics behind everything, moving multiple joints will create overflow in data.qacc 
+# which briefly resets the model. Tried to fix this but solution is not simple. I notice the qpos positions go outside their bounds 
+# when it happens so maybe hard bounds along with resetting the respective data.qvel and data.qacc values could fix it (just an idea) 
+def pause_standing_unstable(data, start_pos, free_joints):
+    for i, ctrl in enumerate(data.ctrl):
+        if (data.ctrl[i] == 0):
+            free_joints[i]=0
+        if (ctrl != 0): #if we change the ctrl we "free" the limb
+            free_joints[i] = -1 #find the limb to free and mark it
+    for i, pos in enumerate(data.qpos[:7]):
+            data.qpos[i] = start_pos[i]
+            pass
+    for i, pos in enumerate(data.qpos[7:]):
+        if (free_joints[i] != -1):
+            data.qpos[i+7] = start_pos[i+7]
+    """ for i, k in enumerate(data.qacc):
+          if (data.qacc[i] > 10000):
+              data.qacc[i] = 0 #physics related but doesnt matter since we're frozen. idek if this helps """
+    return free_joints    
+     
 
 def action(obtained_data, capabilities):
     """
@@ -138,25 +198,38 @@ if __name__ == "__main__":
         threading.Thread(target=retina.vision_progress,
                          args=(default_capabilities, feagi_settings, camera_data['vision'],),
                          daemon=True).start()
-    
+        
+    # Model and Data objects which are used inside the simulation loop
+    # make sure the model path is using the relative humanoid file located at ./humanoid.xml
     model = mujoco.MjModel.from_xml_path('./humanoid.xml')
     data  = mujoco.MjData(model)
     
     actuators.start_servos(capabilities) # inserted here. This is not something you should do on your end. I will fix it shortly
     with mujoco.viewer.launch_passive(model, data) as viewer:
         start_time = time.time()
-        start_pos = copy.copy(data.qpos) # get the starting positions before the simulation starts
+        zero_pos = copy.copy(data.qpos) #starting position model will reset to, copied before
+        start_standing(data)
+        #start_keypos(data, 0) #preset positions, 0: squat, 1: standing one leg, 2:...
+        start_pos = copy.copy(data.qpos) #alternate starting position chosen between start_standing and start_keypos
+
+        free_joints = [0] * 21 #keep track of which joints to lock and free (for pause method)
 
         while viewer.is_running() and time.time() - start_time < RUNTIME:
 
             step_start = time.time()
 
-            ### PAUSING ###
-            #pause_standing(data, start_pos) #pause the model in the standing position
-            #balance_attempt(data, start_pos) #tries to use ctrl to balance instead of hardcoding qpos but doesn't work
+            if (np.array_equal(data.qpos, zero_pos)): #means we're not in the starting position (hit delete to reset sim)
+                start_standing(data)
+
+            ### PAUSING/BALANCE ### Only try one at a time.
+            #balance_attempt_advanced(data, start_pos[7:], np.zeros_like(start_pos[7:])) #better attempt at balancing
+            pause_until_move(data, start_pos) #pauses the simulation until control is applied.
+
+            #free_joints = pause_standing_unstable(data, start_pos, free_joints) #Unstable. Mainly for testing. lock the model but move joints freely. Helpful for seeing what controls actually do
+            #balance_attempt_basic(data, start_pos) #Bad. tries to use ctrl to balance instead of hardcoding qpos.
             ###############
 
-            #print("proximity data:" , data.sensordata[0]) #test to print proximity data
+            #print("proximity data:" , data.sensordata) #test to print proximity data
 
             # steps the simulation forward 'tick'
             mujoco.mj_step(model, data)
@@ -169,17 +242,36 @@ if __name__ == "__main__":
                 pns.check_genome_status_no_vision(message_from_feagi)
                 action(obtained_signals, data)
 
-            ### READ POSITIONAL DATA HERE ###
+            #region READ POSITIONAL DATA HERE
             positions = data.qpos #all positions
             positions = positions[7:] #don't know what the first 7 positions are, but they're not joints so ignore them
 
             abdomen_positions = positions[:3] #first 3 are abdomen z,y,x
             abdomen_positions = abdomen_positions[::-1] #reverse it to x,y,z order
+            #endregion
 
+            #region READ FORCE DATA HERE
+            # Loop through all degrees of freedom (DOFs) to access forces applied to each joint.
+            # This loop gives internal force data related to actuators or controllers
+            # and is useful for understanding forces acting directly on the joints.
+            for i in range(model.nv):  # `nv` is the number of degrees of freedom (DOFs)
+                force = data.qfrc_applied[i]
+                # print(f"Joint DOF {i}, Applied Force: {force}")
 
-            """ for i, pos in enumerate(positions):
-                print("[", i, "]", joints[i] ,f": {pos:{.3}g}") #print all joint positions"""
+            # Loop through all contacts in the simulation
+            # between all bodies. This *should* include the xml model
+            # and environmental bodies like ground/floor
+            for i in range(data.ncon):
+                contact = data.contact[i]  # Access each contact
+                force = np.zeros(6)  # Use numpy to allocate blank array 
 
+                # Retrieve the contact force data
+                mujoco.mj_contactForce(model, data, i, force)
+
+                # Printout contact force data
+                print(f"Contact between body {contact.geom1} and body {contact.geom2}")
+                print(f"Force: {force[:3]}")
+            #endregion
 
             # Pick up changes to the physics state, apply perturbations, update options from GUI.
             viewer.sync()
@@ -189,25 +281,17 @@ if __name__ == "__main__":
             if time_until_next_step > 0:
                 time.sleep(time_until_next_step)
 
-
-            # The controller will grab the data from FEAGI in real-time
-            message_from_feagi = pns.message_from_feagi
-            if message_from_feagi: # Verify if the feagi data is not empty
-                # Translate from feagi data to human readable data
-                obtained_signals = pns.obtain_opu_data(message_from_feagi)
-                action(obtained_signals, capabilities)
-
             # Example to send data to FEAGI. This is basically reading the joint. R
             abdomen_gyro_data = {i: pos for i, pos in enumerate(abdomen_positions) if
                           pns.full_template_information_corticals}
             servo_data = {i: pos for i, pos in enumerate(positions[:20]) if
                           pns.full_template_information_corticals}
-
-            
+            sensor_data = {i: pos for i, pos in enumerate(data.sensordata) if
+                          pns.full_template_information_corticals}
+            #print(sensor_data)
             
             #Creating message to send to FEAGI
             message_to_feagi_gyro = sensors.create_data_for_feagi('gyro',
-
                                                              capabilities,
                                                              message_to_feagi,
                                                              current_data=abdomen_gyro_data,
@@ -220,7 +304,7 @@ if __name__ == "__main__":
             message_to_feagi_prox = sensors.create_data_for_feagi('proximity',
                                                              capabilities,
                                                              message_to_feagi,
-                                                             current_data=data.sensordata[0],
+                                                             current_data=sensor_data,
                                                              symmetric=True, measure_enable=True)
 
             # Sends to feagi data

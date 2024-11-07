@@ -223,10 +223,6 @@
     <motor name="elbow_left"      gear="40"  joint="elbow_left"/>
   </actuator>
 
-  <sensor>
-    <distance cutoff="10" name="waist_elevation" geom1="waist_lower" geom2="floor"/>
-  </sensor>
-
   <keyframe>
     <!--
     The values below are split into rows for readibility:
