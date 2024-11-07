@@ -31,25 +31,45 @@ import time, random
 import mujoco, mujoco.viewer
 import numpy as np
 
+import json 
+
 # Global variable section
 camera_data = {"vision": []}  # This will be heavily relies for vision
-RUNTIME = 600 # (seconds) //timeout time
+
+RUNTIME = 6000 # (seconds) //timeout time
 SPEED   = 120 # simulation step speed
 
+#this works but I'd think there's a better way to check this than opening the json again 
+def get_servo_min_max(index):
+    try:
+        #get json 
+        with open('capabilities.json', 'r') as file:
+            data = json.load(file)
+        # Access the servo data based on the index
+        servo_data = data["capabilities"]["output"]["servo"][str(index)]
+        min_value = servo_data["min_value"]
+        max_value = servo_data["max_value"]
+        return min_value, max_value
+    except KeyError:
+        return None, None  # Return None if the index is not found
+    
+def check_keypos(data, model):
+    #check if current data.qpos matches a model.keypos
+    # Loop over each keyframe
+    for i in range(model.nkey):
+        # Compare with current data.qpos using np.allclose
+        if np.allclose(data.qpos, model.key_qpos[i], atol=1e-6):
+            #print(f"Current qpos matches keyframe {i}")
+            return i
+    else:
+        return -1
 
-#Position number can be 1-4
-def start_keypos(data, position_number):
+#Position number can be 1-5
+def start_keypos(data, model, position_number):
     data.qpos = model.key_qpos[position_number] 
-
-#Better starting standing position for balance. Puts arms down to the side. 
-def start_standing(data):
-    data.qpos[22] = .8      # right arm
-    data.qpos[23] = -.5   # right arm
-    data.qpos[24]     = -1.75      # right elbow
-
-    data.qpos[25]  = .8 #left arm
-    data.qpos[26]  = -.5 #left arm 
-    data.qpos[27]  = -1.75  #left elbow
+    #mujoco.mj_step(model, data) # single step to make sure data renders
+    viewer.sync()
+    return model.key_qpos[position_number]
 
 #Better balance attempt using actual physics 
 def balance_attempt_advanced(data, desired_qpos, desired_qvel):
@@ -79,16 +99,13 @@ def balance_attempt_basic(data, start_pos):
 
 #Pauses the model until control is applied somewhere.
 def pause_until_move(data, start_pos):
-    moved = False
     for i, ctrl in enumerate(data.ctrl):
         if (ctrl != 0): #if we change the ctrl we "free" the limb
-            moved= True
-    if (moved):
-        return
-    for i, pos in enumerate(data.qpos[:7]):
-            data.qpos[i] = start_pos[i]
-    for i, pos in enumerate(data.qpos[7:]):
-            data.qpos[i+7] = start_pos[i+7]
+            return False # we are no longer paused
+    
+    data.qpos[:] = start_pos[:]
+    return True
+
 
 # Since we're ignoring the physics behind everything, moving multiple joints will create overflow in data.qacc 
 # which briefly resets the model. Tried to fix this but solution is not simple. I notice the qpos positions go outside their bounds 
@@ -105,11 +122,8 @@ def pause_standing_unstable(data, start_pos, free_joints):
     for i, pos in enumerate(data.qpos[7:]):
         if (free_joints[i] != -1):
             data.qpos[i+7] = start_pos[i+7]
-    """ for i, k in enumerate(data.qacc):
-          if (data.qacc[i] > 10000):
-              data.qacc[i] = 0 #physics related but doesnt matter since we're frozen. idek if this helps """
     return free_joints    
-     
+
 
 def action(obtained_data, capabilities):
     """
@@ -125,35 +139,47 @@ def action(obtained_data, capabilities):
     recieve_servo_position_data = actuators.get_servo_position_data(obtained_data)
 
     if obtained_data:
-        #print("obtained data d: %d", obtained_data) #testing
+        print("obtained data d: %d", obtained_data) #testing
         pass
-        
+  
     if recieve_servo_position_data:
         # output like {0:0.50, 1:0.20, 2:0.30} # example but the data comes from your capabilities' servo range
-        #print("servo position data d: %d", recieve_servo_position_data) #testing
-        pass
-
-
-    """ recieve_gyro_data = actuators.get_gyro_data(obtained_data)
-
-    if recieve_gyro_data:
-        print("gyro data: %d", recieve_gyro_data)
-        # example output: {0: 0.245, 2: 1.0}
-            for real_id in recieve_gyro_data:
-            servo_number = real_id
-            new_power = recieve_servo_data[real_id]
-            data.ctrl[servo_number] = new_power """
-    
-    
-    if recieve_servo_position_data:
-        # output like {0:0.50, 1:0.20, 2:0.30} # example but the data comes from your capabilities' servo range
-        #print("hello1")
+        print("servo position data d: %d", recieve_servo_position_data) #testing
         for real_id in recieve_servo_position_data:
             servo_number = real_id
-            new_power = recieve_servo_position_data[real_id]
-            data.ctrl[servo_number] = new_power
+            power = recieve_servo_position_data[real_id]
+            data.ctrl[servo_number] = power
             
+            
+            """ #get min and max values from json (probably a better way to do this)
+            min_val, max_val = get_servo_min_max(servo_number)
+
+            if (old_power >= 0):
+                new_power = old_power/max_val
+            elif (old_power < 0):
+                new_power = -old_power/min_val """
+            
+            #print("length: %d", length) #testing
+            #print("new power: %d", new_power ," servo number: %d", servo_number, "old power: %d", old_power, "old power: %d", old_power, "old power: %d", old_power  ) #testing
+            #also keep within bounds
+            """ if (data.ctrl[servo_number] + new_power > 1):  
+                data.ctrl[servo_number] = 1
+            elif (data.ctrl[servo_number] + new_power < -1):  
+                data.ctrl[servo_number] = -1
+            else:
+                data.ctrl[servo_number] = new_power """
+            
+            #data.qpos[servo_number+7] += .1
+            #tolerance = .0001
+            """ while abs(data.qpos[servo_number+7] - old_power) >tolerance:
+                print("data.qpos[servo_number+7]: ", data.qpos[servo_number+7], "old_power: ", old_power) #testing
+                if data.qpos[servo_number+7] > old_power:
+                    data.qpos[servo_number+7] -= .00001
+                elif data.qpos[servo_number+7] < old_power:
+                    data.qpos[servo_number+7] += .00001
+             """
     if recieve_servo_data:
+        print("servo data d: %d", recieve_servo_data) #testing
         # example output: {0: 0.245, 2: 1.0}
         for real_id in recieve_servo_data:
             servo_number = real_id
@@ -203,35 +229,40 @@ if __name__ == "__main__":
     # make sure the model path is using the relative humanoid file located at ./humanoid.xml
     model = mujoco.MjModel.from_xml_path('./humanoid.xml')
     data  = mujoco.MjData(model)
+    #start_keypos(data, model, 0)
+    #start_keypos(data, 4) #preset positions, 0: squat, 1: standing one leg, 2:...
+
     
     actuators.start_servos(capabilities) # inserted here. This is not something you should do on your end. I will fix it shortly
     with mujoco.viewer.launch_passive(model, data) as viewer:
+        mujoco.mj_resetDataKeyframe(model, data, 4)
         start_time = time.time()
-        zero_pos = copy.copy(data.qpos) #starting position model will reset to, copied before
-        start_standing(data)
-        #start_keypos(data, 0) #preset positions, 0: squat, 1: standing one leg, 2:...
-        start_pos = copy.copy(data.qpos) #alternate starting position chosen between start_standing and start_keypos
-
-        free_joints = [0] * 21 #keep track of which joints to lock and free (for pause method)
+        free_joints = [0] * 21 #keep track of which joints to lock and free (for unstable pause method)
+        #start_keypos(data, model, 1)
+        start_pos = copy.copy(data.qpos)
+        paused = True
 
         while viewer.is_running() and time.time() - start_time < RUNTIME:
-
+            
             step_start = time.time()
 
-            if (np.array_equal(data.qpos, zero_pos)): #means we're not in the starting position (hit delete to reset sim)
-                start_standing(data)
+            #check if key pos was manually changed (delete was pressed) and reset to our custom start instead (prob a better way to do this)
+            if check_keypos(data, model) >= 0:
+                #start_pos = start_keypos(data, model, check_keypos(data, model)) #if it was, update the start_pos
+                pass
 
             ### PAUSING/BALANCE ### Only try one at a time.
             #balance_attempt_advanced(data, start_pos[7:], np.zeros_like(start_pos[7:])) #better attempt at balancing
-            pause_until_move(data, start_pos) #pauses the simulation until control is applied.
-
+            #if paused:
+            #paused = pause_until_move(data, start_pos) #pauses the simulation until control is applied. Will lock positions if d.ctrl[:]==0 
             #free_joints = pause_standing_unstable(data, start_pos, free_joints) #Unstable. Mainly for testing. lock the model but move joints freely. Helpful for seeing what controls actually do
             #balance_attempt_basic(data, start_pos) #Bad. tries to use ctrl to balance instead of hardcoding qpos.
             ###############
 
             #print("proximity data:" , data.sensordata) #test to print proximity data
 
-            # steps the simulation forward 'tick'
+            # steps the simulation forward 'tick' -- Only step if we aren't paused because it breaks the physics
+            #if not paused:
             mujoco.mj_step(model, data)
 
             # The controller will grab the data from FEAGI in real-time
@@ -281,6 +312,7 @@ if __name__ == "__main__":
             if time_until_next_step > 0:
                 time.sleep(time_until_next_step)
 
+
             # Example to send data to FEAGI. This is basically reading the joint. R
             abdomen_gyro_data = {i: pos for i, pos in enumerate(abdomen_positions) if
                           pns.full_template_information_corticals}
@@ -306,6 +338,7 @@ if __name__ == "__main__":
                                                              message_to_feagi,
                                                              current_data=sensor_data,
                                                              symmetric=True, measure_enable=True)
+        
 
             # Sends to feagi data
             pns.signals_to_feagi(message_to_feagi_servo, feagi_ipu_channel, agent_settings, feagi_settings)
