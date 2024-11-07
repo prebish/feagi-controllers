@@ -182,9 +182,11 @@ def pause_standing_unstable(data, start_pos, free_joints):
     return free_joints      
 
 def main():
+  
+  
   mujoco.mj_resetDataKeyframe(model, data, 4)
 
-  # Initialize GLFW
+  """ # Initialize GLFW
   if not glfw.init():
     raise Exception("Failed to initialize GLFW")
   # Create a hidden GLFW window
@@ -192,9 +194,9 @@ def main():
   window = glfw.create_window(100, 100, "Hidden Window", None, None)
   if not window:
     glfw.terminate()
-    raise Exception("Failed to create GLFW window")
+    raise Exception("Failed to create GLFW window") """
   
-  with mujoco.viewer.launch(model, data) as viewer:
+  with mujoco.viewer.launch_passive(model, data) as viewer:
      start_time = time.time()
      free_joints = [0] * 21 #keep track of which joints to lock and free (for unstable pause method)
      start_pos = copy.copy(data.qpos)
@@ -215,8 +217,8 @@ def main():
             print(f"Cam orientation {i}: {cam_mat}") """
         #context = mujoco.MjrContext()
         #context = mujoco.MjrContext(model, 50)
-        scene = mujoco.MjvScene(model, maxgeom=10000)
-        viewport = mujoco.MjrRect(0, 0, 100, 100)
+        #scene = mujoco.MjvScene(model, maxgeom=10000)
+        #viewport = mujoco.MjrRect(0, 0, 100, 100)
         """ context = mujoco.MjrContext(model, mujoco.mjtFontScale.mjFONTSCALE_100)
         scene = mujoco.MjvScene(model, maxgeom=10000)
         viewport = mujoco.MjrRect(0, 0, 100, 100)
@@ -239,6 +241,22 @@ def main():
             #print(f"Contact {i}: pos=({pos[0]:.3f}, {pos[1]:.3f}, {pos[2]:.3f}), dist={dist}")
             #print(f"Contact {i}: pos=({pos[0]:.3f}, {pos[1]:.3f}, {pos[2]:.3f}), frame={frame}")
             #print(contact)
+        ### APPLY FORCE TO MODEL HERE ###
+       
+
+        # Loop through all active contacts
+        for i in range(data.ncon):
+            contact = data.contact[i]  # Access each contact
+            force = np.zeros(6)  # Allocate array to hold the contact force data
+
+            # Retrieve the contact force for this contact
+            mujoco.mj_contactForce(model, data, i, force)
+
+            # Print contact force data
+            print(f"Contact between geom {contact.geom1} and geom {contact.geom2}")
+            print(f"Normal force: {force[:3]}")
+            #print(i)
+            #print(f"Tangent forces: {force[3:]}")
 
         """ if (np.array_equal(data.qpos, zero_pos)): #means we're not in the starting position (hit delete to reset sim)
             start_standing(data) """
