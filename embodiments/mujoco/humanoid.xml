@@ -131,6 +131,7 @@
               <joint name="knee_right" class="knee"/>
               <geom name="shin_right" class="shin"/>
               <body name="foot_right" pos="0 0 -.39">
+                <camera name="foot" pos="1 0 0" xyaxes="1 0 0 0 1 2" mode="trackcom"/> <!-- can remove -->
                 <joint name="ankle_y_right" class="ankle_y"/>
                 <joint name="ankle_x_right" class="ankle_x" axis="1 0 .5"/>
                 <geom name="foot1_right" class="foot1"/>

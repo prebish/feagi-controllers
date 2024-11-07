@@ -3,6 +3,7 @@ import copy
 import mujoco, mujoco.viewer
 import numpy as np
 import math
+import glfw
 
 #region CONSTANTS
 RUNTIME = 6000 # (seconds)
@@ -67,6 +68,49 @@ joints = [
 model = mujoco.MjModel.from_xml_path('./humanoid.xml')
 data  = mujoco.MjData(model)
 
+def get_frame(model, data, opt, scene, context, camera_name, loc_x, loc_y, width=640, height=480):
+    # Bottom Placement
+    # bottom left: loc_x = 0, loc_y = 0
+    # bottom middle: loc_x = 0.5*(viewport_width - width), loc_y = 0
+    # bottom right: loc_x = viewport_width - width, loc_y = 0
+    # Middle Placement
+    # middle left: loc_x = 0, loc_y = 0.5*(viewport_width - width)
+    # middle: loc_x = 0.5*(viewport_width - width), loc_y = 0.5*(viewport_width - width)
+    # middle right: loc_x = viewport_width - width, loc_y = 0.5*(viewport_width - width)
+    # Top Placement
+    # top left: loc_x = 0, loc_y = viewport_height - height
+    # top middle: loc_x = 0.5*(viewport_width - width), loc_y = viewport_height - height
+    # top right: loc_x = viewport_width - width, loc_y = viewport_height - height
+    
+    height = int(height)
+    width = int(width)
+    # Adding an inset window from a different perspective
+    # https://github.com/google-deepmind/mujoco/issues/744#issuecomment-1442221178
+    # 1. Create a rectangular viewport in the upper right corner for example.
+    offscreen_viewport = mujoco.MjrRect(int(loc_x), int(loc_y), width, height)
+    
+    # 2. Specify a different camera view by updating the scene with mjv_updateScene.
+    # Set the camera to the specified view
+    camera_id = mujoco.mj_name2id(model, mj.mjtObj.mjOBJ_CAMERA, camera_name)
+    offscreen_cam = mujoco.MjvCamera()
+    offscreen_cam.type = mujoco.mjtCamera.mjCAMERA_FIXED
+    offscreen_cam.fixedcamid = camera_id
+
+    # Update scene for the off-screen camera
+    mujoco.mjv_updateScene(model, data, opt, None, offscreen_cam, mj.mjtCatBit.mjCAT_ALL.value, scene)
+    
+    # 3.Render the scene in the offscreen buffer with mjr_render.
+    frame = np.zeros((height*width*3, 1), dtype=np.uint8)  # Placeholder for pixel data
+    mujoco.mjr_render(offscreen_viewport, scene, context)
+    
+    # 4. Read the pixels with mjr_readPixels.
+    mujoco.mjr_readPixels(frame, None, offscreen_viewport, context)
+    
+    # 5. Call mjr_drawPixels using the rectangular viewport you created in step 1.
+    # glClear(GL_DEPTH_BUFFER_BIT)  # allows rendering over geometries
+    # mj.mjr_drawPixels(frame, None, offscreen_viewport, context)
+    
+    return frame, offscreen_viewport
 
 def check_keypos(data, model):
     #check if current data.qpos matches a model.keypos
@@ -139,7 +183,18 @@ def pause_standing_unstable(data, start_pos, free_joints):
 
 def main():
   mujoco.mj_resetDataKeyframe(model, data, 4)
-  with mujoco.viewer.launch_passive(model, data) as viewer:
+
+  # Initialize GLFW
+  if not glfw.init():
+    raise Exception("Failed to initialize GLFW")
+  # Create a hidden GLFW window
+  glfw.window_hint(glfw.VISIBLE, glfw.FALSE)
+  window = glfw.create_window(100, 100, "Hidden Window", None, None)
+  if not window:
+    glfw.terminate()
+    raise Exception("Failed to create GLFW window")
+  
+  with mujoco.viewer.launch(model, data) as viewer:
      start_time = time.time()
      free_joints = [0] * 21 #keep track of which joints to lock and free (for unstable pause method)
      start_pos = copy.copy(data.qpos)
@@ -151,22 +206,29 @@ def main():
      camera.fixedcamid = camera_id
      camera.type = mujoco.mjtCamera.mjCAMERA_FIXED
      mujoco.mjv_defaultFreeCamera(model, camera)
+     
      while viewer.is_running() and time.time() - start_time < RUNTIME:
         step_start = time.time()
-        # Assuming qfrc_applied and xfrc_applied are lists or arrays and nv is the size
-        
-        
         """ for i, cam_pos in enumerate(data.cam_xpos):
             print(f"Cam position {i}: {cam_pos}")
         for i, cam_mat in enumerate(data.cam_xmat):
             print(f"Cam orientation {i}: {cam_mat}") """
-    
+        #context = mujoco.MjrContext()
+        #context = mujoco.MjrContext(model, 50)
+        scene = mujoco.MjvScene(model, maxgeom=10000)
+        viewport = mujoco.MjrRect(0, 0, 100, 100)
+        """ context = mujoco.MjrContext(model, mujoco.mjtFontScale.mjFONTSCALE_100)
+        scene = mujoco.MjvScene(model, maxgeom=10000)
+        viewport = mujoco.MjrRect(0, 0, 100, 100)
+        #mujoco.mjr_render(viewport, scene, context)
+        upside_down_image = np.empty((100, 100, 3), dtype=np.uint8)
+        upside_down_depth = np.empty((100, 100, 1))
+        #mujoco.mjr_readPixels(rgb=upside_down_image, depth=upside_down_depth, viewport=viewport, con=context)
+ """
          # Iterate over contacts
         for i in range(data.ncon):
             contact = data.contact[i]  # Access the contact object
-
             # Extract contact details
-            
             dist = contact.dist  # Penetration distance
             geom1 = contact.geom1  # ID of the first geometry
             geom2 = contact.geom2  # ID of the second geometry
@@ -176,7 +238,6 @@ def main():
             # Print contact information
             #print(f"Contact {i}: pos=({pos[0]:.3f}, {pos[1]:.3f}, {pos[2]:.3f}), dist={dist}")
             #print(f"Contact {i}: pos=({pos[0]:.3f}, {pos[1]:.3f}, {pos[2]:.3f}), frame={frame}")
-
             #print(contact)
 
         """ if (np.array_equal(data.qpos, zero_pos)): #means we're not in the starting position (hit delete to reset sim)
@@ -201,24 +262,6 @@ def main():
         # steps the simulation forward 'tick' -- Only step if we aren't paused because it breaks the physics
         #if not paused:
         mujoco.mj_step(model, data)
-        # make model spaz out
-        #moving_jnt = random.randint(0, len(data.ctrl)-1)
-        #data.ctrl[moving_jnt] += random.randint(0, 2) # increase pos of random joint
-        #data.ctrl[moving_jnt] += random.randint(0, 2) # decrease pos of random joint 
-        # if data.ctrl[moving_jnt] > 4: 
-        #   data.ctrl = 0  # reset value if too high
-
-
-        ### READ POSITIONAL DATA HERE ###
-        positions = data.qpos #all positions
-        positions = positions[7:] #don't know what the first 7 positions are, but they're not joints so ignore them
-
-        abdomen_positions = positions[:3]
-        
-        
-        """ for i, pos in enumerate(positions):
-            print("[", i, "]", joints[i] ,f": {pos:{.3}g}") """
-        
 
         # Pick up changes to the physics state, apply perturbations, update options from GUI.
         viewer.sync()
