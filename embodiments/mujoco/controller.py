@@ -30,6 +30,7 @@ from feagi_connector import feagi_interface as feagi
 import time, random
 import mujoco, mujoco.viewer
 import numpy as np
+
 import json 
 
 # Global variable section
@@ -105,6 +106,7 @@ def pause_until_move(data, start_pos):
     data.qpos[:] = start_pos[:]
     return True
 
+
 # Since we're ignoring the physics behind everything, moving multiple joints will create overflow in data.qacc 
 # which briefly resets the model. Tried to fix this but solution is not simple. I notice the qpos positions go outside their bounds 
 # when it happens so maybe hard bounds along with resetting the respective data.qvel and data.qacc values could fix it (just an idea) 
@@ -121,7 +123,7 @@ def pause_standing_unstable(data, start_pos, free_joints):
         if (free_joints[i] != -1):
             data.qpos[i+7] = start_pos[i+7]
     return free_joints    
-    
+
 
 def action(obtained_data, capabilities):
     """
@@ -139,7 +141,7 @@ def action(obtained_data, capabilities):
     if obtained_data:
         print("obtained data d: %d", obtained_data) #testing
         pass
-    
+  
     if recieve_servo_position_data:
         # output like {0:0.50, 1:0.20, 2:0.30} # example but the data comes from your capabilities' servo range
         print("servo position data d: %d", recieve_servo_position_data) #testing
@@ -222,7 +224,9 @@ if __name__ == "__main__":
         threading.Thread(target=retina.vision_progress,
                          args=(default_capabilities, feagi_settings, camera_data['vision'],),
                          daemon=True).start()
-    
+        
+    # Model and Data objects which are used inside the simulation loop
+    # make sure the model path is using the relative humanoid file located at ./humanoid.xml
     model = mujoco.MjModel.from_xml_path('./humanoid.xml')
     data  = mujoco.MjData(model)
     #start_keypos(data, model, 0)
@@ -237,6 +241,7 @@ if __name__ == "__main__":
         #start_keypos(data, model, 1)
         start_pos = copy.copy(data.qpos)
         paused = True
+
         while viewer.is_running() and time.time() - start_time < RUNTIME:
             
             step_start = time.time()
@@ -268,17 +273,36 @@ if __name__ == "__main__":
                 pns.check_genome_status_no_vision(message_from_feagi)
                 action(obtained_signals, data)
 
-            ### READ POSITIONAL DATA HERE ###
+            #region READ POSITIONAL DATA HERE
             positions = data.qpos #all positions
             positions = positions[7:] #don't know what the first 7 positions are, but they're not joints so ignore them
 
             abdomen_positions = positions[:3] #first 3 are abdomen z,y,x
             abdomen_positions = abdomen_positions[::-1] #reverse it to x,y,z order
+            #endregion
 
+            #region READ FORCE DATA HERE
+            # Loop through all degrees of freedom (DOFs) to access forces applied to each joint.
+            # This loop gives internal force data related to actuators or controllers
+            # and is useful for understanding forces acting directly on the joints.
+            for i in range(model.nv):  # `nv` is the number of degrees of freedom (DOFs)
+                force = data.qfrc_applied[i]
+                # print(f"Joint DOF {i}, Applied Force: {force}")
 
-            """ for i, pos in enumerate(positions):
-                print("[", i, "]", joints[i] ,f": {pos:{.3}g}") #print all joint positions"""
+            # Loop through all contacts in the simulation
+            # between all bodies. This *should* include the xml model
+            # and environmental bodies like ground/floor
+            for i in range(data.ncon):
+                contact = data.contact[i]  # Access each contact
+                force = np.zeros(6)  # Use numpy to allocate blank array 
 
+                # Retrieve the contact force data
+                mujoco.mj_contactForce(model, data, i, force)
+
+                # Printout contact force data
+                print(f"Contact between body {contact.geom1} and body {contact.geom2}")
+                print(f"Force: {force[:3]}")
+            #endregion
 
             # Pick up changes to the physics state, apply perturbations, update options from GUI.
             viewer.sync()

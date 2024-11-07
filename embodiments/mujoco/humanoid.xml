@@ -278,6 +278,7 @@
     <distance cutoff="10" name="upper_arm_right_elevation" geom1="upper_arm_right" geom2="floor"/>
   </sensor>
 
+
   <keyframe>
     <!--
     The values below are split into rows for readibility:
