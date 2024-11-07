@@ -19,7 +19,7 @@ limitations under the License.
 
 import threading
 import copy
-
+# import frame_data_test as cv2
 from time import sleep
 from feagi_connector import sensors
 from feagi_connector import actuators
@@ -144,7 +144,7 @@ def action(obtained_data, capabilities):
   
     if recieve_servo_position_data:
         # output like {0:0.50, 1:0.20, 2:0.30} # example but the data comes from your capabilities' servo range
-        print("servo position data d: %d", recieve_servo_position_data) #testing
+        # print("servo position data d: %d", recieve_servo_position_data) #testing
         for real_id in recieve_servo_position_data:
             servo_number = real_id
             power = recieve_servo_position_data[real_id]
@@ -179,8 +179,8 @@ def action(obtained_data, capabilities):
                     data.qpos[servo_number+7] += .00001
              """
     if recieve_servo_data:
-        print("servo data d: %d", recieve_servo_data) #testing
-        # example output: {0: 0.245, 2: 1.0}
+        # print("servo data d: %d", recieve_servo_data) #testing
+        # example output: {0: 0 .245, 2: 1.0}
         for real_id in recieve_servo_data:
             servo_number = real_id
             new_power = recieve_servo_data[real_id]
@@ -241,7 +241,7 @@ if __name__ == "__main__":
         #start_keypos(data, model, 1)
         start_pos = copy.copy(data.qpos)
         paused = True
-
+        opt = mujoco.MjvOption()
         while viewer.is_running() and time.time() - start_time < RUNTIME:
             
             step_start = time.time()
@@ -292,16 +292,19 @@ if __name__ == "__main__":
             # Loop through all contacts in the simulation
             # between all bodies. This *should* include the xml model
             # and environmental bodies like ground/floor
+            force_list = []
             for i in range(data.ncon):
-                contact = data.contact[i]  # Access each contact
+                i = 8 # I just hardcode to get the foot. I leave the rest to you
+                # contact = data.contact[i]  # Access each contact # Not even sure how to address this. I was expecting something like true/false for each index - Kevin
                 force = np.zeros(6)  # Use numpy to allocate blank array 
 
                 # Retrieve the contact force data
                 mujoco.mj_contactForce(model, data, i, force)
 
                 # Printout contact force data
-                print(f"Contact between body {contact.geom1} and body {contact.geom2}")
-                print(f"Force: {force[:3]}")
+                # print(f"Contact between body {contact.geom1} and body {contact.geom2}")
+                # print(f"Force: {force[:3]}", " and id: ", i)
+                force_list = list(force[:3])
             #endregion
 
             # Pick up changes to the physics state, apply perturbations, update options from GUI.
@@ -316,9 +319,11 @@ if __name__ == "__main__":
             # Example to send data to FEAGI. This is basically reading the joint. R
             abdomen_gyro_data = {i: pos for i, pos in enumerate(abdomen_positions) if
                           pns.full_template_information_corticals}
-            servo_data = {i: pos for i, pos in enumerate(positions[:20]) if
+            servo_data = {i: pos for i, pos in enumerate(positions[:21]) if
                           pns.full_template_information_corticals}
             sensor_data = {i: pos for i, pos in enumerate(data.sensordata) if
+                          pns.full_template_information_corticals}
+            pressure_data = {i: pos for i, pos in enumerate(force_list) if
                           pns.full_template_information_corticals}
             #print(sensor_data)
             
@@ -338,6 +343,11 @@ if __name__ == "__main__":
                                                              message_to_feagi,
                                                              current_data=sensor_data,
                                                              symmetric=True, measure_enable=True)
+            message_to_feagi_force = sensors.create_data_for_feagi('pressure',
+                                                                   capabilities,
+                                                                   message_to_feagi,
+                                                                   current_data=pressure_data,
+                                                                   symmetric=True, measure_enable=False) # measure enable set to false so that way, it doesnt change 50/-50 in capabilities automatically
         
 
             # Sends to feagi data
@@ -350,6 +360,7 @@ if __name__ == "__main__":
 
             # Pick up changes to the physics state, apply perturbations, update options from GUI.
             viewer.sync()
+            # cv2.get_frame(model=model, data=data, opt=opt)
 
             # Tick Speed # 
             time_until_next_step = (1/SPEED) - (time.time() - step_start)
