@@ -5,8 +5,8 @@ Link to humanoid.xml https://github.com/google-deepmind/mujoco/blob/main/model/h
 ## FEAGI (Docker)
 1. Clone the repository
 2. Change directory to `/feagi/docker/`
-3. Ensure you have the latest update: `docker compose -f playground.yml pull`
-4. Run FEAGI with: `docker compose -f playground.yml up`
+3. Ensure you have the latest update: `docker-compose -f playground.yml pull`
+4. Run FEAGI with: `docker-compose -f playground.yml up`
 
 ## FEAGI Playground & Brain Visualizer
 1. With FEAGI running, visit this link: http://localhost:4000/

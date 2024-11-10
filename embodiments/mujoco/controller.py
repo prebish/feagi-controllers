@@ -36,7 +36,7 @@ import json
 # Global variable section
 camera_data = {"vision": []}  # This will be heavily relies for vision
 
-RUNTIME = 6000 # (seconds) //timeout time
+RUNTIME = float('inf') # (seconds) timeout time 
 SPEED   = 120 # simulation step speed
 
 #this works but I'd think there's a better way to check this than opening the json again 
@@ -137,14 +137,9 @@ def action(obtained_data, capabilities):
     """
     recieve_servo_data = actuators.get_servo_data(obtained_data)
     recieve_servo_position_data = actuators.get_servo_position_data(obtained_data)
-
-    if obtained_data:
-        print("obtained data d: %d", obtained_data) #testing
-        pass
   
     if recieve_servo_position_data:
         # output like {0:0.50, 1:0.20, 2:0.30} # example but the data comes from your capabilities' servo range
-        print("servo position data d: %d", recieve_servo_position_data) #testing
         for real_id in recieve_servo_position_data:
             servo_number = real_id
             power = recieve_servo_position_data[real_id]
@@ -179,7 +174,6 @@ def action(obtained_data, capabilities):
                     data.qpos[servo_number+7] += .00001
              """
     if recieve_servo_data:
-        print("servo data d: %d", recieve_servo_data) #testing
         # example output: {0: 0.245, 2: 1.0}
         for real_id in recieve_servo_data:
             servo_number = real_id
@@ -273,7 +267,7 @@ if __name__ == "__main__":
                 pns.check_genome_status_no_vision(message_from_feagi)
                 action(obtained_signals, data)
 
-            #region READ POSITIONAL DATA HERE
+            #region READ POSITIONAL DATA HERE ###
             positions = data.qpos #all positions
             positions = positions[7:] #don't know what the first 7 positions are, but they're not joints so ignore them
 
@@ -281,7 +275,7 @@ if __name__ == "__main__":
             abdomen_positions = abdomen_positions[::-1] #reverse it to x,y,z order
             #endregion
 
-            #region READ FORCE DATA HERE
+            #region READ FORCE DATA HERE ###
             # Loop through all degrees of freedom (DOFs) to access forces applied to each joint.
             # This loop gives internal force data related to actuators or controllers
             # and is useful for understanding forces acting directly on the joints.
@@ -298,10 +292,6 @@ if __name__ == "__main__":
 
                 # Retrieve the contact force data
                 mujoco.mj_contactForce(model, data, i, force)
-
-                # Printout contact force data
-                print(f"Contact between body {contact.geom1} and body {contact.geom2}")
-                print(f"Force: {force[:3]}")
             #endregion
 
             # Pick up changes to the physics state, apply perturbations, update options from GUI.
