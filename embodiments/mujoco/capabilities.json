@@ -1,13 +1,48 @@
 {
 	"capabilities": {
 		"input": {
+			"camera": {
+				"0": {
+					"custom_name": "head_camera",
+					"disabled": false,
+					"eccentricity_control": {
+						"X offset percentage": 1,
+						"Y offset percentage": 1
+					},
+					"feagi_index": 0,
+					"index": "00",
+					"mirror": false,
+					"modulation_control": {
+						"X offset percentage": 99,
+						"Y offset percentage": 99
+					},
+					"threshold_default": 50
+				}
+			},
+			"gyro": {
+				"0": {
+					"custom_name": "abdomen",
+					"disabled": false,
+					"feagi_index": 0,
+					"max_value": [
+						0.619,
+						0.531,
+						0.794
+					],
+					"min_value": [
+						-0.619,
+						-0.509,
+						-0.578
+					]
+				}
+			},
 			"servo_position": {
 				"0": {
 					"custom_name": "abdomen_z",
 					"default_value": 0,
 					"disabled": false,
 					"feagi_index": 0,
-					"max_power": 10,
+					"max_power": 1,
 					"max_value": 0.794,
 					"min_value": -0.578
 				},
@@ -16,7 +51,7 @@
 					"default_value": 0,
 					"disabled": false,
 					"feagi_index": 1,
-					"max_power": 10,
+					"max_power": 1,
 					"max_value": 0.531,
 					"min_value": -0.509
 				},
@@ -25,7 +60,7 @@
 					"default_value": 0,
 					"disabled": false,
 					"feagi_index": 2,
-					"max_power": 10,
+					"max_power": 1,
 					"max_value": 0.619,
 					"min_value": -0.619
 				},
@@ -34,7 +69,7 @@
 					"default_value": 0,
 					"disabled": false,
 					"feagi_index": 3,
-					"max_power": 10,
+					"max_power": 1,
 					"max_value": 0.162,
 					"min_value": -0.533
 				},
@@ -43,7 +78,7 @@
 					"default_value": 0,
 					"disabled": false,
 					"feagi_index": 4,
-					"max_power": 10,
+					"max_power": 1,
 					"max_value": 0.621,
 					"min_value": -0.567
 				},
@@ -52,7 +87,7 @@
 					"default_value": 0,
 					"disabled": false,
 					"feagi_index": 5,
-					"max_power": 10,
+					"max_power": 1,
 					"max_value": 0.358,
 					"min_value": -2.63
 				},
@@ -61,7 +96,7 @@
 					"default_value": 0,
 					"disabled": false,
 					"feagi_index": 6,
-					"max_power": 10,
+					"max_power": 1,
 					"max_value": 0.0443,
 					"min_value": -2.8
 				},
@@ -70,7 +105,7 @@
 					"default_value": 0,
 					"disabled": false,
 					"feagi_index": 7,
-					"max_power": 10,
+					"max_power": 1,
 					"max_value": 0.882,
 					"min_value": -0.882
 				},
@@ -79,7 +114,7 @@
 					"default_value": 0,
 					"disabled": false,
 					"feagi_index": 8,
-					"max_power": 10,
+					"max_power": 1,
 					"max_value": 0.882,
 					"min_value": -0.883
 				},
@@ -88,7 +123,7 @@
 					"default_value": 0,
 					"disabled": false,
 					"feagi_index": 9,
-					"max_power": 10,
+					"max_power": 1,
 					"max_value": 0.132,
 					"min_value": -0.5
 				},
@@ -97,7 +132,7 @@
 					"default_value": 0,
 					"disabled": false,
 					"feagi_index": 10,
-					"max_power": 10,
+					"max_power": 1,
 					"max_value": 0.621,
 					"min_value": -1.06
 				},
@@ -106,7 +141,7 @@
 					"default_value": 0,
 					"disabled": false,
 					"feagi_index": 11,
-					"max_power": 10,
+					"max_power": 1,
 					"max_value": 0.358,
 					"min_value": -2.63
 				},
@@ -115,7 +150,7 @@
 					"default_value": 0,
 					"disabled": false,
 					"feagi_index": 12,
-					"max_power": 10,
+					"max_power": 1,
 					"max_value": 0.0443,
 					"min_value": -2.8
 				},
@@ -124,7 +159,7 @@
 					"default_value": 0,
 					"disabled": false,
 					"feagi_index": 13,
-					"max_power": 10,
+					"max_power": 1,
 					"max_value": 0.882,
 					"min_value": -0.882
 				},
@@ -133,7 +168,7 @@
 					"default_value": 0,
 					"disabled": false,
 					"feagi_index": 14,
-					"max_power": 10,
+					"max_power": 1,
 					"max_value": 0.882,
 					"min_value": -0.882
 				},
@@ -142,7 +177,7 @@
 					"default_value": 0,
 					"disabled": false,
 					"feagi_index": 15,
-					"max_power": 10,
+					"max_power": 1,
 					"max_value": 1.05,
 					"min_value": -1.49
 				},
@@ -151,7 +186,7 @@
 					"default_value": 0,
 					"disabled": false,
 					"feagi_index": 16,
-					"max_power": 10,
+					"max_power": 1,
 					"max_value": 0.835,
 					"min_value": -1.49
 				},
@@ -160,7 +195,7 @@
 					"default_value": 0,
 					"disabled": false,
 					"feagi_index": 17,
-					"max_power": 10,
+					"max_power": 1,
 					"max_value": 0.882,
 					"min_value": -1.75
 				},
@@ -169,7 +204,7 @@
 					"default_value": 0,
 					"disabled": false,
 					"feagi_index": 18,
-					"max_power": 10,
+					"max_power": 1,
 					"max_value": 1.05,
 					"min_value": -1.49
 				},
@@ -178,7 +213,7 @@
 					"default_value": 0,
 					"disabled": false,
 					"feagi_index": 19,
-					"max_power": 10,
+					"max_power": 1,
 					"max_value": 1.06,
 					"min_value": -1.49
 				},
@@ -187,12 +222,35 @@
 					"default_value": 0,
 					"disabled": false,
 					"feagi_index": 20,
-					"max_power": 10,
+					"max_power": 1,
 					"max_value": 0.882,
 					"min_value": -1.75
 				}
-		}
-	},
+			},
+			"proximity": {
+				"0": {
+					"custom_name": "waist",
+					"disabled": false,
+					"feagi_index": 0,
+					"max_value": 0,
+					"min_value": 0
+				},
+				"1": {
+					"custom_name": "shoulder1_left",
+					"disabled": false,
+					"feagi_index": 1,
+					"max_value": 0,
+					"min_value": 0
+				},
+				"2": {
+					"custom_name": "shoulder1_right",
+					"disabled": false,
+					"feagi_index": 2,
+					"max_value": 0,
+					"min_value": 0
+				}
+			}
+		},
 		"output": {
 			"servo": {
 				"0": {
@@ -200,7 +258,7 @@
 					"default_value": 0,
 					"disabled": false,
 					"feagi_index": 0,
-					"max_power": 10,
+					"max_power": 1,
 					"max_value": 0.794,
 					"min_value": -0.578
 				},
@@ -209,7 +267,7 @@
 					"default_value": 0,
 					"disabled": false,
 					"feagi_index": 1,
-					"max_power": 10,
+					"max_power": 1,
 					"max_value": 0.531,
 					"min_value": -0.509
 				},
@@ -218,7 +276,7 @@
 					"default_value": 0,
 					"disabled": false,
 					"feagi_index": 2,
-					"max_power": 10,
+					"max_power": 1,
 					"max_value": 0.619,
 					"min_value": -0.619
 				},
@@ -227,7 +285,7 @@
 					"default_value": 0,
 					"disabled": false,
 					"feagi_index": 3,
-					"max_power": 10,
+					"max_power": 1,
 					"max_value": 0.162,
 					"min_value": -0.533
 				},
@@ -236,7 +294,7 @@
 					"default_value": 0,
 					"disabled": false,
 					"feagi_index": 4,
-					"max_power": 10,
+					"max_power": 1,
 					"max_value": 0.621,
 					"min_value": -0.567
 				},
@@ -245,7 +303,7 @@
 					"default_value": 0,
 					"disabled": false,
 					"feagi_index": 5,
-					"max_power": 10,
+					"max_power": 1,
 					"max_value": 0.358,
 					"min_value": -2.63
 				},
@@ -254,7 +312,7 @@
 					"default_value": 0,
 					"disabled": false,
 					"feagi_index": 6,
-					"max_power": 10,
+					"max_power": 1,
 					"max_value": 0.0443,
 					"min_value": -2.8
 				},
@@ -263,7 +321,7 @@
 					"default_value": 0,
 					"disabled": false,
 					"feagi_index": 7,
-					"max_power": 10,
+					"max_power": 1,
 					"max_value": 0.882,
 					"min_value": -0.882
 				},
@@ -272,7 +330,7 @@
 					"default_value": 0,
 					"disabled": false,
 					"feagi_index": 8,
-					"max_power": 10,
+					"max_power": 1,
 					"max_value": 0.882,
 					"min_value": -0.883
 				},
@@ -281,7 +339,7 @@
 					"default_value": 0,
 					"disabled": false,
 					"feagi_index": 9,
-					"max_power": 10,
+					"max_power": 1,
 					"max_value": 0.132,
 					"min_value": -0.5
 				},
@@ -290,7 +348,7 @@
 					"default_value": 0,
 					"disabled": false,
 					"feagi_index": 10,
-					"max_power": 10,
+					"max_power": 1,
 					"max_value": 0.621,
 					"min_value": -1.06
 				},
@@ -299,7 +357,7 @@
 					"default_value": 0,
 					"disabled": false,
 					"feagi_index": 11,
-					"max_power": 10,
+					"max_power": 1,
 					"max_value": 0.358,
 					"min_value": -2.63
 				},
@@ -308,7 +366,7 @@
 					"default_value": 0,
 					"disabled": false,
 					"feagi_index": 12,
-					"max_power": 10,
+					"max_power": 1,
 					"max_value": 0.0443,
 					"min_value": -2.8
 				},
@@ -317,7 +375,7 @@
 					"default_value": 0,
 					"disabled": false,
 					"feagi_index": 13,
-					"max_power": 10,
+					"max_power": 1,
 					"max_value": 0.882,
 					"min_value": -0.882
 				},
@@ -326,7 +384,7 @@
 					"default_value": 0,
 					"disabled": false,
 					"feagi_index": 14,
-					"max_power": 10,
+					"max_power": 1,
 					"max_value": 0.882,
 					"min_value": -0.882
 				},
@@ -335,7 +393,7 @@
 					"default_value": 0,
 					"disabled": false,
 					"feagi_index": 15,
-					"max_power": 10,
+					"max_power": 1,
 					"max_value": 1.05,
 					"min_value": -1.49
 				},
@@ -344,7 +402,7 @@
 					"default_value": 0,
 					"disabled": false,
 					"feagi_index": 16,
-					"max_power": 10,
+					"max_power": 1,
 					"max_value": 0.835,
 					"min_value": -1.49
 				},
@@ -353,7 +411,7 @@
 					"default_value": 0,
 					"disabled": false,
 					"feagi_index": 17,
-					"max_power": 10,
+					"max_power": 1,
 					"max_value": 0.882,
 					"min_value": -1.75
 				},
@@ -362,7 +420,7 @@
 					"default_value": 0,
 					"disabled": false,
 					"feagi_index": 18,
-					"max_power": 10,
+					"max_power": 1,
 					"max_value": 1.05,
 					"min_value": -1.49
 				},
@@ -371,7 +429,7 @@
 					"default_value": 0,
 					"disabled": false,
 					"feagi_index": 19,
-					"max_power": 10,
+					"max_power": 1,
 					"max_value": 1.06,
 					"min_value": -1.49
 				},
@@ -380,7 +438,7 @@
 					"default_value": 0,
 					"disabled": false,
 					"feagi_index": 20,
-					"max_power": 10,
+					"max_power": 1,
 					"max_value": 0.882,
 					"min_value": -1.75
 				}
