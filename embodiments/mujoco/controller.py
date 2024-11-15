@@ -36,7 +36,7 @@ import json
 # Global variable section
 camera_data = {"vision": []}  # This will be heavily relies for vision
 
-RUNTIME = 6000 # (seconds) //timeout time
+RUNTIME = float('inf') # (seconds) timeout time 
 SPEED   = 120 # simulation step speed
 
 #this works but I'd think there's a better way to check this than opening the json again 
@@ -137,14 +137,9 @@ def action(obtained_data, capabilities):
     """
     recieve_servo_data = actuators.get_servo_data(obtained_data)
     recieve_servo_position_data = actuators.get_servo_position_data(obtained_data)
-
-    if obtained_data:
-        print("obtained data d: %d", obtained_data) #testing
-        pass
   
     if recieve_servo_position_data:
         # output like {0:0.50, 1:0.20, 2:0.30} # example but the data comes from your capabilities' servo range
-        # print("servo position data d: %d", recieve_servo_position_data) #testing
         for real_id in recieve_servo_position_data:
             servo_number = real_id
             power = recieve_servo_position_data[real_id]
@@ -179,8 +174,6 @@ def action(obtained_data, capabilities):
                     data.qpos[servo_number+7] += .00001
              """
     if recieve_servo_data:
-        # print("servo data d: %d", recieve_servo_data) #testing
-        # example output: {0: 0 .245, 2: 1.0}
         for real_id in recieve_servo_data:
             servo_number = real_id
             new_power = recieve_servo_data[real_id]
@@ -229,6 +222,12 @@ if __name__ == "__main__":
     # make sure the model path is using the relative humanoid file located at ./humanoid.xml
     model = mujoco.MjModel.from_xml_path('./humanoid.xml')
     data  = mujoco.MjData(model)
+
+    # Create a dict to store data
+    force_list = {}
+    for x in range(20):
+        force_list[str(x)] = [0, 0, 0]
+
     #start_keypos(data, model, 0)
     #start_keypos(data, 4) #preset positions, 0: squat, 1: standing one leg, 2:...
 
@@ -243,7 +242,7 @@ if __name__ == "__main__":
         paused = True
         opt = mujoco.MjvOption()
         while viewer.is_running() and time.time() - start_time < RUNTIME:
-            
+
             step_start = time.time()
 
             #check if key pos was manually changed (delete was pressed) and reset to our custom start instead (prob a better way to do this)
@@ -254,7 +253,7 @@ if __name__ == "__main__":
             ### PAUSING/BALANCE ### Only try one at a time.
             #balance_attempt_advanced(data, start_pos[7:], np.zeros_like(start_pos[7:])) #better attempt at balancing
             #if paused:
-            #paused = pause_until_move(data, start_pos) #pauses the simulation until control is applied. Will lock positions if d.ctrl[:]==0 
+            #paused = pause_until_move(data, start_pos) #pauses the simulation until control is applied. Will lock positions if d.ctrl[:]==0
             #free_joints = pause_standing_unstable(data, start_pos, free_joints) #Unstable. Mainly for testing. lock the model but move joints freely. Helpful for seeing what controls actually do
             #balance_attempt_basic(data, start_pos) #Bad. tries to use ctrl to balance instead of hardcoding qpos.
             ###############
@@ -273,7 +272,7 @@ if __name__ == "__main__":
                 pns.check_genome_status_no_vision(message_from_feagi)
                 action(obtained_signals, data)
 
-            #region READ POSITIONAL DATA HERE
+            #region READ POSITIONAL DATA HERE ###
             positions = data.qpos #all positions
             positions = positions[7:] #don't know what the first 7 positions are, but they're not joints so ignore them
 
@@ -281,7 +280,7 @@ if __name__ == "__main__":
             abdomen_positions = abdomen_positions[::-1] #reverse it to x,y,z order
             #endregion
 
-            #region READ FORCE DATA HERE
+            #region READ FORCE DATA HERE ###
             # Loop through all degrees of freedom (DOFs) to access forces applied to each joint.
             # This loop gives internal force data related to actuators or controllers
             # and is useful for understanding forces acting directly on the joints.
@@ -292,11 +291,9 @@ if __name__ == "__main__":
             # Loop through all contacts in the simulation
             # between all bodies. This *should* include the xml model
             # and environmental bodies like ground/floor
-            force_list = []
             for i in range(data.ncon):
-                i = 8 # I just hardcode to get the foot. I leave the rest to you
                 # contact = data.contact[i]  # Access each contact # Not even sure how to address this. I was expecting something like true/false for each index - Kevin
-                force = np.zeros(6)  # Use numpy to allocate blank array 
+                force = np.zeros(6)  # Use numpy to allocate blank array
 
                 # Retrieve the contact force data
                 mujoco.mj_contactForce(model, data, i, force)
@@ -304,29 +301,26 @@ if __name__ == "__main__":
                 # Printout contact force data
                 # print(f"Contact between body {contact.geom1} and body {contact.geom2}")
                 # print(f"Force: {force[:3]}", " and id: ", i)
-                force_list = list(force[:3])
-            #endregion
+                obtained_data_from_force = force[:3]
+                force_list[str(i)] = list((float(obtained_data_from_force[0]), float(obtained_data_from_force[1]), float(obtained_data_from_force[2])))
+            # endregion
 
             # Pick up changes to the physics state, apply perturbations, update options from GUI.
             viewer.sync()
 
-            # Tick Speed # 
+            # Tick Speed #
             time_until_next_step = (1/SPEED) - (time.time() - step_start)
             if time_until_next_step > 0:
                 time.sleep(time_until_next_step)
 
 
             # Example to send data to FEAGI. This is basically reading the joint. R
-            abdomen_gyro_data = {i: pos for i, pos in enumerate(abdomen_positions) if
-                          pns.full_template_information_corticals}
+            abdomen_gyro_data = {'0': [float(abdomen_positions[0]), float(abdomen_positions[1]), float(abdomen_positions[2])]}
             servo_data = {i: pos for i, pos in enumerate(positions[:21]) if
                           pns.full_template_information_corticals}
             sensor_data = {i: pos for i, pos in enumerate(data.sensordata) if
                           pns.full_template_information_corticals}
-            pressure_data = {i: pos for i, pos in enumerate(force_list) if
-                          pns.full_template_information_corticals}
-            #print(sensor_data)
-            
+
             #Creating message to send to FEAGI
             message_to_feagi_gyro = sensors.create_data_for_feagi('gyro',
                                                              capabilities,
@@ -346,14 +340,15 @@ if __name__ == "__main__":
             message_to_feagi_force = sensors.create_data_for_feagi('pressure',
                                                                    capabilities,
                                                                    message_to_feagi,
-                                                                   current_data=pressure_data,
+                                                                   current_data=force_list,
                                                                    symmetric=True, measure_enable=False) # measure enable set to false so that way, it doesnt change 50/-50 in capabilities automatically
-        
+
 
             # Sends to feagi data
             pns.signals_to_feagi(message_to_feagi_servo, feagi_ipu_channel, agent_settings, feagi_settings)
             pns.signals_to_feagi(message_to_feagi_gyro, feagi_ipu_channel, agent_settings, feagi_settings)
             pns.signals_to_feagi(message_to_feagi_prox, feagi_ipu_channel, agent_settings, feagi_settings) #confused why it still shows up in the bv when commented out
+            pns.signals_to_feagi(message_to_feagi_force, feagi_ipu_channel, agent_settings, feagi_settings)
 
             # Clear data that is created by controller such as sensors
             message_to_feagi.clear()
@@ -362,7 +357,7 @@ if __name__ == "__main__":
             viewer.sync()
             # cv2.get_frame(model=model, data=data, opt=opt)
 
-            # Tick Speed # 
+            # Tick Speed #
             time_until_next_step = (1/SPEED) - (time.time() - step_start)
             if time_until_next_step > 0:
                 time.sleep(time_until_next_step)
