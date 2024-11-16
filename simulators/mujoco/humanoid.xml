@@ -113,6 +113,8 @@
       <geom name="waist_upper" fromto="-.01 -.06 -.12 -.01 .06 -.12" size=".06"/>
       <body name="head" pos="0 0 .19">
         <geom name="head" type="sphere" size=".09"/>
+        <site name="head_gyro_mount" pos="0 0 0" size="0.01"/>
+
         <camera name="egocentric" pos=".09 0 0" xyaxes="0 -1 0 .1 0 1" fovy="80"/>
       </body>
       <body name="waist_lower" pos="-.01 0 -.26">
@@ -183,6 +185,11 @@
       </body>
     </body>
   </worldbody>
+
+  <sensor>
+      <!-- Define gyro sensor attached to the mounting site -->
+      <gyro name="head_gyro" site="head_gyro_mount" noise="0.0"/>
+  </sensor>
 
   <contact>
     <exclude body1="waist_lower" body2="thigh_right"/>
