@@ -181,6 +181,11 @@ def action(obtained_data, capabilities):
             data.ctrl[servo_number] = new_power
 
 
+def get_gyro_data():
+    gyro_id = model.sensor('head_gyro').id
+    return data.sensordata[gyro_id:gyro_id+3]
+
+
 if __name__ == "__main__":
     # Generate runtime dictionary
     runtime_data = {"vision": [], "stimulation_period": None, "feagi_state": None,
@@ -311,12 +316,19 @@ if __name__ == "__main__":
             sensor_data = {i: pos for i, pos in enumerate(data.sensordata) if
                           pns.full_template_information_corticals}
             #print(sensor_data)
-            
+
+            # Get gyro data
+            gyro = get_gyro_data()
+
+            gyro_data = {"0": gyro}
+            print("gyro data:", gyro_data)
+            print("servo data:", servo_data)
+
             #Creating message to send to FEAGI
             message_to_feagi_gyro = sensors.create_data_for_feagi('gyro',
                                                              capabilities,
                                                              message_to_feagi,
-                                                             current_data=abdomen_gyro_data,
+                                                             current_data=gyro,
                                                              symmetric=True)
             message_to_feagi_servo = sensors.create_data_for_feagi('servo_position',
                                                              capabilities,

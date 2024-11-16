@@ -21,18 +21,18 @@
 			},
 			"gyro": {
 				"0": {
-					"custom_name": "abdomen",
+					"custom_name": "head_gyro",
 					"disabled": false,
 					"feagi_index": 0,
 					"max_value": [
-						0.619,
-						0.531,
-						0.794
+						10,
+						10,
+						10
 					],
 					"min_value": [
-						-0.619,
-						-0.509,
-						-0.578
+						-10,
+						-10,
+						-10
 					]
 				}
 			},
