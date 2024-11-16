@@ -1,6 +1,6 @@
-How to connect FEAGI with Mujoco
+# How to connect FEAGI with Mujoco
 
-Start Mujoco project:
+## Start Mujoco project:
 1.	Open a new terminal/cmd and run: `git clone https://github.com/feagi/controllers.git`
 2. `cd controllers/simulators/mujoco`
 3. `python3 -m venv venv` (Windows: `python -m venv venv`)
@@ -8,7 +8,7 @@ Start Mujoco project:
 5. `pip3 install -r requirements.txt` (Windows: `pip install -r requirements.txt`)
 6. `python3 controller.py` (Windows: `python controller.py`) (If you are using FEAGI in the docker, run this command: `python3 controller.py --port 30000`
 
-Load Docker:
+## Load Docker:
 
 	1.	git clone git@github.com:feagi/feagi.git
 	2.	cd ~/feagi/docker
@@ -16,7 +16,7 @@ Load Docker:
 	4.	Wait until it’s done.
 	5.	docker compose -f playground.yml up
 
-Open Playground Website:
+## Open Playground Website:
 
 	1.	Go to http://127.0.0.1:4000/
 	2.	Click the “GENOME” button on the top right, next to “API.”
