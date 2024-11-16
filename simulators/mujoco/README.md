@@ -1,21 +1,47 @@
-Link to humanoid.xml https://github.com/google-deepmind/mujoco/blob/main/model/humanoid/humanoid.xml
+How to connect FEAGI with Mujoco
 
-# How to Run
+Start Mujoco project:
 
-## FEAGI (Docker)
-1. Clone the repository
-2. Change directory to `/feagi/docker/`
-3. Ensure you have the latest update: `docker-compose -f playground.yml pull`
-4. Run FEAGI with: `docker-compose -f playground.yml up`
+	1.	Open a new terminal/cmd and run:git clone https://github.com/feagi/controllers.git
+	2.	cd controllers/simulators/mujoco
+	3.	python3 -m venv venv (Windows: python -m venv venv)
+	4.	source venv/bin/activate (Windows: venv/Scripts/activate)
+	5.	pip3 install -r requirements.txt (Windows: pip install -r requirements.txt)
+	6.	python3 controller.py (Windows: python controller.py) (If you are using FEAGI in the docker, run this command: python3 controller.py --port 30000
 
-## FEAGI Playground & Brain Visualizer
-1. With FEAGI running, visit this link: http://localhost:4000/
-This should open up the Playground and Brain Visualizer
+Load Docker:
 
-2. It should say "Loading..." BUT
-On the top right select 'GENOMES' > 'ESSENTIAL'
-From there you should see the brain visualizer.
+	1.	git clone git@github.com:feagi/feagi.git
+	2.	cd ~/feagi/docker
+	3.	docker compose -f playground.yml pull
+	4.	Wait until it’s done.
+	5.	docker compose -f playground.yml up
 
-3. Spin up the MuJoCo controller
-`python3 controller.py --port 30000`
+Open Playground Website:
 
+	1.	Go to http://127.0.0.1:4000/
+	2.	Click the “GENOME” button on the top right, next to “API.”
+	3.	Click “Essential.”
+
+
+# Extra flags
+Example command: `python controller.py --help`
+```
+optional arguments:
+  -h, --help            Show this help message and exit.
+  
+  -magic_link MAGIC_LINK, --magic_link MAGIC_LINK
+                        Use a magic link. You can find your magic link from NRS studio.
+                        
+  -magic-link MAGIC_LINK, --magic-link MAGIC_LINK
+                        Use a magic link. You can find your magic link from NRS studio.
+                        
+  -magic MAGIC, --magic MAGIC
+                        Use a magic link. You can find your magic link from NRS studio.
+                        
+  -ip IP, --ip IP       Specify the FEAGI IP address.
+  
+  -port PORT, --port PORT
+                        Change the ZMQ port. Use 30000 for Docker and 3000 for localhost.
+
+```
