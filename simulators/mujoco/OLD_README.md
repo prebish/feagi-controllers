@@ -1,3 +1,5 @@
+
+
 Link to humanoid.xml https://github.com/google-deepmind/mujoco/blob/main/model/humanoid/humanoid.xml
 
 # How to Run
