@@ -188,7 +188,7 @@
 
   <sensor>
       <!-- Define gyro sensor attached to the mounting site -->
-      <framequat objtype="body" objname="head_gyro_mount" name="head_gyro"/>
+      <framequat objtype="site" objname="head_gyro_mount" name="head_gyro"/>
   </sensor>
 
   <contact>

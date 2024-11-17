@@ -215,7 +215,7 @@ def quaternion_to_euler(w, x, y, z):
 
 def get_head_orientation():
     # Get quaternion data from head sensor
-    quat_id = model.sensor('head_orientation').id
+    quat_id = model.sensor('head_gyro').id
     quat = data.sensordata[quat_id:quat_id + 4]  # w, x, y, z
 
     # Convert to euler angles
