@@ -17,21 +17,14 @@ limitations under the License.
 ==============================================================================
 """
 
-import threading
-import copy
-
-from time import sleep
+import time
+import numpy as np
+import mujoco.viewer
 from feagi_connector import sensors
 from feagi_connector import actuators
-from feagi_connector import retina as retina
 from feagi_connector import pns_gateway as pns
 from feagi_connector.version import __version__
 from feagi_connector import feagi_interface as feagi
-import time, random
-import mujoco, mujoco.viewer
-import numpy as np
-
-import json
 
 RUNTIME = float('inf')  # (seconds) timeout time
 SPEED = 120  # simulation step speed
@@ -121,7 +114,7 @@ if __name__ == "__main__":
     with mujoco.viewer.launch_passive(model, data) as viewer:
         mujoco.mj_resetDataKeyframe(model, data, 4)
         start_time = time.time()
-        free_joints = [0] * 21  #keep track of which joints to lock and free (for unstable pause method)
+        free_joints = [0] * 21  # keep track of which joints to lock and free (for unstable pause method)
         paused = True
 
         while viewer.is_running() and time.time() - start_time < RUNTIME:
@@ -136,9 +129,10 @@ if __name__ == "__main__":
                 pns.check_genome_status_no_vision(message_from_feagi)
                 action(obtained_signals)
 
-            #region READ POSITIONAL DATA HERE ###
-            positions = data.qpos  #all positions
-            positions = positions[7:]  #don't know what the first 7 positions are, but they're not joints so ignore them
+            # region READ POSITIONAL DATA HERE ###
+            positions = data.qpos  # all positions
+            positions = positions[7:]  # don't know what the first 7 positions are, but they're not joints so ignore
+            # them
 
             for i in range(data.ncon):
                 force = np.zeros(6)  # Use numpy to allocate blank array
@@ -169,7 +163,7 @@ if __name__ == "__main__":
             gyro = get_head_orientation()
             gyro_data = {"0": np.array(gyro)}
 
-            #Creating message to send to FEAGI
+            # Creating message to send to FEAGI
             message_to_feagi = sensors.create_data_for_feagi('gyro',
                                                              capabilities,
                                                              message_to_feagi,
@@ -191,7 +185,8 @@ if __name__ == "__main__":
                                                              message_to_feagi,
                                                              current_data=force_list,
                                                              symmetric=True,
-                                                             measure_enable=False)  # measure enable set to false so that way, it doesnt change 50/-50 in capabilities automatically
+                                                             measure_enable=False)  # measure enable set to false so
+            # that way, it doesn't change 50/-50 in capabilities automatically
 
             # Sends to feagi data
             pns.signals_to_feagi(message_to_feagi, feagi_ipu_channel, agent_settings, feagi_settings)
