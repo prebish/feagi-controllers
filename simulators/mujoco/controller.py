@@ -276,6 +276,11 @@ if __name__ == "__main__":
     #start_keypos(data, model, 0)
     #start_keypos(data, 4) #preset positions, 0: squat, 1: standing one leg, 2:...
 
+    # Create a dict to store data
+    force_list = {}
+    for x in range(20):
+        force_list[str(x)] = [0, 0, 0]
+
     
     actuators.start_servos(capabilities) # inserted here. This is not something you should do on your end. I will fix it shortly
     with mujoco.viewer.launch_passive(model, data) as viewer:
@@ -337,12 +342,18 @@ if __name__ == "__main__":
             # between all bodies. This *should* include the xml model
             # and environmental bodies like ground/floor
             for i in range(data.ncon):
-                contact = data.contact[i]  # Access each contact
-                force = np.zeros(6)  # Use numpy to allocate blank array 
+                # contact = data.contact[i]  # Access each contact # Not even sure how to address this. I was expecting something like true/false for each index - Kevin
+                force = np.zeros(6)  # Use numpy to allocate blank array
 
                 # Retrieve the contact force data
                 mujoco.mj_contactForce(model, data, i, force)
-            #endregion
+
+                # Printout contact force data
+                # print(f"Contact between body {contact.geom1} and body {contact.geom2}")
+                # print(f"Force: {force[:3]}", " and id: ", i)
+                obtained_data_from_force = force[:3]
+                force_list[str(i)] = list((float(obtained_data_from_force[0]), float(obtained_data_from_force[1]), float(obtained_data_from_force[2])))
+            # endregion
 
             # Pick up changes to the physics state, apply perturbations, update options from GUI.
             viewer.sync()
@@ -383,12 +394,20 @@ if __name__ == "__main__":
                                                              message_to_feagi,
                                                              current_data=sensor_data,
                                                              symmetric=True, measure_enable=True)
+            message_to_feagi_force = sensors.create_data_for_feagi('pressure',
+                                                                   capabilities,
+                                                                   message_to_feagi,
+                                                                   current_data=force_list,
+                                                                   symmetric=True, measure_enable=False) # measure enable set to false so that way, it doesnt change 50/-50 in capabilities automatically
+
 
 
             # Sends to feagi data
             pns.signals_to_feagi(message_to_feagi_servo, feagi_ipu_channel, agent_settings, feagi_settings)
             pns.signals_to_feagi(message_to_feagi_gyro, feagi_ipu_channel, agent_settings, feagi_settings)
             pns.signals_to_feagi(message_to_feagi_prox, feagi_ipu_channel, agent_settings, feagi_settings) #confused why it still shows up in the bv when commented out
+            pns.signals_to_feagi(message_to_feagi_force, feagi_ipu_channel, agent_settings, feagi_settings)
+
 
             # Clear data that is created by controller such as sensors
             message_to_feagi.clear()
