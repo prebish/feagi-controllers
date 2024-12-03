@@ -21,18 +21,18 @@
 			},
 			"gyro": {
 				"0": {
-					"custom_name": "abdomen",
+					"custom_name": "head_gyro",
 					"disabled": false,
 					"feagi_index": 0,
 					"max_value": [
-						0.619,
-						0.531,
-						0.794
+						1,
+						1,
+						1
 					],
 					"min_value": [
-						-0.619,
-						-0.509,
-						-0.578
+						-1,
+						-1,
+						-1
 					]
 				}
 			},
@@ -232,21 +232,21 @@
 					"custom_name": "waist",
 					"disabled": false,
 					"feagi_index": 0,
-					"max_value": 0,
+					"max_value": 1,
 					"min_value": 0
 				},
 				"1": {
 					"custom_name": "shoulder1_left",
 					"disabled": false,
 					"feagi_index": 1,
-					"max_value": 0,
+					"max_value": 1,
 					"min_value": 0
 				},
 				"2": {
 					"custom_name": "shoulder1_right",
 					"disabled": false,
 					"feagi_index": 2,
-					"max_value": 0,
+					"max_value": 1,
 					"min_value": 0
 				}
 			}

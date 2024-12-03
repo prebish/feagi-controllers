@@ -181,6 +181,56 @@ def action(obtained_data, capabilities):
             data.ctrl[servo_number] = new_power
 
 
+def get_gyro_data():
+    gyro_id = model.sensor('head_gyro').id
+    return data.sensordata[gyro_id:gyro_id+3]
+
+
+def get_proximity_data():
+    waist_elevation = model.sensor('waist_elevation').id
+    return data.sensordata[waist_elevation:waist_elevation+1]
+
+
+def quaternion_to_euler(w, x, y, z):
+    """Convert quaternion to euler angles (in degrees)"""
+    # roll (x-axis rotation)
+    sinr_cosp = 2 * (w * x + y * z)
+    cosr_cosp = 1 - 2 * (x * x + y * y)
+    roll = np.arctan2(sinr_cosp, cosr_cosp)
+
+    # pitch (y-axis rotation)
+    sinp = 2 * (w * y - z * x)
+    if abs(sinp) >= 1:
+        pitch = np.copysign(np.pi / 2, sinp)
+    else:
+        pitch = np.arcsin(sinp)
+
+    # yaw (z-axis rotation)
+    siny_cosp = 2 * (w * z + x * y)
+    cosy_cosp = 1 - 2 * (y * y + z * z)
+    yaw = np.arctan2(siny_cosp, cosy_cosp)
+
+    return np.degrees([roll, pitch, yaw])
+
+
+def get_head_orientation():
+    # Get quaternion data from head sensor
+    quat_id = model.sensor('head_gyro').id
+    quat = data.sensordata[quat_id:quat_id + 4]  # w, x, y, z
+
+    # Convert to euler angles
+    euler_angles = quaternion_to_euler(quat[0], quat[1], quat[2], quat[3])
+
+    # return {
+    #     'roll': euler_angles[0],  # Head tilt (left/right)
+    #     'pitch': euler_angles[1],  # Head nod (up/down)
+    #     'yaw': euler_angles[2],  # Head turn (left/right)
+    #     'quaternion': quat
+    # }
+
+    return [euler_angles[0], euler_angles[1], euler_angles[2]]
+
+
 if __name__ == "__main__":
     # Generate runtime dictionary
     runtime_data = {"vision": [], "stimulation_period": None, "feagi_state": None,
@@ -304,31 +354,36 @@ if __name__ == "__main__":
 
 
             # Example to send data to FEAGI. This is basically reading the joint. R
-            abdomen_gyro_data = {i: pos for i, pos in enumerate(abdomen_positions) if
-                          pns.full_template_information_corticals}
+            # abdomen_gyro_data = {i: pos for i, pos in enumerate(abdomen_positions) if
+            #               pns.full_template_information_corticals}
             servo_data = {i: pos for i, pos in enumerate(positions[:20]) if
                           pns.full_template_information_corticals}
-            sensor_data = {i: pos for i, pos in enumerate(data.sensordata) if
+            sensor_data = {i: pos for i, pos in enumerate(data.sensordata[3:6]) if
                           pns.full_template_information_corticals}
-            #print(sensor_data)
-            
+
+            # Get gyro data
+            gyro = get_head_orientation()
+
+            gyro_data = {"0": np.array(gyro)}
+
             #Creating message to send to FEAGI
             message_to_feagi_gyro = sensors.create_data_for_feagi('gyro',
                                                              capabilities,
                                                              message_to_feagi,
-                                                             current_data=abdomen_gyro_data,
+                                                             current_data=gyro_data,
                                                              symmetric=True)
             message_to_feagi_servo = sensors.create_data_for_feagi('servo_position',
                                                              capabilities,
                                                              message_to_feagi,
                                                              current_data=servo_data,
                                                              symmetric=True)
+
             message_to_feagi_prox = sensors.create_data_for_feagi('proximity',
                                                              capabilities,
                                                              message_to_feagi,
                                                              current_data=sensor_data,
                                                              symmetric=True, measure_enable=True)
-        
+
 
             # Sends to feagi data
             pns.signals_to_feagi(message_to_feagi_servo, feagi_ipu_channel, agent_settings, feagi_settings)
